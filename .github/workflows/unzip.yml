@@ -1,0 +1,96 @@
+name: Auto Unzip & Push
+
+# রিপোতে যেকোনো .zip আপলোড করলেই এই workflow চলবে
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - '**.zip'
+  workflow_dispatch:   # চাইলে Actions ট্যাব থেকে হাতেও চালানো যাবে
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-unzip
+  cancel-in-progress: false
+
+env:
+  # true করলে: জিপের ভেতরে একটাই root ফোল্ডার থাকলে সেটা বাদ দিয়ে ভেতরের জিনিস extract হবে
+  STRIP_SINGLE_ROOT: "false"
+  # true করলে: extract শেষে মূল .zip ফাইল রিপো থেকে মুছে যাবে
+  DELETE_ZIP_AFTER: "true"
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find & extract all zip files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config core.quotepath false
+          sudo apt-get install -y -qq unzip rsync >/dev/null
+
+          mapfile -d '' ZIPS < <(find . -type f -iname '*.zip' \
+            -not -path './.git/*' -not -path './.github/*' -print0)
+
+          if [ ${#ZIPS[@]} -eq 0 ]; then
+            echo "কোনো zip পাওয়া যায়নি।"
+            exit 0
+          fi
+
+          for Z in "${ZIPS[@]}"; do
+            echo "=== Processing: $Z"
+            DEST_DIR="$(dirname "$Z")"
+            TMP="$(mktemp -d)"
+
+            # extract (non-ASCII নামের জন্য UTF-8 চেষ্টা, না হলে ডিফল্ট)
+            unzip -o -q -O UTF-8 "$Z" -d "$TMP" 2>/dev/null || unzip -o -q "$Z" -d "$TMP"
+
+            # অপ্রয়োজনীয় ফাইল মুছে ফেলা
+            rm -rf "$TMP/__MACOSX"
+            find "$TMP" -name '.DS_Store' -delete
+
+            # .github ফোল্ডার বাদ (যেকোনো লেভেলে নয়, শুধু root-এ এবং নিচে সবখানে)
+            find "$TMP" -type d -name '.github' -prune -exec rm -rf {} +
+
+            # একটাই root ফোল্ডার থাকলে strip করার অপশন
+            SRC="$TMP"
+            if [ "$STRIP_SINGLE_ROOT" = "true" ]; then
+              COUNT=$(find "$TMP" -mindepth 1 -maxdepth 1 | wc -l)
+              if [ "$COUNT" -eq 1 ] && [ -d "$(find "$TMP" -mindepth 1 -maxdepth 1)" ]; then
+                SRC="$(find "$TMP" -mindepth 1 -maxdepth 1)"
+              fi
+            fi
+
+            # ফোল্ডার/সাবফোল্ডার structure ঠিক রেখে কপি (zip যে ফোল্ডারে ছিল সেখানে)
+            rsync -a "$SRC"/ "$DEST_DIR"/
+            rm -rf "$TMP"
+
+            if [ "$DELETE_ZIP_AFTER" = "true" ]; then
+              git rm -q -f "$Z" 2>/dev/null || rm -f "$Z"
+            fi
+          done
+
+      - name: Commit & push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "কোনো পরিবর্তন নেই।"
+            exit 0
+          fi
+
+          git commit -m "Auto-unzip: extracted uploaded zip file(s) [skip ci]"
+          git pull --rebase origin "${GITHUB_REF_NAME}" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}"
