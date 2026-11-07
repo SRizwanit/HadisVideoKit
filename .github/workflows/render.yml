@@ -1,0 +1,233 @@
+name: Render Hadis Video
+
+# একটাই workflow — সব কাজ এখান থেকে (ফোন থেকেই):
+#   action = check               → যাচাই (বান্ডল + ছবি রেন্ডার), Artifacts: check-images
+#   action = render              → ভিডিও রেন্ডার, Artifacts: videos
+#   action = render_and_release  → রেন্ডার + GitHub Release-এ আপলোড
+#
+# নতুন zip আপলোড করেছো? zip_file ঘরে zip-এর নাম লেখো (যেমন HadisVideokit-part3.zip);
+# workflow আগে zip খুলে ফাইল কমিট করবে, তারপর কাজ করবে। zip_file ফাঁকা = zip খোলা হবে না।
+#
+# ⚠️ এই ফাইলটা কিটের ভেতরের সব স্ক্রিপ্ট (scripts/*.mjs) ব্যবহার করে, তাই পরের Part-এ
+#    এটা আর বদলাতে হবে না; শুধু zip আপডেট হবে।
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "কী করবে?"
+        required: true
+        default: "check"
+        type: choice
+        options:
+          - check
+          - render
+          - render_and_release
+      zip_file:
+        description: "রিপোতে আপলোড করা zip-এর নাম (যেমন HadisVideokit-part3.zip)। ফাঁকা = zip খোলা হবে না"
+        required: false
+        default: ""
+        type: string
+      hadis_id:
+        description: "ফাইলের কী (যেমন 0101 → hadis0101.wav)"
+        required: false
+        default: "0101"
+        type: string
+      hadis_bookname:
+        description: "কিতাবের নাম (ভিডিওতে দেখাবে)"
+        required: false
+        default: "সহীহ বুখারী"
+        type: string
+      hadis_number:
+        description: "হাদিস নম্বর (বাংলা সংখ্যায়, যেমন ১২৩)"
+        required: false
+        default: "১"
+        type: string
+      theme:
+        description: "থিম"
+        required: false
+        default: "emerald"
+        type: choice
+        options:
+          - emerald
+          - navy
+          - greenDayNight
+      orientation:
+        description: "ওরিয়েন্টেশন"
+        required: false
+        default: "portrait"
+        type: choice
+        options:
+          - portrait
+          - landscape
+          - both
+      quality:
+        description: "কোয়ালিটি"
+        required: false
+        default: "hd"
+        type: choice
+        options:
+          - hd
+          - 4k
+          - both
+      intro_seconds:
+        description: "Intro কত সেকেন্ড"
+        required: false
+        default: "3"
+        type: string
+      outro_seconds:
+        description: "Outro কত সেকেন্ড"
+        required: false
+        default: "4"
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: render-hadis
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unpack zip
+        if: ${{ inputs.zip_file != '' }}
+        env:
+          ZIP_FILE: ${{ inputs.zip_file }}
+        run: |
+          set -euo pipefail
+
+          if ! [[ "$ZIP_FILE" =~ ^[A-Za-z0-9._-]+\.zip$ ]]; then
+            echo "::error::zip ফাইলের নাম ঠিক নেই। শুধু ইংরেজি অক্ষর, সংখ্যা, . - _ এবং শেষে .zip থাকতে হবে (ফোল্ডার পাথ নয়)।"
+            exit 1
+          fi
+          if [ ! -f "$ZIP_FILE" ]; then
+            echo "::error::'$ZIP_FILE' রিপোর রুটে পাওয়া যায়নি। আগে Add file → Upload files দিয়ে আপলোড করো।"
+            exit 1
+          fi
+
+          # .github/workflows স্বয়ংক্রিয় আপডেট করা যায় না (GitHub অনুমতি দেয় না) → বাদ।
+          # লোগো, badge ও public/ এর তোমার নিজের ফাইল কখনো ওভাররাইট হবে না।
+          unzip -o -q "$ZIP_FILE" \
+            -x ".github/workflows/*" "public/*" "src/logo.jpg" "src/google-play-badge.png" "__MACOSX/*" "*.DS_Store"
+          unzip -n -q "$ZIP_FILE" "public/*" "src/logo.jpg" "src/google-play-badge.png" || true
+
+          # zip-এর workflow ফাইল রিপোর সাথে মেলে কিনা দেখা
+          {
+            echo "### 🔧 Workflow ফাইল যাচাই"
+            changed=0
+            for f in $(unzip -Z1 "$ZIP_FILE" | grep -E '^\.github/workflows/.*\.ya?ml$' || true); do
+              mkdir -p /tmp/wf && unzip -o -q "$ZIP_FILE" "$f" -d /tmp/wf
+              if [ ! -f "$f" ] || ! diff -q "/tmp/wf/$f" "$f" > /dev/null; then
+                echo "- ⚠️ \`$f\` নতুন/বদলেছে → GitHub-এ হাতে আপডেট করতে হবে (HadisVideokit.md দেখো)"
+                changed=1
+              fi
+            done
+            if [ "$changed" = "0" ]; then echo "- ✅ workflow ফাইল আপ-টু-ডেট"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          rm -f "$ZIP_FILE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "কোনো পরিবর্তন নেই।"
+          else
+            git commit -q -m "chore: unpack $ZIP_FILE"
+            git push
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Install Chrome system libraries
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            libnss3 libdbus-1-3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 \
+            libgbm1 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+            libasound2t64 libpango-1.0-0 libcairo2
+
+      # ---------- action = check ----------
+      - name: Bundle & render check images
+        if: ${{ inputs.action == 'check' }}
+        run: npm run check
+
+      - name: Upload check images
+        if: ${{ always() && inputs.action == 'check' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-images
+          path: out/*.png
+          if-no-files-found: warn
+          retention-days: 7
+
+      # ---------- action = render / render_and_release ----------
+      - name: Render videos
+        if: ${{ startsWith(inputs.action, 'render') }}
+        env:
+          HADIS_ID: ${{ inputs.hadis_id }}
+          HADIS_BOOKNAME: ${{ inputs.hadis_bookname }}
+          HADIS_NUMBER: ${{ inputs.hadis_number }}
+          THEME: ${{ inputs.theme }}
+          ORIENTATION: ${{ inputs.orientation }}
+          QUALITY: ${{ inputs.quality }}
+          INTRO_SECONDS: ${{ inputs.intro_seconds }}
+          OUTRO_SECONDS: ${{ inputs.outro_seconds }}
+        run: |
+          node scripts/render.mjs \
+            --id "$HADIS_ID" \
+            --book "$HADIS_BOOKNAME" \
+            --number "$HADIS_NUMBER" \
+            --theme "$THEME" \
+            --orientation "$ORIENTATION" \
+            --quality "$QUALITY" \
+            --intro "$INTRO_SECONDS" \
+            --outro "$OUTRO_SECONDS"
+
+      - name: List rendered files
+        if: ${{ startsWith(inputs.action, 'render') }}
+        run: |
+          {
+            echo "### 🎬 রেন্ডার হওয়া ভিডিও"
+            ls -lh out/*.mp4 | awk '{print "- `" $9 "` — " $5}'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload videos
+        if: ${{ startsWith(inputs.action, 'render') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: videos
+          path: out/*.mp4
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      - name: Create GitHub Release
+        if: ${{ inputs.action == 'render_and_release' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HADIS_ID: ${{ inputs.hadis_id }}
+          HADIS_BOOKNAME: ${{ inputs.hadis_bookname }}
+          HADIS_NUMBER: ${{ inputs.hadis_number }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          TAG="hadis${HADIS_ID}-run${RUN_NUMBER}"
+          gh release create "$TAG" out/*.mp4 \
+            --title "${HADIS_BOOKNAME} নং : ${HADIS_NUMBER}" \
+            --notes "ইসলামী বিশ্বকোষ ও আল হাদিস S2 — hadis${HADIS_ID}"
