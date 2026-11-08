@@ -1,6 +1,7 @@
 import React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { HOOK_TEXT, TRANSITION_FRAMES } from "../constants";
+import { HookVisual } from "../components/HookVisual";
+import { HOOK_TEXT, HOOK_VISUAL_ENABLED, TRANSITION_FRAMES } from "../constants";
 import { FONT_DISPLAY } from "../fonts";
 import { hookFramesOf, type Timing } from "../lib/timing";
 import { useNightFactor } from "../lib/useNightFactor";
@@ -10,6 +11,8 @@ import type { ThemeId } from "../types";
 /**
  * Hook দৃশ্য — ভিডিওর একদম শুরুতে বড় প্রশ্ন-লেখা ("এই হাদিসের ব্যাপারে কি আপনার জানা আছে?") + hook.wav-এর ভয়েস।
  * ভয়েস এখানে বাজে না — `IntroOutroAudio` মূল স্তরে বাজায় (ক্যাপশনের মতো আলাদা সিঙ্ক লাগে না)।
+ *
+ * ভিজ্যুয়াল হুক: প্রথম ফ্রেম থেকেই (লেখা আসার আগেই) বিষয়ের সাথে মেলে এমন SVG এনিমেশন (`HookVisual`; `HOOK_VISUAL_ENABLED`)।
  *
  * ক্রম (দৃশ্যের নিজের ফ্রেমে):
  *   ০–          প্যানেল কার্ড স্প্রিং-ইন (স্কেল ০.৯ → ১)
@@ -29,6 +32,10 @@ type Props = {
   timing: Timing;
   /** dev প্রিভিউয়ের জন্য: ভিডিওর সাইজ ছাড়া অন্য সাইজে লেআউট */
   size?: { width: number; height: number };
+  /** ভিজ্যুয়াল হুক: দিলে (এবং `HOOK_VISUAL_ENABLED`) প্রথম ফ্রেম থেকে বিষয়ের SVG এনিমেশন দেখায়; না দিলে আগের মতো শুধু লেখা */
+  hadisId?: string;
+  /** টিজারের শুরু (সেকেন্ড) — SVG বাছাইয়ে (টিজারের সেগমেন্টের SVG) */
+  teaserStartSeconds?: number;
 };
 
 /** শব্দের স্টাগার: প্রতি শব্দের বিরতি (ফ্রেম) ও পুরো ক্রমের সর্বোচ্চ ভাগ */
@@ -53,7 +60,7 @@ function withAlpha(color: string, alpha: number): string {
   return `rgba(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)}, ${alpha})`;
 }
 
-export const HookScene: React.FC<Props> = ({ theme, text = HOOK_TEXT, timing, size }) => {
+export const HookScene: React.FC<Props> = ({ theme, text = HOOK_TEXT, timing, size, hadisId, teaserStartSeconds }) => {
   const frame = useCurrentFrame();
   const video = useVideoConfig();
   const fps = video.fps;
@@ -79,11 +86,21 @@ export const HookScene: React.FC<Props> = ({ theme, text = HOOK_TEXT, timing, si
   const pulse = 0.85 + 0.15 * Math.sin((frame / fps) * ((Math.PI * 2) / 2));
 
   // ---------- মাপ ----------
-  const cardW = isPortrait ? width * 0.9 : width * 0.82;
-  const padX = (isPortrait ? 44 : 72) * u;
-  const padY = (isPortrait ? 70 : 56) * u;
+  // ভিজ্যুয়াল হুক থাকলে: Portrait-এ SVG উপরে + লেখার কার্ড নিচে; Landscape-এ SVG বাঁয়ে + কার্ড ডানে (লেখার ফন্ট একটু ছোট)
+  const showVisual = HOOK_VISUAL_ENABLED && !!hadisId;
+  const visualSize = showVisual ? (isPortrait ? 640 : 600) * u : 0;
+  const visualGap = showVisual ? (isPortrait ? 40 : 56) * u : 0;
+  const cardW = showVisual
+    ? isPortrait
+      ? width * 0.9
+      : width * 0.9 - visualSize - visualGap
+    : isPortrait
+      ? width * 0.9
+      : width * 0.82;
+  const padX = (isPortrait ? 44 : showVisual ? 56 : 72) * u;
+  const padY = (isPortrait ? (showVisual ? 56 : 70) : 56) * u;
   const innerW = cardW - padX * 2;
-  const fontSize = (isPortrait ? 136 : 118) * u;
+  const fontSize = (showVisual ? (isPortrait ? 108 : 84) : isPortrait ? 136 : 118) * u;
   const wordGap = fontSize * 0.26;
   const lineGap = fontSize * 0.12;
 
@@ -95,12 +112,24 @@ export const HookScene: React.FC<Props> = ({ theme, text = HOOK_TEXT, timing, si
         width,
         height,
         display: "flex",
+        flexDirection: isPortrait ? "column" : "row",
         alignItems: "center",
         justifyContent: "center",
+        gap: visualGap,
         opacity: fadeOut,
         transform: `scale(${outScale})`,
       }}
     >
+      {showVisual && hadisId ? (
+        <HookVisual
+          hadisId={hadisId}
+          theme={theme}
+          timing={timing}
+          size={visualSize}
+          teaserStartSeconds={teaserStartSeconds}
+          unit={u}
+        />
+      ) : null}
       <div
         style={{
           position: "relative",

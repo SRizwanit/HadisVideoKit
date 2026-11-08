@@ -135,6 +135,11 @@ export const timestampFileSchema = z
     language: z.string().optional(),
     /** ঐচ্ছিক: থাকলে Hook-এর পরে এই অংশ আগে বাজে (cold open) */
     teaser: teaserSchema.optional(),
+    /** ঐচ্ছিক (ভিজ্যুয়াল হুক): ভিডিওর প্রথম মুহূর্তে (Hook দৃশ্যে) দেখানোর SVG — বিষয়ের সাথে মেলে এমনটা, যেমন "svg3"। না দিলে টিজারের সেগমেন্টের SVG */
+    hookSvg: z
+      .string()
+      .regex(/^svg\d+$/, 'hookSvg নাম হতে হবে "svg1", "svg2" ... এই ধাঁচের')
+      .optional(),
     segments: z.array(segmentSchema).min(1, "কমপক্ষে একটা segment দরকার"),
   })
   .superRefine((file, ctx) => {

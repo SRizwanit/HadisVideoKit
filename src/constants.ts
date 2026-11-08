@@ -117,6 +117,11 @@ export const HOOK_AUDIO_VOLUME = 1;
 export const HOOK_AUDIO_FADE_OUT_FRAMES = 6;
 /** Hook দৃশ্য = অডিও + এই বাড়তি সেকেন্ড (শেষ শব্দ কেটে যায় না; ফেড-আউটের জায়গা) */
 export const HOOK_AUDIO_TAIL_SECONDS = 0.12;
+/**
+ * ভিজ্যুয়াল হুক: Hook দৃশ্যের প্রথম ফ্রেম থেকেই বিষয়ের সাথে মেলে এমন SVG এনিমেশন (লেখার সাথে)।
+ * SVG বাছাই: JSON-এর `"hookSvg"` → টিজারের সেগমেন্টের SVG → প্রথম সেগমেন্টের SVG → (কিছু না থাকলে) fallback আইকন। বন্ধ করতে `false`
+ */
+export const HOOK_VISUAL_ENABLED = true;
 
 // ---------- অডিও টিজার / cold open (Hook-এর পরে) ----------
 /**

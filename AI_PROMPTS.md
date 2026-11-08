@@ -76,6 +76,7 @@ OUTPUT FORMAT — return exactly this JSON structure and NOTHING else
 {
   "language": "bn",
   "teaser": { "start": 12.4, "end": 17.9 },
+  "hookSvg": "svg2",
   "segments": [
     {
       "id": 1,
@@ -102,6 +103,7 @@ HARD RULES (a file that breaks any rule is rejected by the video code)
 8. "id" is OPTIONAL; if used, number the segments 1, 2, 3 ... in order.
 9. The output must be valid JSON: double quotes only, no trailing commas, no comments, numbers without quotes.
 10. "teaser" is OPTIONAL (a block at the top level, next to "language" and "segments"). Include it ONLY if TEASER_WANTED is "yes" AND AUDIO_TIMING has word-level times. It marks the single STRONGEST phrase of the hadith (the core message, the key promise, warning or advice), which the video plays first as a cold open. Rules: "start" = the start time of the FIRST word of that phrase (ideally right after a pause), "end" = the end time of the LAST word of that phrase, optionally plus up to 0.1 second of the pause after it (the video itself adds a 0.15 s tail after "end", so "end" + 0.15 must still be BEFORE the start of the next spoken word; therefore the phrase must end at a REAL PAUSE: the end of a sentence/clause that is followed by a gap or a new segment; never between two words that are spoken without a gap, because the voice would sound cut off); the phrase is one complete, meaningful clause of 3 to 15 words, lasting between 1 and 10 seconds (never less than 0.5 and never more than 12); it must lie inside the audio, with end > start, and it is NOT cut out of the segments (the segments still cover the whole hadith from the start to the end). Do NOT add "text" to teaser. If TEASER_WANTED is "no", or there are no word-level times, OMIT "teaser" completely.
+11. "hookSvg" is OPTIONAL (a value at the top level, next to "language" and "segments"). It is the SVG shown in the very first moment of the video (the Hook), so it must match the MAIN TOPIC of the hadith (the same topic as the teaser phrase, if you gave one). Include it ONLY if SVG_COUNT is greater than 0: use one value of the form "svg<N>" (letters "svg" + a number, nothing else) where N is between 1 and SVG_COUNT, preferably the "svg" value of the segment that contains the teaser phrase or the segment that carries the core message. If SVG_COUNT is 0, or you are unsure, OMIT "hookSvg" (the video then uses the SVG of the teaser segment automatically).
 
 RETURN ONLY THE JSON.
 ```
@@ -113,6 +115,7 @@ RETURN ONLY THE JSON.
 - [ ] Every segment: `end` is larger than `start`; times only go forward
 - [ ] No segment is longer than about 25 words
 - [ ] `svg` values are only `svg1`, `svg2` … and the numbers are not larger than your SVG count
+- [ ] If you used `hookSvg`: it is one `"hookSvg": "svgN"` value at the top level, N is not larger than your SVG count, and it fits the main topic of the hadith. If you did not, there is no `hookSvg` (the video then picks the SVG of the teaser segment)
 - [ ] `sfx.name` is one of `whoosh`, `pop`, `chime`, `ding`, `swoosh`
 - [ ] The last `end` is not (much) larger than the audio length
 - [ ] If you asked for a Teaser: there is one `"teaser": { "start": …, "end": … }` block at the top level; `end` is larger than `start`; the span is between 1 and 10 seconds; its start matches the start of a word, its end is the end of a word (plus at most 0.1 s of pause, and `end` + 0.15 s is still before the next word starts) and ends where the speaker really pauses — so the sentence does not sound cut off; the phrase is really spoken there. If you did not ask for one, there is no `teaser` block

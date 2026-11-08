@@ -67,7 +67,7 @@ export type SvgStageProps = {
 };
 
 /** এক সেগমেন্টের স্তর: SVG আঁকা, না পারলে (ফাইল নেই / অবৈধ / নাম null) fallback আইকন */
-const StageLayer: React.FC<{
+export const StageLayer: React.FC<{
   name: string | null;
   segmentIndex: number;
   localFrame: number;

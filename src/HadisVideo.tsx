@@ -22,7 +22,7 @@ import type { HadisVideoProps } from "./types";
  *
  * স্তরের ক্রম (নিচ → উপর):
  *   `<Background>`  সব দৃশ্যের পেছনে, আসল `timing` সহ (তাই Outro-র আকাশ রাত; `computeNightFactor`)
- *   Hook    `<Sequence from=0 …>` (hook.wav থাকলে)       → `HookScene`    (বড় প্রশ্ন-লেখা; নিজেই শেষে ফেড-আউট)
+ *   Hook    `<Sequence from=0 …>` (hook.wav থাকলে)       → `HookScene`    (বড় প্রশ্ন-লেখা + প্রথম ফ্রেম থেকেই বিষয়ের SVG এনিমেশন — ভিজ্যুয়াল হুক; নিজেই শেষে ফেড-আউট)
  *   Teaser  `<Sequence from=hook …>` (JSON-এ `teaser` থাকলে) → `TeaserScene`  (হাদিসের শক্তিশালী বাক্যাংশ, শব্দ-হাইলাইট; ভয়েস `TeaserAudio`)
  *   Intro   `<Sequence from=hook+teaser …>`             → `IntroScene`   (নিজেই শেষে ফেড-আউট; Part 8; Hook/Teaser না থাকলে from=0)
  *   Main    `<Sequence from=intro …>` + ফেড-ইন মোড়ক   → `MainScene`    (Header + SvgStage + Caption; Part 13A)
@@ -104,7 +104,7 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
       {scenes.hook && (
         <Sequence name="hook" from={scenes.hook.from} durationInFrames={scenes.hook.frames}>
           <AbsoluteFill data-scene="hook">
-            <HookScene theme={props.theme} timing={timing} size={size} text={props.hookText && props.hookText.trim() !== "" ? props.hookText : undefined} />
+            <HookScene theme={props.theme} timing={timing} size={size} hadisId={props.hadisId} teaserStartSeconds={props.teaserStartSeconds} text={props.hookText && props.hookText.trim() !== "" ? props.hookText : undefined} />
           </AbsoluteFill>
         </Sequence>
       )}
