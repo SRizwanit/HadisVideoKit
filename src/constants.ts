@@ -66,3 +66,20 @@ export const SFX_MAX_SECONDS = 4;
 /** Main → Outro বদলের SFX (ফাইল না থাকলে চুপচাপ বাদ); বন্ধ করতে `OUTRO_SFX_ENABLED = false` */
 export const OUTRO_SFX_NAME = "whoosh";
 export const OUTRO_SFX_ENABLED = true;
+
+// ---------- Intro / Outro ভয়েস (Part 14C-audio) ----------
+/**
+ * Intro ও Outro-তে শুধু এই দুটো অডিও বাজে (ক্যাপশন নেই — ক্যাপশন শুধু Main-এ)।
+ * ফাইল: `public/audio/intro.wav`, `public/audio/outro.wav` — না থাকলে ক্র্যাশ নয়, আগের মতো (SFX সহ) চলে।
+ * ফাইল থাকলে Intro/Outro-র নিজস্ব SFX (whoosh/chime) বন্ধ থাকে, যেন ভয়েসের উপর না চাপে।
+ */
+export const AUDIO_DIR = "audio";
+export const INTRO_AUDIO_PATH = `${AUDIO_DIR}/intro.wav`;
+export const OUTRO_AUDIO_PATH = `${AUDIO_DIR}/outro.wav`;
+/** বন্ধ করতে `false` — তখন আগের আচরণ (সেকেন্ড/SFX অপরিবর্তিত) */
+export const INTRO_OUTRO_AUDIO_ENABLED = true;
+export const INTRO_OUTRO_AUDIO_VOLUME = 1;
+/** অডিওর শেষে ছোট ফেড-আউট (ফ্রেম) — দৃশ্য অডিওর চেয়ে ছোট হলে "ক্লিক" শোনা যায় না */
+export const INTRO_OUTRO_AUDIO_FADE_OUT_FRAMES = 6;
+/** দৃশ্যের দৈর্ঘ্য কমপক্ষে (অডিও + এই বাড়তি সেকেন্ড) — অডিও কেটে যায় না */
+export const INTRO_OUTRO_AUDIO_TAIL_SECONDS = 0.1;

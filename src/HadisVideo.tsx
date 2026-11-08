@@ -2,8 +2,10 @@ import React, { useMemo } from "react";
 import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig } from "remotion";
 import { Background } from "./components/Background";
 import { HadisAudio } from "./components/HadisAudio";
+import { IntroOutroAudio } from "./components/IntroOutroAudio";
 import { SfxPlayer } from "./components/SfxPlayer";
 import { mainFadeIn, planScenes } from "./lib/sceneFade";
+import { useIntroOutroAudio } from "./lib/useIntroOutroAudio";
 import { timingFromConfig, type Timing } from "./lib/timing";
 import { IntroScene } from "./scenes/IntroScene";
 import { MainScene } from "./scenes/MainScene";
@@ -18,6 +20,7 @@ import type { HadisVideoProps } from "./types";
  *   Intro   `<Sequence from=0 …>`                       → `IntroScene`   (নিজেই শেষে ফেড-আউট; Part 8)
  *   Main    `<Sequence from=intro …>` + ফেড-ইন মোড়ক   → `MainScene`    (Header + SvgStage + Caption; Part 13A)
  *   Outro   `<Sequence from=intro+main …>`              → `OutroScene`   (নিজেই ১২ ফ্রেমে ফেড-ইন/আউট; Part 12)
+ *   `<IntroOutroAudio>` (Part 14C-audio)  Intro/Outro-র ভয়েস — শুধু অডিও, ক্যাপশন নেই; `public/audio/intro.wav`, `outro.wav`
  *   `<HadisAudio>` + `<SfxPlayer>`  **মূল স্তরে, কোনো দৃশ্য-Sequence-এর বাইরে** (এদের ফ্রেম ভিডিওর শুরু থেকে মাপা; Part 11)
  *
  * নিয়ম (fixed):
@@ -70,6 +73,13 @@ export type HadisVideoViewProps = HadisVideoProps & {
 export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, idScope, audio = true, sfx, ...props }) => {
   const scenes = planScenes(timing.introFrames, timing.mainFrames, timing.outroFrames);
 
+  // Part 14C-audio: Intro/Outro-তে শুধু ভয়েস (ক্যাপশন নেই)। ফাইল থাকলে ওই দৃশ্যের নিজস্ব SFX বন্ধ (ভয়েসের উপর চাপে না);
+  // খোঁজা শেষ না হওয়া পর্যন্ত (ready=false) SFX মাউন্ট হয় না। `audio=false` (dev প্রিভিউ) হলে কিছু খোঁজে না — আচরণ আগের মতো।
+  const voice = useIntroOutroAudio(audio);
+  const introSfx = sfx === false ? false : !voice.ready || voice.intro ? false : sfx;
+  const outroSfx = sfx === false ? false : !voice.ready || voice.outro ? false : sfx;
+  const sfxOptions = useMemo(() => (voice.outro ? { outroSfx: false } : undefined), [voice.outro]);
+
   return (
     <AbsoluteFill data-hadis-video="" data-intro-frames={timing.introFrames} data-main-frames={timing.mainFrames} data-outro-frames={timing.outroFrames}>
       <Background theme={props.theme} timing={timing} size={size} />
@@ -83,7 +93,7 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
               number={props.hadisNumber}
               timing={timing}
               size={size}
-              sfx={sfx}
+              sfx={introSfx}
             />
           </AbsoluteFill>
         </Sequence>
@@ -108,14 +118,15 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
       {scenes.outro && (
         <Sequence name="outro" from={scenes.outro.from} durationInFrames={scenes.outro.frames}>
           <AbsoluteFill data-scene="outro">
-            <OutroScene theme={props.theme} timing={timing} size={size} sfx={sfx} />
+            <OutroScene theme={props.theme} timing={timing} size={size} sfx={outroSfx} />
           </AbsoluteFill>
         </Sequence>
       )}
 
       {/* ⚠️ মূল স্তরে — কোনো দৃশ্য-Sequence-এর ভেতরে নয় (Part 11) */}
       {audio && <HadisAudio hadisId={props.hadisId} timing={timing} />}
-      {audio && <SfxPlayer hadisId={props.hadisId} timing={timing} />}
+      {audio && <SfxPlayer hadisId={props.hadisId} timing={timing} options={sfxOptions} />}
+      {audio && voice.ready && <IntroOutroAudio timing={timing} introSrc={voice.intro} outroSrc={voice.outro} />}
     </AbsoluteFill>
   );
 };

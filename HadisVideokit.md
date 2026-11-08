@@ -3,7 +3,7 @@
 > An **automatic hadith video kit** built with React + Remotion + GitHub Actions.
 > You only put a `.wav` + `_timestamp.json` (+ AI-made SVG/SFX) in the repo, type the **book name** and **hadith number (in Bengali)** in GitHub Actions, press Run, and the video renders. No video editor or PC needed.
 
-**Version 2.52 (English edition) — Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
+**Version 2.53 (English edition) — Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
 
 3 themes: Emerald Night, Royal Navy, Green Day & Night (with fireflies). Book name and Bengali hadith number come straight from GitHub Actions inputs (no book-code list).
 
@@ -382,15 +382,16 @@ hadis-videokit/
 │  │  ├─ hadis0000same_timestamp.json   # dev sample (cross-fade cells); may be deleted with hadis0000
 │  │  └─ hadis0000gap_timestamp.json    # dev sample (gap + tail); may be deleted with hadis0000
 │  ├─ svg/                        # svg1.svg, svg2.svg (samples), svg3.svg ...
+│  ├─ audio/                      # intro.wav, outro.wav — Intro/Outro voice (audio only, no captions) — Part 14C-audio
 │  └─ sfx/                        # whoosh.mp3 (sample, synthetic 0.9 s; replace with your own), pop.mp3, chime.mp3 ...
 ├─ src/
 │  ├─ logo.jpg, google-play-badge.png (1600×474), index.ts, Root.tsx, HadisVideo.tsx
 │  ├─ types.ts, constants.ts, themes.ts, fonts.ts, assets.d.ts
 │  ├─ lib/        # dayNight, sky, useNightFactor, bnDigits, displayText, loadHadis, timing, useLayout, fitText,
-│  │              # useSfxSrc, svgSanitize, svgSync, svgLoad, svgPicker, svgInventory, svgStage, svgTransition,
+│  │              # useSfxSrc, introOutroAudio, useIntroOutroAudio, svgSanitize, svgSync, svgLoad, svgPicker, svgInventory, svgStage, svgTransition,
 │  │              # captionWords, audioPlan, outroPlan, sceneFade
 │  ├─ components/ # Background(+DayNightSky, Fireflies), Header, Logo, Ribbon, FitText, AnimatedSvg, FallbackSvg,
-│  │              # SvgStage, Caption, HadisAudio, SfxPlayer, PlayBadge
+│  │              # SvgStage, Caption, HadisAudio, SfxPlayer, IntroOutroAudio, PlayBadge
 │  ├─ scenes/     # IntroScene, MainScene, OutroScene
 │  └─ dev/        # *Preview / *Check images + pure *Cases files (ThemePreview, DataCheck, BackgroundPreview,
 │                 # HeaderPreview, IntroPreview, SvgSanitizeCheck, SvgSyncPreview, AnimatedSvgPreview, SvgPickerCheck,
@@ -544,6 +545,7 @@ No new packages; `render.yml`/`package.json`/`check.mjs` unchanged. Part 13's `M
 - **Constants:** `VOICE_FADE_OUT_FRAMES = 10`, `SFX_FADE_OUT_FRAMES = 6`, `SFX_MAX_SECONDS = 4`, `OUTRO_SFX_NAME = "whoosh"`, `OUTRO_SFX_ENABLED = true`.
 - **API:** `<HadisAudio hadisId timing />`, `<SfxPlayer hadisId timing />` — **top level of `HadisVideo` only**. Voice starts at `introFrames`, lasts `mainFrames`. One SFX per segment with `sfx` at its start frame; volume default 0.4, clamped 0–1; invalid name → dropped + warning; cue never runs into the Outro; Outro `whoosh` at the first Outro frame; missing SFX files → silent + one ⚠️ per name (`Audio` is only mounted if the file exists).
 
+- **Intro/Outro voice (Part 14C-audio):** `public/audio/intro.wav` (5.44 s) and `public/audio/outro.wav` (5.52 s) play **only as audio** in Intro and Outro (captions exist only in Main). Files: `lib/introOutroAudio.ts` (pure: `fitSecondsToAudio`, `planIntroOutroAudio`, `introOutroGain`), `lib/useIntroOutroAudio.ts` (checks the files exist; `ready` flag + `delayRender`; missing file → `null`, no crash), `components/IntroOutroAudio.tsx` (`<Sequence><Audio/></Sequence>` at the top level of `HadisVideo`). Constants: `INTRO_AUDIO_PATH`, `OUTRO_AUDIO_PATH`, `INTRO_OUTRO_AUDIO_ENABLED = true` (set `false` for the old behaviour), `INTRO_OUTRO_AUDIO_VOLUME = 1`, `INTRO_OUTRO_AUDIO_FADE_OUT_FRAMES = 6`, `INTRO_OUTRO_AUDIO_TAIL_SECONDS = 0.1`. **Rules:** Intro voice starts at frame 0 and Outro voice at the end of Main; the scene length is `max(your seconds, audio length + 0.1 s)` (so the default 3 s / 4 s becomes ≈ 5.57 s / 5.63 s with these files, never above 15 s); `0` seconds still means "no scene, no voice"; `calculateHadisMetadata` (`loadHadis.ts`) returns the fitted `introSeconds`/`outroSeconds` in `props`, so `timingFromConfig` gets the same numbers. When a voice file exists, that scene's own SFX is switched off (Intro `whoosh`/`chime`; Outro `whoosh` via `SfxPlayer` option `outroSfx: false`, and the Outro `chime`) so nothing plays over the voice; without the file everything works as before. `DEFAULT_*_SECONDS`, `render.mjs`, `renderPlan.mjs` and `render.yml` are unchanged. The `.wav` files are in `public/`, so zip updates never overwrite them (`unzip -n`).
 ---
 
 ## ✅ Part 12 (12A–12E) — Outro scene — Done (what later Parts need)
@@ -751,6 +753,12 @@ node scripts/render.mjs --id 0101 --book "সহীহ বুখারী" --num
 ---
 
 ## 📝 Change log
+
+**Version 2.52 → 2.53**
+- 🔊 **Intro and Outro now play your voice files (audio only, no captions):** `inro.wav` (typo) → `public/audio/intro.wav`, `outro.wav` → `public/audio/outro.wav`.
+- 🧩 **New files:** `src/lib/introOutroAudio.ts`, `src/lib/useIntroOutroAudio.ts`, `src/components/IntroOutroAudio.tsx`, `public/audio/intro.wav`, `public/audio/outro.wav`. **Changed:** `src/constants.ts` (new constants at the end only), `src/lib/loadHadis.ts` (`loadVoiceSeconds`; `calculateHadisMetadata` fits intro/outro seconds to the voice and returns them in `props`), `src/HadisVideo.tsx` (mounts `IntroOutroAudio`; turns the scene SFX off when a voice file exists), this md.
+- ✅ **Checked:** TypeScript clean for the new/changed files; pure maths run in Node (3 s + 5.44 s → 167 frames, 4 s + 5.52 s → 169 frames, user 8 s stays 8 s, 0 stays 0, clamp 15 s, fade 1 → 0 over the last 6 frames). Not rendered here — the first real check is your GitHub run.
+- 🔒 Nothing else changed (the Bengali clipping fix of 2.52, all other `src/`, scripts, `render.yml`, `package.json`, tests, Part 15 plan).
 
 **Version 2.51 → 2.52**
 - 🔧 **Bug fix (not a font problem): the Bengali app name and book name were clipped at the top** in Intro, Main (Header) and Outro, and the Main caption was clipped at top and bottom. Cause: Bengali glyphs (matra, ই-kar, reph) rise above the line box, but `FitText` (`overflow: hidden`, line-height 1.18–1.3), the Header/Intro label pills (`overflow: hidden`), the Intro name mask (only 6 unit padding) and the Ribbon (`line-height: 1` + `clip-path`) cut them. The caption was clipped for a different reason: every word is `inline-block` with `0.05em` side padding, but the fit calculation measured plain text, so real text wrapped into more lines than estimated and the fixed-height box cut the first and last lines.

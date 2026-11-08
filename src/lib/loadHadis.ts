@@ -7,8 +7,16 @@ import {
   type CalculateMetadataFunction,
 } from "remotion";
 import { useEffect, useState } from "react";
-import { BASE_SIZES, hadisAudioPath, hadisTimestampPath } from "../constants";
+import {
+  BASE_SIZES,
+  hadisAudioPath,
+  hadisTimestampPath,
+  INTRO_AUDIO_PATH,
+  INTRO_OUTRO_AUDIO_ENABLED,
+  OUTRO_AUDIO_PATH,
+} from "../constants";
 import { parseTimestampFile, type HadisVideoProps, type TimestampFile } from "../types";
+import { fitSecondsToAudio } from "./introOutroAudio";
 import { computeTiming } from "./timing";
 
 /**
@@ -88,6 +96,19 @@ export async function loadAudioSeconds(hadisId: string): Promise<number> {
   }
 }
 
+/**
+ * Part 14C-audio: Intro/Outro ভয়েসের দৈর্ঘ্য (সেকেন্ড)। ফাইল না থাকলে বা পড়া না গেলে `null` — কখনো throw করে না
+ * (Studio-র ডেভ সার্ভার ফাইল না পেলে HTML ফেরত দেয়; তখনও পড়া ব্যর্থ হয় → `null`)।
+ */
+export async function loadVoiceSeconds(rel: string): Promise<number | null> {
+  try {
+    const secs = await getAudioDurationInSeconds(staticFile(rel));
+    return Number.isFinite(secs) && secs > 0 ? secs : null;
+  } catch {
+    return null;
+  }
+}
+
 /** WAV + JSON একসাথে। JSON-এর শেষ segment WAV ছাড়ালে ওয়ার্নিং (ক্র্যাশ নয়, timing.ts ছেঁটে দেয়) */
 export async function loadHadis(hadisId: string): Promise<LoadedHadis> {
   const [audioSeconds, timestamp] = await Promise.all([
@@ -107,7 +128,7 @@ export async function loadHadis(hadisId: string): Promise<LoadedHadis> {
 
 /**
  * Composition-এর calculateMetadata:
- *   durationInFrames = (intro + .wav + outro) × FPS
+ *   durationInFrames = (intro + .wav + outro) × FPS  (intro/outro = max(দেওয়া সেকেন্ড, ভয়েসের দৈর্ঘ্য) — Part 14C-audio)
  *   width/height     = orientation অনুযায়ী (বেস HD সাইজ; 4K-তে render scale=2)
  * Studio-তে props প্যানেলে hadisId/orientation/intro/outro বদলালে নিজে নিজে আবার চলে।
  */
@@ -117,17 +138,22 @@ export const calculateHadisMetadata: CalculateMetadataFunction<HadisVideoProps> 
   const { audioSeconds, warnings } = await loadHadis(props.hadisId);
   for (const w of warnings) console.warn(`⚠️ ${w}`);
 
-  const timing = computeTiming({
-    introSeconds: props.introSeconds,
-    outroSeconds: props.outroSeconds,
-    audioSeconds,
-  });
+  // Part 14C-audio: Intro/Outro ভয়েস থাকলে দৃশ্য অন্তত অডিওর সমান লম্বা (অডিও কাটে না); ব্যবহারকারীর সেকেন্ড বেশি হলে সেটাই থাকে;
+  // ০ সেকেন্ড (দৃশ্য বন্ধ) হলে ০-ই। ফল `props`-এ ফেরত যায়, তাই কম্পোনেন্টের `timingFromConfig` ঠিক একই সংখ্যা পায়।
+  const [introAudio, outroAudio] = INTRO_OUTRO_AUDIO_ENABLED
+    ? await Promise.all([loadVoiceSeconds(INTRO_AUDIO_PATH), loadVoiceSeconds(OUTRO_AUDIO_PATH)])
+    : [null, null];
+  const introSeconds = fitSecondsToAudio(props.introSeconds, introAudio);
+  const outroSeconds = fitSecondsToAudio(props.outroSeconds, outroAudio);
+
+  const timing = computeTiming({ introSeconds, outroSeconds, audioSeconds });
   const size = BASE_SIZES[props.orientation];
 
   return {
     durationInFrames: timing.totalFrames,
     width: size.width,
     height: size.height,
+    props: { ...props, introSeconds, outroSeconds },
   };
 };
 
