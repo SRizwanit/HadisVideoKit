@@ -3,7 +3,7 @@
 > An **automatic hadith video kit** built with React + Remotion + GitHub Actions.
 > You only put a `.wav` + `_timestamp.json` (+ AI-made SVG/SFX) in the repo, type the **book name** and **hadith number (in Bengali)** in GitHub Actions, press Run, and the video renders. No video editor or PC needed.
 
-**Version 2.56 (English edition) — Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
+**Version 2.57 (English edition) — Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
 
 3 themes: Emerald Night, Royal Navy, Green Day & Night (with fireflies). Book name and Bengali hadith number come straight from GitHub Actions inputs (no book-code list).
 
@@ -528,7 +528,7 @@ hadis-videokit/
 │  ├─ types.ts, constants.ts, themes.ts, fonts.ts, assets.d.ts
 │  ├─ lib/        # dayNight, sky, useNightFactor, bnDigits, displayText, loadHadis, timing, useLayout, fitText,
 │  │              # useSfxSrc, introOutroAudio, useIntroOutroAudio, svgSanitize, svgSync, svgLoad, svgPicker, svgInventory, svgStage, svgTransition,
-│  │              # captionWords, audioPlan, outroPlan, sceneFade
+│  │              # captionWords (+ paging, safe clamp), audioPlan, outroPlan, sceneFade
 │  ├─ components/ # Background(+DayNightSky, Fireflies), Header, Logo, Ribbon, FitText, AnimatedSvg, FallbackSvg,
 │  │              # SvgStage, Caption, HadisAudio, SfxPlayer, IntroOutroAudio, PlayBadge
 │  ├─ scenes/     # IntroScene, MainScene, OutroScene
@@ -643,7 +643,7 @@ Remotion renders frame by frame, so ordinary CSS/SMIL animation may not play cor
 | `check-SvgPickerCheck.png` | "সব ✅ · 26/26" |
 | `check-SvgInventoryCheck.png` | "সব ✅ · 27/27"; `source = probe` normal in `check` |
 | `check-SvgStagePreview.png` (1080×9189) | "সব ✅ · 57/57"; 8 cross-fade cells show two see-through stars; row 10 exactly **1** "কোনো SVG পাওয়া যায়নি" warning |
-| `check-CaptionPreview.png` (1080×4505) | "সব ✅ · 33/33"; active word glows; long text stays inside |
+| `check-CaptionPreview.png` (taller than before: +10 cases) | "সব ✅ · 43/43" (9 rows + 34 cases); active word glows; long text = pages of ≤ 2 lines at a fixed font; box inside the safe margins |
 | `check-AudioPreview.png` (1080×3270) | "সব ✅ · 33/33"; 3 timelines, nothing cut |
 | `check-AudioSmoke.png` | "AudioSmoke ✅", Intro 90 · Main 180 · Outro 120 frames |
 | `check-OutroPreview.png` (1080×5196) | "সব ✅ · 44/44"; badge sharp and unstretched with space around it, tap hint below, all inside the dark panel |
@@ -674,9 +674,10 @@ No new packages; `render.yml`/`package.json`/`check.mjs` unchanged. Part 13's `M
 
 ## ✅ Part 10 — Animated colorful caption — Done
 
-- **Files:** `captionWords.ts` (pure), `Caption.tsx`, dev `captionCases.ts` (24) + `CaptionPreview`.
+- **Files:** `captionWords.ts` (pure), `Caption.tsx`, dev `captionCases.ts` (34) + `CaptionPreview`.
 - **API:** `<Caption hadisId theme timing frameOffset? />`. `PANEL_BLUR_UNITS = 10` (0 if blur looks wrong), `CAPTION_PAD_UNITS = 36`. Draws nothing outside Main, in a gap, with no segments/words.
-- **Rules:** box enter 10 / exit 8 frames (shortened to ⌊len ÷ 3⌋), contiguous segments → no blink; active word from its start until `max(start+1, min(next start, end + 6))`, colour `(segment index + word index) mod 6`; font fit Portrait 66→40, Landscape 60→34 (×2 at 4K), "…" if still too long; all computed from the frame.
+- **Rules:** box enter 10 / exit 8 frames (shortened to ⌊len ÷ 3⌋), contiguous segments → no blink; active word from its start until `max(start+1, min(next start, end + 6))`, colour `(segment index + word index) mod 6`; all computed from the frame.
+- **Caption fix (v2.57) — word highlight, max 2 lines, inside the safe margins:** the font no longer shrinks to 3–4 lines. It stays at the base size (Portrait 66, Landscape 60 — ×2 at 4K) and a long segment is split by word into **pages of at most 2 lines** (`paginateCaption`, `CAPTION_MAX_LINES = 2`). A page turns exactly at the `startFrame` of its first word (page 0 from the segment start); the new page text fades in over `PAGE_FADE_FRAMES = 6` (0.3 → 1). The word highlight is unchanged (upcoming / active / read, pop 1.15, underline, 6 rotating colours) and works across pages. Each word is measured separately in a hidden span (base size, same `inline-block` + 0.05 em padding), lines are broken greedily with `LINE_FILL = 0.86` of the inner width and drawn as one `div` per line (`nowrap`), so the DOM has exactly the calculated lines. A lone last word is avoided (one word moves over from the previous page). Only a single word wider than the box shrinks the font (down to `MIN_PAGE_SCALE = 0.3`); if even that fails `data-clipped = 1` and the panel clips. The box goes through `clampBoxToSafe(captionBox, layout.safe)` (no change in the current layouts, because the caption box already sits inside the safe area: Portrait bottom 8.5 %, sides = padding; Landscape bottom 5 %). New data attributes: `data-page`, `data-pages`, `data-page-start`, `data-page-end` (`data-words` = words on the current page, `data-active-word` = index in the whole segment).
 
 ---
 
@@ -897,6 +898,12 @@ node scripts/render.mjs --id 0101 --book "সহীহ বুখারী" --num
 ---
 
 ## 📝 Change log
+
+**Version 2.56 → 2.57**
+- 🔧 **Caption fix: word-by-word highlight, maximum 2 lines, inside the safe margins.** Before, a long segment shrank the font and wrapped to 3–4 lines (and was cut with "…" when it still did not fit). Now every caption page has **at most 2 lines at a fixed font size**; long text continues on the next page when its first word starts. The highlight is still per word (active = coloured + pop + underline, read = plain, upcoming = dim).
+- 🧩 **Files changed (4 code files + this md):** `src/lib/captionWords.ts` (new pure functions `paginateCaption`, `pageIndexAt`, `pageTextOpacity`, `clampBoxToSafe`; constants `CAPTION_MAX_LINES = 2`, `PAGE_FADE_FRAMES = 6`, `PAGE_FADE_FROM = 0.3`, `MIN_PAGE_SCALE = 0.3`; `fitCaption` and every old constant/function are kept unchanged), `src/components/Caption.tsx` (`CaptionBox` measures each word, builds the pages, draws the current page line by line; `CaptionView` clamps the box to `layout.safe`; the 14C "measure the real height and shrink by 6 %" step is gone because the lines are now explicit), `src/dev/captionCases.ts` (24 → 34 cases: 8 paging cases + 2 safe-margin cases), `src/dev/CaptionPreview.tsx` (row 3 also checks `layout.safe`; row 5 now checks "≤ 2 lines, font = base, long text on several pages"; row 6 reads the active word inside its page; new `pages/page/pageStart` fields).
+- ✅ **Checked here:** `npm ci` + `tsc --noEmit` clean for the whole project; all 34 pure caption cases pass in plain Node (every page ≤ 2 lines, every word exactly once and in order for 1–300 words, no lone last word, a very wide word shrinks the font instead of overflowing, junk/`null` input never throws, page index never goes backwards, `clampBoxToSafe` leaves the 4 real layouts unchanged and pulls an outside box in, 2 lines at the base font fit the inner height at 1080×1920, 1920×1080, 2160×3840, 3840×2160). **Not rendered here** (no browser could be downloaded) — please look at `check-CaptionPreview.png` on the first run: pages of ≤ 2 lines, highlight moving word by word, page turn on the first word of the next page, text inside the panel and the panel inside the safe margins.
+- 🔒 Nothing else changed: Header, SVG stage, Main/Intro/Outro/Hook/Teaser, themes, colours, timing, audio, `render.yml`, scripts, `package.json`, `AI_PROMPTS.md`, `README.md` (no JSON change — the existing `words` timings, or equal splitting, are used as before).
 
 **Version 2.55 → 2.56**
 - 🎙️ **New Audio Teaser (cold open) after the Hook:** the strongest phrase of the hadith plays **first** (big text, the spoken word glows, earlier words stay bright, later words dim), then Intro → the **full hadith from the very beginning** → Outro. Video order is now **[ Hook ][ Teaser ][ Intro ][ Main ][ Outro ]** (Hook and Teaser are each optional; with neither, nothing changes).

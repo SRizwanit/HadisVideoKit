@@ -13,7 +13,11 @@ import { findActiveSegment, type FrameSegment, type FrameWord } from "./timing";
  *     - active = শব্দের শুরু থেকে "release" পর্যন্ত; release = min(পরের শব্দের শুরু, শব্দের শেষ + ACTIVE_HOLD_FRAMES)
  *       (তাই শব্দের মাঝের ছোট ফাঁকে হাইলাইট নিভে যায় না; লম্বা বিরতিতে নিভে যায়)।
  *     - active শব্দের রঙ `captionColors` থেকে ঘুরে ঘুরে (সেগমেন্ট-ক্রম + শব্দ-ক্রম)।
- *  ৩. ফন্ট আঁটানো: বেস সাইজ থেকে নেমে, minSize-এর নিচে নয়; লাইন বেশি হলে ফন্ট ছোট। minSize-এও না আঁটলে ছাঁটা ("…")।
+ *  ৩. ফন্ট আঁটানো (পুরোনো, এখন Caption.tsx ব্যবহার করে না — পরীক্ষার জন্য রাখা): বেস সাইজ থেকে নেমে, minSize-এর নিচে নয়।
+ *  ৪. (ক্যাপশন-ফিক্স) পেজিং: লম্বা সেগমেন্ট শব্দ ধরে "পেজ"-এ ভাগ — প্রতি পেজে সর্বোচ্চ ২ লাইন, ফন্ট স্থির (বেস সাইজ)।
+ *     পেজ বদলায় ঠিক সেই পেজের প্রথম শব্দ শুরু হওয়ার ফ্রেমে (পেজ ০ সেগমেন্টের শুরু থেকে); হাইলাইট আগের মতো শব্দ ধরে।
+ *     লাইন ভাঙা হয় আগে মাপা শব্দ-প্রস্থ দিয়ে (greedy) — তাই DOM-এ লাইন ঠিক যা হিসাব হয়েছে তা-ই (বাড়তি লাইন আসে না)।
+ *  ৫. (ক্যাপশন-ফিক্স) নিরাপদ মার্জিন: `clampBoxToSafe` বাক্সকে layout.safe-এর ভেতরে রাখে (এখনকার layout-এ বাক্স আগে থেকেই ভেতরে, তাই কিছু বদলায় না)।
  */
 
 // ---------- ধ্রুবক (সব সংখ্যা এখানে; Caption.tsx-এ হার্ডকোড নেই) ----------
@@ -256,4 +260,174 @@ export function fitCaption(input: CaptionFitInput): CaptionFit {
   }
   const maxLines = Math.max(1, Math.floor(height / (min * lh)));
   return { fontSize: min, lines: linesAt(min), clipped: true, maxLines };
+}
+
+// ---------- ৪. পেজিং: শব্দ ধরে, প্রতি পেজে সর্বোচ্চ ২ লাইন ----------
+
+/** এক পেজে সর্বোচ্চ লাইন */
+export const CAPTION_MAX_LINES = 2;
+/** নতুন পেজের লেখা আসতে কত ফ্রেম (শুরুতে PAGE_FADE_FROM স্বচ্ছতা থেকে) */
+export const PAGE_FADE_FRAMES = 6;
+export const PAGE_FADE_FROM = 0.3;
+/** অতি লম্বা একটা শব্দ বাক্সে আঁটাতে ফন্ট বেসের এর নিচে নামে না (তখনো না আঁটলে overflow = true) */
+export const MIN_PAGE_SCALE = 0.3;
+
+export type CaptionLine = { start: number; end: number };
+export type CaptionPage = {
+  /** সেগমেন্টের শব্দ-তালিকায় এই পেজের প্রথম শব্দ (সূচক) */
+  start: number;
+  /** শেষ শব্দের পরের সূচক (exclusive) */
+  end: number;
+  /** এই পেজের লাইনগুলো (≤ maxLines); প্রতিটা [start, end) */
+  lines: CaptionLine[];
+};
+export type CaptionPaging = {
+  /** বেস ফন্টের গুণক (১ = বেস সাইজ); ফন্ট = baseSize × scale */
+  scale: number;
+  pages: CaptionPage[];
+  /** একটা শব্দই বাক্সের প্রস্থের চেয়ে চওড়া (scale-এর সর্বনিম্নেও) — তখন বাক্সে ছাঁটা পড়ে */
+  overflow: boolean;
+};
+
+export type CaptionPagingInput = {
+  /** প্রতিটা শব্দের প্রস্থ (px), **বেস ফন্টে** মাপা (inline-block + padding সহ) */
+  wordWidths: readonly number[];
+  /** দুই শব্দের মাঝের ফাঁক (px), বেস ফন্টে */
+  spaceWidth: number;
+  /** লেখার জায়গার ভেতরের প্রস্থ ও উচ্চতা (px) */
+  maxWidth: number;
+  maxHeight: number;
+  baseSize: number;
+  lineHeight?: number;
+  maxLines?: number;
+};
+
+/**
+ * শব্দগুলোকে পেজে ভাগ করে (greedy)। প্রতি পেজ সর্বোচ্চ `maxLines` (ডিফল্ট ২) লাইন।
+ * - ফন্ট বেসেই থাকে; শুধু (ক) `maxLines` লাইন উচ্চতায় না আঁটলে, বা (খ) একটা শব্দই লাইনের চেয়ে চওড়া হলে সামান্য কমে।
+ * - লাইনের ধারণক্ষমতা = maxWidth × LINE_FILL (pop-স্কেল/glow-এর জন্য ফাঁকা রাখা)।
+ * - শেষ পেজে একটামাত্র শব্দ পড়ে থাকলে আগের পেজ থেকে শেষ শব্দটা নিয়ে আসা হয় (একলা শব্দের পেজ এড়াতে)।
+ * - কখনো throw করে না; শব্দ না থাকলে `pages = []`।
+ */
+export function paginateCaption(rawInput: CaptionPagingInput): CaptionPaging {
+  const input: Partial<CaptionPagingInput> = rawInput ?? {};
+  const base = Math.max(1, finite(input.baseSize, 1));
+  const lh = finite(input.lineHeight, CAPTION_LINE_HEIGHT) > 0 ? finite(input.lineHeight, CAPTION_LINE_HEIGHT) : CAPTION_LINE_HEIGHT;
+  const maxLines = Math.max(1, Math.floor(finite(input.maxLines, CAPTION_MAX_LINES)));
+  const width = Math.max(0, finite(input.maxWidth, 0));
+  const height = finite(input.maxHeight, 0);
+  const space = Math.max(0, finite(input.spaceWidth, 0));
+  const widths = (Array.isArray(input.wordWidths) ? input.wordWidths : []).map((w) => Math.max(0, finite(w, 0)));
+  const n = widths.length;
+  if (n === 0) return { scale: 1, pages: [], overflow: false };
+
+  // ফন্ট-গুণক: উচ্চতায় maxLines লাইন আঁটা চাই; আর সবচেয়ে চওড়া শব্দ এক লাইনে আঁটা চাই
+  const widest = widths.reduce((m, w) => Math.max(m, w), 0);
+  const capAtOne = width * LINE_FILL;
+  const sHeight = height > 0 ? height / (maxLines * lh * base) : 1;
+  const sWidth = widest > 0 && capAtOne > 0 ? capAtOne / widest : 1;
+  let scale = Math.min(1, sHeight, Math.max(MIN_PAGE_SCALE, sWidth));
+  if (!(scale > 0)) scale = MIN_PAGE_SCALE;
+  const overflow = width > 0 ? widest * scale > width + 1e-6 : false;
+
+  const cap = Math.max(1, capAtOne);
+  const wAt = (i: number) => widths[i] * scale;
+  const gap = space * scale;
+
+  /** [from, limit) থেকে এক লাইন: যতগুলো শব্দ আঁটে (অন্তত ১টা) */
+  const takeLine = (from: number, limit: number): CaptionLine => {
+    let end = from + 1;
+    let used = wAt(from);
+    while (end < limit && used + gap + wAt(end) <= cap) {
+      used += gap + wAt(end);
+      end += 1;
+    }
+    return { start: from, end };
+  };
+  const layoutRange = (from: number, to: number): CaptionLine[] => {
+    const lines: CaptionLine[] = [];
+    let i = from;
+    while (i < to) {
+      const ln = takeLine(i, to);
+      lines.push(ln);
+      i = ln.end;
+    }
+    return lines;
+  };
+
+  const ranges: { start: number; end: number }[] = [];
+  let i = 0;
+  while (i < n) {
+    const start = i;
+    for (let k = 0; k < maxLines && i < n; k += 1) i = takeLine(i, n).end;
+    ranges.push({ start, end: i });
+  }
+
+  // একলা শব্দের শেষ পেজ এড়ানো
+  if (ranges.length > 1) {
+    const last = ranges[ranges.length - 1];
+    const prev = ranges[ranges.length - 2];
+    if (last.end - last.start === 1 && prev.end - prev.start >= 3) {
+      prev.end -= 1;
+      last.start -= 1;
+    }
+  }
+
+  const pages: CaptionPage[] = ranges.map((r) => {
+    let lines = layoutRange(r.start, r.end);
+    if (lines.length > maxLines) {
+      // (প্রায় অসম্ভব) নিরাপত্তা: বাড়তি লাইন শেষ লাইনে জুড়ে দেওয়া — তবু ≤ maxLines
+      const head = lines.slice(0, maxLines - 1);
+      lines = [...head, { start: head.length ? head[head.length - 1].end : r.start, end: r.end }];
+    }
+    return { start: r.start, end: r.end, lines };
+  });
+  return { scale, pages, overflow };
+}
+
+/**
+ * এই ফ্রেমে কোন পেজ দেখাবে: পেজ k (k ≥ ১) তার প্রথম শব্দের startFrame থেকে। পেজ ০ সেগমেন্টের শুরু থেকেই।
+ * পেজ-তালিকা খালি → -১।
+ */
+export function pageIndexAt(pages: readonly CaptionPage[], words: readonly FrameWord[], frame: number): number {
+  if (!Array.isArray(pages) || pages.length === 0) return -1;
+  const f = finite(frame, NaN);
+  let idx = 0;
+  if (!Number.isFinite(f)) return idx;
+  for (let k = 1; k < pages.length; k += 1) {
+    const w = words[pages[k].start];
+    if (w && f >= w.startFrame) idx = k;
+  }
+  return idx;
+}
+
+/** পেজের লেখার স্বচ্ছতা: পেজ ০ = ১ (বাক্সের নিজের enter দেখে); পরের পেজ শুরুতে PAGE_FADE_FROM → ১ */
+export function pageTextOpacity(pageIndex: number, pageStartFrame: number, frame: number): number {
+  if (pageIndex <= 0) return 1;
+  const t = clamp01((finite(frame, 0) - finite(pageStartFrame, 0)) / PAGE_FADE_FRAMES);
+  return PAGE_FADE_FROM + (1 - PAGE_FADE_FROM) * easeOutCubic(t);
+}
+
+// ---------- ৫. নিরাপদ মার্জিন ----------
+
+export type RectLike = { x: number; y: number; width: number; height: number };
+
+/** বাক্সকে canvas-এর নিরাপদ এলাকার (safe: top/bottom/left/right মার্জিন) ভেতরে আনে; ভেতরে থাকলে হুবহু একই মান। */
+export function clampBoxToSafe(
+  rawBox: RectLike,
+  rawSafe: { top: number; bottom: number; left: number; right: number },
+  rawCanvas: { width: number; height: number },
+): RectLike {
+  const box: Partial<RectLike> = rawBox ?? {};
+  const safe: Partial<{ top: number; bottom: number; left: number; right: number }> = rawSafe ?? {};
+  const canvas: Partial<{ width: number; height: number }> = rawCanvas ?? {};
+  const minX = Math.max(0, finite(safe.left, 0));
+  const maxX = Math.max(minX + 1, finite(canvas.width, 0) - Math.max(0, finite(safe.right, 0)));
+  const minY = Math.max(0, finite(safe.top, 0));
+  const maxY = Math.max(minY + 1, finite(canvas.height, 0) - Math.max(0, finite(safe.bottom, 0)));
+  const x0 = Math.min(maxX - 1, Math.max(minX, finite(box.x, minX)));
+  const y0 = Math.min(maxY - 1, Math.max(minY, finite(box.y, minY)));
+  const x1 = Math.min(maxX, Math.max(x0 + 1, finite(box.x, minX) + finite(box.width, 1)));
+  const y1 = Math.min(maxY, Math.max(y0 + 1, finite(box.y, minY) + finite(box.height, 1)));
+  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
 }

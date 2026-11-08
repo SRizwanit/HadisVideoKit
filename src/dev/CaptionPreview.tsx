@@ -8,6 +8,7 @@ import { buildFrameSegments, computeTiming, type FrameSegment, type Timing } fro
 import { computeLayout } from "../lib/useLayout";
 import { getThemeColors, parseColor, skyGradient, type Palette } from "../themes";
 import type { ThemeId } from "../types";
+import { CAPTION_MAX_LINES } from "../lib/captionWords";
 import { CAPTION_CASE_COUNT, runCaptionCases } from "./captionCases";
 
 /**
@@ -61,14 +62,14 @@ type CellDef = {
 
 const CELLS: CellDef[] = [
   { key: "p1", label: "emerald · সেগমেন্ট A, ফ্রেম 145", why: "৪র্থ শব্দ active, আগের ৩টা read, পরের ২টা upcoming", theme: "emerald", landscape: false, frame: 145, kind: "main", expectSeg: 0 },
-  { key: "p2", label: "navy · সেগমেন্ট B (লম্বা), ফ্রেম 240", why: "ফন্ট ছোট, একাধিক লাইন, বাক্সের ভেতরে", theme: "navy", landscape: false, frame: 240, kind: "main", expectSeg: 1 },
+  { key: "p2", label: "navy · সেগমেন্ট B (লম্বা), ফ্রেম 240", why: "ফন্ট স্থির, ≤ ২ লাইন, লেখা একাধিক পেজে — বাক্সের ভেতরে", theme: "navy", landscape: false, frame: 240, kind: "main", expectSeg: 1 },
   { key: "p3", label: "greenDayNight দিন · A, ফ্রেম 100", why: "উজ্জ্বল সকাল — ১ম শব্দ active", theme: "greenDayNight", landscape: false, frame: 100, kind: "main", expectSeg: 0 },
-  { key: "p4", label: "greenDayNight রাতের দিকে · C (অতি লম্বা), ফ্রেম 436", why: "গাঢ় প্যানেল; ন্যূনতম ফন্ট/ছাঁটা — তবু বাইরে যায় না", theme: "greenDayNight", landscape: false, frame: 436, kind: "main", expectSeg: 2 },
+  { key: "p4", label: "greenDayNight রাতের দিকে · C (অতি লম্বা), ফ্রেম 436", why: "গাঢ় প্যানেল; অতি লম্বা লেখা পেজে ভাগ, ≤ ২ লাইন — বাইরে যায় না", theme: "greenDayNight", landscape: false, frame: 436, kind: "main", expectSeg: 2 },
   { key: "p5", label: "emerald · D শুরুর কাছে, ফ্রেম 468", why: "নিচ থেকে উঠছে + ফেড-ইন (স্বচ্ছ, একটু নিচে)", theme: "emerald", landscape: false, frame: 468, kind: "main", expectSeg: 3 },
   { key: "p6", label: "emerald · D শেষের কাছে, ফ্রেম 493", why: "মিলিয়ে যাচ্ছে (ফেড-আউট)", theme: "emerald", landscape: false, frame: 493, kind: "main", expectSeg: 3 },
   { key: "p7", label: "navy · B-র শুরু (A-র গায়ে-গায়ে), ফ্রেম 182", why: "ফেড নেই — পুরো উজ্জ্বল, শুধু উঠে আসছে", theme: "navy", landscape: false, frame: 182, kind: "main", expectSeg: 1 },
   { key: "p8", label: "emerald · ফাঁক (B ও C-র মাঝে), ফ্রেম 315", why: "ক্যাপশন নেই", theme: "emerald", landscape: false, frame: 315, kind: "main", expectSeg: null },
-  { key: "l1", label: "emerald Landscape · B, ফ্রেম 240", why: "ডানের বাক্সে লম্বা লেখা", theme: "emerald", landscape: true, frame: 240, kind: "main", expectSeg: 1 },
+  { key: "l1", label: "emerald Landscape · B, ফ্রেম 240", why: "ডানের বাক্সে লম্বা লেখা — ≤ ২ লাইনের পেজ", theme: "emerald", landscape: true, frame: 240, kind: "main", expectSeg: 1 },
   { key: "l2", label: "greenDayNight Landscape · C, ফ্রেম 436", why: "রাতের দিকে, অতি লম্বা", theme: "greenDayNight", landscape: true, frame: 436, kind: "main", expectSeg: 2 },
   { key: "e1", label: "emerald · Intro, ফ্রেম 45", why: "Main-এর বাইরে — কিছু নয়", theme: "emerald", landscape: false, frame: 45, kind: "edge", expectSeg: null },
   { key: "e2", label: "emerald · Outro, ফ্রেম 560", why: "Main-এর বাইরে — কিছু নয়", theme: "emerald", landscape: false, frame: 560, kind: "edge", expectSeg: null },
@@ -143,6 +144,10 @@ type Info = {
   fs: number;
   lines: number;
   clipped: number;
+  /** ক্যাপশন-ফিক্স: পেজ সংখ্যা, বর্তমান পেজ, পেজের প্রথম শব্দের সূচক */
+  pages: number;
+  page: number;
+  pageStart: number;
   opacityAttr: number;
   slideAttr: number;
   opacityCss: number;
@@ -167,6 +172,9 @@ const EMPTY_INFO: Info = {
   fs: 0,
   lines: 0,
   clipped: 0,
+  pages: 0,
+  page: 0,
+  pageStart: 0,
   opacityAttr: 0,
   slideAttr: 0,
   opacityCss: 0,
@@ -213,6 +221,9 @@ function readCell(root: HTMLElement, scale: number): Info {
     fs,
     lines: Number(cap.dataset.lines),
     clipped: Number(cap.dataset.clipped),
+    pages: Number(cap.dataset.pages),
+    page: Number(cap.dataset.page),
+    pageStart: Number(cap.dataset.pageStart),
     opacityAttr: Number(cap.dataset.opacity),
     slideAttr: Number(cap.dataset.slide),
     opacityCss: parseFloat(cs.opacity),
@@ -324,20 +335,21 @@ function buildRows(infos: Info[]): Row[] {
     });
   }
 
-  // 3. বাক্স = captionBox (layout-অবস্থান, transform-এর প্রভাব ছাড়া)
+  // 3. বাক্স = captionBox (layout-অবস্থান, transform-এর প্রভাব ছাড়া) এবং layout.safe-এর (নিরাপদ মার্জিন) ভেতরে
   {
     const res = drawnCells.map((p) => {
       const L = p.def.landscape ? LL : LP;
       const b = get(p.def.key).box;
       const cb = L.captionBox;
-      const ok = near(b.x, cb.x, 1.5) && near(b.y, cb.y, 1.5) && near(b.w, cb.width, 1.5) && near(b.h, cb.height, 1.5);
-      return { key: p.def.key, ok, b, cb };
+      const same = near(b.x, cb.x, 1.5) && near(b.y, cb.y, 1.5) && near(b.w, cb.width, 1.5) && near(b.h, cb.height, 1.5);
+      const safe = b.x >= L.safe.left - 1.5 && b.x + b.w <= L.width - L.safe.right + 1.5 && b.y >= L.safe.top - 1.5 && b.y + b.h <= L.height - L.safe.bottom + 1.5;
+      return { key: p.def.key, ok: same && safe, same, safe, b, cb };
     });
     const bad = res.filter((r) => !r.ok);
     rows.push({
-      title: "ক্যাপশন-বাক্স ঠিক layout-এর captionBox-এ",
+      title: "ক্যাপশন-বাক্স ঠিক layout-এর captionBox-এ এবং নিরাপদ মার্জিনের (layout.safe) ভেতরে",
       ok: bad.length === 0,
-      note: bad.length === 0 ? `Portrait ${LP.captionBox.width.toFixed(0)}×${LP.captionBox.height.toFixed(0)} · Landscape ${LL.captionBox.width.toFixed(0)}×${LL.captionBox.height.toFixed(0)} — ${res.length}/${res.length} ঘর ✓` : `ভুল: ${bad.map((r) => `${r.key} (${r.b.x.toFixed(0)},${r.b.y.toFixed(0)} ${r.b.w.toFixed(0)}×${r.b.h.toFixed(0)})`).join(" · ")}`,
+      note: bad.length === 0 ? `Portrait ${LP.captionBox.width.toFixed(0)}×${LP.captionBox.height.toFixed(0)} (নিচের মার্জিন ${LP.safe.bottom.toFixed(0)}px) · Landscape ${LL.captionBox.width.toFixed(0)}×${LL.captionBox.height.toFixed(0)} — ${res.length}/${res.length} ঘর ✓` : `ভুল: ${bad.map((r) => `${r.key} (${r.b.x.toFixed(0)},${r.b.y.toFixed(0)} ${r.b.w.toFixed(0)}×${r.b.h.toFixed(0)}${r.same ? "" : " ≠ captionBox"}${r.safe ? "" : " safe-এর বাইরে"})`).join(" · ")}`,
     });
   }
 
@@ -348,48 +360,53 @@ function buildRows(infos: Info[]): Row[] {
       return i.overflowY || i.overflowX || !i.wordsInside;
     });
     rows.push({
-      title: "লম্বা লেখাও বাক্সের বাইরে যায় না (সব ঘরে)",
+      title: "লম্বা লেখাও বাক্সের বাইরে যায় না (সব ঘরে; ছাঁটা = এক শব্দই বাক্সের চেয়ে চওড়া)",
       ok: bad.length === 0,
       note: bad.length === 0 ? `${drawnCells.length}/${drawnCells.length} ঘর — শব্দ বাক্সের ভেতরে, উপচে পড়া নেই; ছাঁটা: ${drawnCells.filter((p) => get(p.def.key).clipped === 1).map((p) => p.def.key).join(" ") || "কেউ নয়"}` : `উপচেছে: ${bad.map((p) => { const i = get(p.def.key); return `${p.def.key}(Y${i.overflowY ? "✗" : "✓"} X${i.overflowX ? "✗" : "✓"} শব্দ${i.wordsInside ? "✓" : "✗"})`; }).join(" ")}`,
     });
   }
 
-  // 5. ফন্ট আঁটানো
+  // 5. (ক্যাপশন-ফিক্স) সর্বোচ্চ ২ লাইন + শব্দ ধরে পেজ: ফন্ট স্থির (বেস), লম্বা লেখা একাধিক পেজে
   {
+    const lp = LP.fontSizes;
     const fa = get("p1").fs;
     const fb = get("p2").fs;
     const fc = get("p4").fs;
-    const lines = get("p2").lines;
-    const lp = LP.fontSizes;
-    const inRange = drawnCells.every((p) => {
+    const maxLinesOk = drawnCells.every((p) => get(p.def.key).lines >= 1 && get(p.def.key).lines <= CAPTION_MAX_LINES);
+    const fontOk = drawnCells.every((p) => {
       const f = get(p.def.key).fs;
       const fsz = (p.def.landscape ? LL : LP).fontSizes;
-      return f >= fsz.captionMin - 0.01 && f <= fsz.captionMax + 0.01;
+      return near(f, fsz.captionMax, 0.01);
     });
-    const ok = near(fa, lp.captionMax, 0.01) && fb < fa && fc <= fb && lines >= 2 && inRange;
+    const pagesOk = get("p2").pages >= 2 && get("p4").pages >= 2 && get("l1").pages >= 1 && get("p1").pages >= 1 && get("p5").pages === 1;
+    const ok = maxLinesOk && fontOk && pagesOk;
     rows.push({
-      title: "ফন্ট আঁটে: ছোট লেখা = বেস, লম্বা = ছোট, অতি লম্বা = আরও ছোট (সীমার মধ্যে)",
+      title: "সর্বোচ্চ ২ লাইন: ফন্ট স্থির (বেস) · লম্বা লেখা শব্দ ধরে একাধিক পেজে (সব ঘরে)",
       ok,
-      note: `A ${fa.toFixed(1)}px (বেস ${lp.captionMax}) · B ${fb.toFixed(1)}px, ${lines} লাইন · C ${fc.toFixed(1)}px (ন্যূনতম ${lp.captionMin}) · সব ঘর সীমার ${inRange ? "মধ্যে" : "বাইরে ✗"}`,
+      note: `A ${fa.toFixed(1)}px (বেস ${lp.captionMax}) · B ${fb.toFixed(1)}px, ${get("p2").pages} পেজ · C ${fc.toFixed(1)}px, ${get("p4").pages} পেজ · D ${get("p5").pages} পেজ · লাইন/পেজ ${drawnCells.map((p) => get(p.def.key).lines).join("/")} (≤ ${CAPTION_MAX_LINES} ${maxLinesOk ? "✓" : "✗"}) · ফন্ট ${fontOk ? "বেসে ✓" : "বেসে নয় ✗"}`,
     });
   }
 
-  // 6. শব্দের হাইলাইট (p1: ৬ শব্দের মধ্যে ৪র্থটা active, ফ্রেম 145 = শব্দের ১০ ফ্রেম ভেতরে)
+  // 6. শব্দের হাইলাইট (p1: ফ্রেম 145-এ বৈশ্বিক ৪র্থ শব্দ (সূচক ৩) active — ওই পেজের ভেতরে, শব্দের ১০ ফ্রেম ভেতরে)
   {
     const i = get("p1");
-    const want = ["read", "read", "read", "active", "upcoming", "upcoming"];
-    const statesOk = want.length === i.states.length && want.every((w, k) => i.states[k] === w);
-    const act = i.scales[3] ?? 1;
+    const a = 3 - i.pageStart; // পেজের ভেতরে active শব্দের অবস্থান
+    const want = i.states.map((_, k) => {
+      const g = i.pageStart + k;
+      return g < 3 ? "read" : g === 3 ? "active" : "upcoming";
+    });
+    const statesOk = i.states.length > 0 && a >= 0 && a < i.states.length && want.every((w, k) => i.states[k] === w);
+    const act = i.scales[a] ?? 1;
     const popOk = near(act, 1.15, 0.05);
-    const readPlain = [0, 1, 2].every((k) => near(i.scales[k] ?? 0, 1, 0.001) && near(i.opacities[k] ?? 0, 1, 0.01));
-    const upDim = [4, 5].every((k) => near(i.opacities[k] ?? 0, 0.45, 0.03));
-    const colorDiff = i.colors[3] !== undefined && i.colors[3] !== i.colors[0];
-    const bar = i.underlines[3] === true && !i.underlines[0] && !i.underlines[2] && !i.underlines[4];
+    const readPlain = i.states.every((_, k) => k >= a || (near(i.scales[k] ?? 0, 1, 0.001) && near(i.opacities[k] ?? 0, 1, 0.01)));
+    const upDim = i.states.every((_, k) => k <= a || near(i.opacities[k] ?? 0, 0.45, 0.03));
+    const colorDiff = a > 0 ? i.colors[a] !== undefined && i.colors[a] !== i.colors[0] : i.colors.length > 1 && i.colors[a] !== i.colors[i.colors.length - 1];
+    const bar = i.underlines.length > 0 && i.underlines.every((u, k) => u === (k === a));
     const ok = statesOk && popOk && readPlain && upDim && colorDiff && bar && i.activeWord === 3;
     rows.push({
       title: "শব্দ-হাইলাইট: read সাদা · active রঙিন + ১.১৫ pop + আন্ডারলাইন · upcoming ঝাপসা",
       ok,
-      note: `অবস্থা ${i.states.join("/") || "—"} (চাই ${want.join("/")}) · active scale ${act.toFixed(3)} · upcoming opacity ${(i.opacities[4] ?? 0).toFixed(2)} · আন্ডারলাইন ${bar ? "শুধু active-এ ✓" : "✗"} · রঙ ${colorDiff ? "আলাদা ✓" : "একই ✗"}`,
+      note: `অবস্থা ${i.states.join("/") || "—"} (চাই ${want.join("/")}) · active scale ${act.toFixed(3)} · upcoming opacity ${(i.opacities[a + 1] ?? 0).toFixed(2)} · আন্ডারলাইন ${bar ? "শুধু active-এ ✓" : "✗"} · রঙ ${colorDiff ? "আলাদা ✓" : "একই ✗"}`,
     });
   }
 

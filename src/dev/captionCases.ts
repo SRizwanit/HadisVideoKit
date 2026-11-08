@@ -6,14 +6,21 @@ import type { FrameSegment, FrameWord } from "../lib/timing";
 import {
   ACTIVE_HOLD_FRAMES,
   CAPTION_LINE_HEIGHT,
+  CAPTION_MAX_LINES,
   ENTER_FRAMES,
   EXIT_FRAMES,
+  LINE_FILL,
+  PAGE_FADE_FROM,
   POP_SCALE,
   SLIDE_UNITS,
   UPCOMING_OPACITY,
   WORD_RELAX_FRAMES,
   activeWordIndex,
+  clampBoxToSafe,
   fitCaption,
+  pageIndexAt,
+  pageTextOpacity,
+  paginateCaption,
   planCaption,
   popScale,
   springValue,
@@ -402,6 +409,223 @@ const defs: Def[] = [
         expectEq("ঋণাত্মক জায়গা → base", d.fontSize, 66),
         expectEq("ঋণাত্মক জায়গা maxLines ≥ ১", d.maxLines >= 1, true),
       );
+    },
+  },
+
+  // ---- (ক্যাপশন-ফিক্স) পেজিং: সর্বোচ্চ ২ লাইন, শব্দ ধরে ----
+  {
+    id: "page-max2",
+    title: "যত লম্বা লেখাই হোক: প্রতি পেজে ≤ ২ লাইন, প্রতিটা শব্দ ঠিক একবার, ক্রম ঠিক, লাইন প্রস্থের ভেতরে",
+    rule: "১…৩০০ শব্দ × ৩ রকম প্রস্থ-ছাঁদ: পেজ লাইন ≤ ২; পেজগুলো ০…n জুড়ে ফাঁক/ওভারল্যাপ ছাড়া; প্রতি লাইনের প্রস্থ ≤ maxWidth × LINE_FILL (একক শব্দ বাদে)",
+    run: () => {
+      const spans = [120, 150, 190];
+      for (const n of [1, 2, 3, 5, 8, 13, 40, 120, 300]) {
+        for (const seed of [1, 2, 3]) {
+          const widths = Array.from({ length: n }, (_, i) => 60 + ((i * 37 * seed + 11 * seed) % spans[seed - 1]));
+          const r = paginateCaption({ wordWidths: widths, spaceWidth: 18, maxWidth: 898, maxHeight: 389, baseSize: 66 });
+          let next = 0;
+          for (const pg of r.pages) {
+            if (pg.start !== next) return `n=${n} seed=${seed}: পেজ ${pg.start} থেকে শুরু (চাই ${next})`;
+            if (pg.lines.length < 1 || pg.lines.length > CAPTION_MAX_LINES) return `n=${n} seed=${seed}: পেজে ${pg.lines.length} লাইন`;
+            let li = pg.start;
+            for (const ln of pg.lines) {
+              if (ln.start !== li || ln.end <= ln.start) return `n=${n}: লাইন ভাঙা (${ln.start}…${ln.end})`;
+              li = ln.end;
+              let w = 0;
+              for (let k = ln.start; k < ln.end; k += 1) w += widths[k] * r.scale + (k > ln.start ? 18 * r.scale : 0);
+              if (ln.end - ln.start > 1 && w > 898 * LINE_FILL + 1e-6) return `n=${n} seed=${seed}: লাইন ${w.toFixed(0)} > ${(898 * LINE_FILL).toFixed(0)}`;
+            }
+            if (li !== pg.end) return `n=${n}: লাইন পেজ শেষ ছোঁয় না`;
+            next = pg.end;
+          }
+          if (next !== n) return `n=${n} seed=${seed}: শব্দ ঢাকা পড়েছে ${next}/${n}`;
+        }
+      }
+      return null;
+    },
+  },
+  {
+    id: "page-short",
+    title: "ছোট লেখা → এক পেজ, বেস ফন্ট (scale ১); লম্বা → একাধিক পেজ, ফন্ট তবু বেস",
+    rule: "৬টা ছোট শব্দ → pages = ১, scale = ১; ৪০টা শব্দ → pages ≥ ২, scale = ১ (ফন্ট ছোট হয় না)",
+    run: () => {
+      const short = paginateCaption({ wordWidths: [150, 120, 130, 160, 140, 200], spaceWidth: 18, maxWidth: 898, maxHeight: 389, baseSize: 66 });
+      const long = paginateCaption({ wordWidths: Array.from({ length: 40 }, () => 150), spaceWidth: 18, maxWidth: 898, maxHeight: 389, baseSize: 66 });
+      return firstFail(
+        expectEq("ছোট: পেজ", short.pages.length, 1),
+        expectEq("ছোট: scale", short.scale, 1),
+        long.pages.length >= 2 ? null : `লম্বা: পেজ ${long.pages.length}`,
+        expectEq("লম্বা: scale", long.scale, 1),
+        expectEq("লম্বা: overflow", long.overflow, false),
+      );
+    },
+  },
+  {
+    id: "page-no-orphan",
+    title: "শেষ পেজে একলা শব্দ পড়ে থাকে না (আগের পেজ থেকে একটা এসে জোড়া বাঁধে)",
+    rule: "৫টা শব্দ ২ লাইনে + ১টা বাড়তি → শেষ পেজে ≥ ২ শব্দ; আগের পেজ ≤ ২ লাইন",
+    run: () => {
+      // প্রতি শব্দ ৩৫০ → লাইনে ২টা (৭০০+১৮ ≤ ৭৭২); পেজে ৪টা; ৫ শব্দ → ৪ + ১ (orphan)
+      const r = paginateCaption({ wordWidths: [350, 350, 350, 350, 350], spaceWidth: 18, maxWidth: 898, maxHeight: 389, baseSize: 66 });
+      const last = r.pages[r.pages.length - 1];
+      const prev = r.pages[r.pages.length - 2];
+      return firstFail(
+        expectEq("পেজ সংখ্যা", r.pages.length, 2),
+        last && last.end - last.start >= 2 ? null : `শেষ পেজে ${last ? last.end - last.start : 0} শব্দ`,
+        expectEq("ক্রম: আগের শেষ = শেষের শুরু", prev?.end, last?.start),
+        prev && prev.lines.length <= CAPTION_MAX_LINES && last.lines.length <= CAPTION_MAX_LINES ? null : "লাইন সীমা ভেঙেছে",
+        expectEq("মোট শব্দ", last?.end, 5),
+      );
+    },
+  },
+  {
+    id: "page-wide-word",
+    title: "খুব চওড়া একটা শব্দ → ফন্ট নামে যাতে এক লাইনে আঁটে; ২ লাইনের উচ্চতাও মানে",
+    rule: "শব্দ ১৫০০ > ৭৭২ → scale < ১ ও শব্দ আঁটে (overflow নয়); ছোট বাক্সে (উচ্চতা ১০০) ২ × ফন্ট × lineHeight ≤ ১০০",
+    run: () => {
+      const r = paginateCaption({ wordWidths: [200, 1500, 200], spaceWidth: 18, maxWidth: 898, maxHeight: 389, baseSize: 66 });
+      const widest = 1500 * r.scale;
+      const h = paginateCaption({ wordWidths: [200, 200, 200], spaceWidth: 18, maxWidth: 898, maxHeight: 100, baseSize: 66 });
+      return firstFail(
+        r.scale < 1 ? null : `scale ${r.scale}`,
+        widest <= 898 * LINE_FILL + 1e-6 ? null : `শব্দ ${widest.toFixed(0)} আঁটেনি`,
+        expectEq("overflow", r.overflow, false),
+        2 * 66 * h.scale * CAPTION_LINE_HEIGHT <= 100 + 1e-6 ? null : `উচ্চতা ${(2 * 66 * h.scale * CAPTION_LINE_HEIGHT).toFixed(1)} > ১০০`,
+        h.pages.every((pg) => pg.lines.length <= CAPTION_MAX_LINES) ? null : "ছোট বাক্সে লাইন > ২",
+        paginateCaption({ wordWidths: [1e7], spaceWidth: 18, maxWidth: 898, maxHeight: 389, baseSize: 66 }).overflow ? null : "অসম্ভব চওড়া শব্দে overflow জানায়নি",
+      );
+    },
+  },
+  {
+    id: "page-safe",
+    title: "ভুল ইনপুটে (খালি, NaN, ঋণাত্মক, ০ প্রস্থ) ক্র্যাশ নেই; খালি → পেজ নেই",
+    rule: "খালি → pages = []; NaN/ঋণাত্মক প্রস্থ → ০ ধরে; maxWidth ০ → প্রতি লাইনে ১ শব্দ, তবু ≤ ২ লাইন/পেজ",
+    run: () => {
+      try {
+        const empty = paginateCaption({ wordWidths: [], spaceWidth: 18, maxWidth: 898, maxHeight: 389, baseSize: 66 });
+        const junk = paginateCaption({ wordWidths: [NaN, -5, Infinity, 100], spaceWidth: NaN, maxWidth: 898, maxHeight: 389, baseSize: 66 });
+        const zero = paginateCaption({ wordWidths: [100, 100, 100, 100, 100], spaceWidth: 10, maxWidth: 0, maxHeight: 0, baseSize: 66 });
+        const bad = paginateCaption(null as unknown as Parameters<typeof paginateCaption>[0]);
+        return firstFail(
+          expectEq("খালি", empty.pages.length, 0),
+          expectEq("junk: শব্দ ঢাকা", junk.pages[junk.pages.length - 1]?.end, 4),
+          zero.pages.every((pg) => pg.lines.length <= CAPTION_MAX_LINES) ? null : "maxWidth ০: লাইন > ২",
+          expectEq("maxWidth ০: শব্দ ঢাকা", zero.pages[zero.pages.length - 1]?.end, 5),
+          expectEq("null ইনপুট", bad.pages.length, 0),
+        );
+      } catch (e) {
+        return `throw: ${String(e)}`;
+      }
+    },
+  },
+  {
+    id: "page-index",
+    title: "পেজ বদলায় ঠিক সেই পেজের প্রথম শব্দের শুরুর ফ্রেমে; পিছনে যায় না; পেজ ০ শুরু থেকেই",
+    rule: "পেজ ১-এর প্রথম শব্দ ১৩০-এ → ১২৯ পর্যন্ত পেজ ০, ১৩০ থেকে পেজ ১; ফ্রেম বাড়লে সূচক কমে না",
+    run: () => {
+      const words = [W(100, 115), W(115, 130), W(130, 145), W(145, 160), W(160, 175)];
+      const pages = [
+        { start: 0, end: 2, lines: [{ start: 0, end: 2 }] },
+        { start: 2, end: 4, lines: [{ start: 2, end: 4 }] },
+        { start: 4, end: 5, lines: [{ start: 4, end: 5 }] },
+      ];
+      let last = 0;
+      for (let f = 90; f < 200; f += 1) {
+        const k = pageIndexAt(pages, words, f);
+        if (k < last) return `ফ্রেম ${f}: পেজ পিছিয়েছে (${last} → ${k})`;
+        last = k;
+      }
+      return firstFail(
+        expectEq("শুরুর আগেও পেজ ০", pageIndexAt(pages, words, 50), 0),
+        expectEq("১২৯", pageIndexAt(pages, words, 129), 0),
+        expectEq("১৩০", pageIndexAt(pages, words, 130), 1),
+        expectEq("১৫৯", pageIndexAt(pages, words, 159), 1),
+        expectEq("১৬০", pageIndexAt(pages, words, 160), 2),
+        expectEq("পেজ নেই", pageIndexAt([], words, 130), -1),
+        expectEq("NaN ফ্রেম", pageIndexAt(pages, words, NaN), 0),
+      );
+    },
+  },
+  {
+    id: "page-fade",
+    title: "নতুন পেজের লেখা আসে ধীরে (০.৩ → ১, ৬ ফ্রেমে); পেজ ০ সবসময় ১",
+    rule: "pageTextOpacity(০, …) = ১; পেজ ১ শুরুর ফ্রেমে = ০.৩; ৬ ফ্রেম পরে = ১; মাঝে ক্রমে বাড়ে",
+    run: () =>
+      firstFail(
+        expectEq("পেজ ০", pageTextOpacity(0, 100, 100), 1),
+        near("পেজ ১ শুরু", pageTextOpacity(1, 130, 130), PAGE_FADE_FROM, 1e-9),
+        expectEq("৬ ফ্রেম পরে", pageTextOpacity(1, 130, 136), 1),
+        pageTextOpacity(1, 130, 132) > pageTextOpacity(1, 130, 131) ? null : "opacity ক্রমে বাড়ছে না",
+        pageTextOpacity(1, 130, 120) >= PAGE_FADE_FROM - 1e-9 ? null : "শুরুর আগে ০.৩-এর নিচে",
+        expectEq("NaN", Number.isFinite(pageTextOpacity(2, NaN, NaN)), true),
+      ),
+  },
+  {
+    id: "page-real-segments",
+    title: "আসল buildFrameSegments + আন্দাজ-প্রস্থ: প্রতি সেগমেন্টে প্রতিটা শব্দ কোনো পেজে আছে, পেজ-ক্রমে active শব্দও এগোয়",
+    rule: "পেজ সূচক সময়ের সাথে কমে না; active শব্দ সবসময় বর্তমান পেজের [start, end)-এ",
+    run: () => {
+      const timing = computeTiming({ introSeconds: 3, outroSeconds: 4, audioSeconds: 12 });
+      const text = Array.from({ length: 36 }, (_, i) => "শব্দ".repeat(1 + (i % 3)) + String(i)).join(" ");
+      const segs = buildFrameSegments({ segments: [{ id: 1, start: 0, end: 12, text }] }, timing);
+      const s = segs[0];
+      const widths = s.words.map((w) => w.word.length * 40);
+      const r = paginateCaption({ wordWidths: widths, spaceWidth: 16, maxWidth: 898, maxHeight: 389, baseSize: 66 });
+      if (r.pages.length < 2) return `পেজ ${r.pages.length}`;
+      let last = 0;
+      for (let f = s.startFrame; f < s.endFrame; f += 1) {
+        const k = pageIndexAt(r.pages, s.words, f);
+        if (k < last) return `ফ্রেম ${f}: পেজ পিছিয়েছে`;
+        last = k;
+        const a = activeWordIndex(s.words, f, timing.fps);
+        if (a >= 0 && (a < r.pages[k].start || a >= r.pages[k].end)) return `ফ্রেম ${f}: active শব্দ ${a} পেজ ${k} (${r.pages[k].start}…${r.pages[k].end})-এর বাইরে`;
+      }
+      return null;
+    },
+  },
+
+  // ---- (ক্যাপশন-ফিক্স) নিরাপদ মার্জিন ----
+  {
+    id: "safe-clamp",
+    title: "বাক্স layout.safe-এর ভেতরে: ভেতরে থাকলে হুবহু একই; বাইরে গেলে টেনে আনা",
+    rule: "আসল ৪টা layout-এ clampBoxToSafe(captionBox) = captionBox; বাইরের বাক্স safe-এর ভেতরে আসে; ভুল ইনপুটে throw নেই",
+    run: () => {
+      for (const [w, h] of [[1080, 1920], [1920, 1080], [2160, 3840], [3840, 2160]] as const) {
+        const L = computeLayout(w, h);
+        const c = clampBoxToSafe(L.captionBox, L.safe, { width: w, height: h });
+        for (const k of ["x", "y", "width", "height"] as const) {
+          if (Math.abs(c[k] - L.captionBox[k]) > 1e-6) return `${w}×${h}: ${k} বদলে গেছে (${L.captionBox[k]} → ${c[k]})`;
+        }
+        if (c.x < L.safe.left - 1e-6 || c.x + c.width > w - L.safe.right + 1e-6) return `${w}×${h}: ডান-বাঁ মার্জিনের বাইরে`;
+        if (c.y < L.safe.top - 1e-6 || c.y + c.height > h - L.safe.bottom + 1e-6) return `${w}×${h}: উপর-নিচ মার্জিনের বাইরে`;
+      }
+      const safe = { top: 67, bottom: 163, left: 59, right: 59 };
+      const out = clampBoxToSafe({ x: -20, y: 1700, width: 1200, height: 400 }, safe, { width: 1080, height: 1920 });
+      try {
+        clampBoxToSafe({ x: NaN, y: NaN, width: NaN, height: NaN }, safe, { width: 1080, height: 1920 });
+        clampBoxToSafe(null as unknown as Parameters<typeof clampBoxToSafe>[0], safe, { width: 1080, height: 1920 });
+      } catch (e) {
+        return `throw: ${String(e)}`;
+      }
+      return firstFail(
+        out.x >= 59 && out.x + out.width <= 1080 - 59 ? null : `ডান-বাঁ: ${out.x}…${out.x + out.width}`,
+        out.y >= 67 && out.y + out.height <= 1920 - 163 ? null : `উপর-নিচ: ${out.y}…${out.y + out.height}`,
+        out.width > 0 && out.height > 0 ? null : "শূন্য মাপ",
+      );
+    },
+  },
+  {
+    id: "safe-two-lines-fit",
+    title: "আসল layout-এ বেস ফন্টে ২ লাইন ক্যাপশন-বাক্সের ভেতরের উচ্চতায় আঁটে (৪টা সাইজেই)",
+    rule: "২ × captionMax × lineHeight ≤ captionBox.height − ২ × padding",
+    run: () => {
+      for (const [w, h] of [[1080, 1920], [1920, 1080], [2160, 3840], [3840, 2160]] as const) {
+        const L = computeLayout(w, h);
+        const inner = L.captionBox.height - 2 * 36 * L.unit;
+        const need = CAPTION_MAX_LINES * L.fontSizes.captionMax * CAPTION_LINE_HEIGHT;
+        if (need > inner + 1e-6) return `${w}×${h}: ২ লাইন ${need.toFixed(1)} > ভেতরের উচ্চতা ${inner.toFixed(1)}`;
+      }
+      return null;
     },
   },
 
