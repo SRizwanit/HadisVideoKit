@@ -129,7 +129,7 @@ print("segments:", len(segments), "| শেষ সময়:", segments[-1]["end
 
 ## ধাপ 0.3 — এরপর কী করবেন
 
-`hadis<ID>_words.txt`-এর পুরো লেখা Prompt 1-এর **AUDIO_TIMING**-এ পেস্ট করুন। সঙ্গে `HADITH_TEXT`, `SVG_COUNT`, `TEASER_WANTED` দিন। AI তখন সময় বানাবে না, শুধু `svg`, `sfx`, `hookSvg`, `teaser` যোগ করে JSON সাজাবে।
+`hadis<ID>_words.txt`-এর পুরো লেখা Prompt 1-এর **AUDIO_TIMING**-এ পেস্ট করুন। সঙ্গে `HADITH_TEXT`, `SVG_COUNT`, `TEASER_WANTED` (আর ইনফোগ্রাফিক চাইলে `INFOGRAPHIC_WANTED`) দিন। AI তখন সময় বানাবে না, শুধু `svg`, `sfx`, `hookSvg`, `teaser` (আর চাইলে `infographics`) যোগ করে JSON সাজাবে।
 
 > Prompt 1-এর নিয়ম ৫ ("words শুধু শব্দ-স্তরের সময় থাকলেই") এখন সবসময় পূরণ হবে, তাই `words` রাখবেন। টিজারও তখন শব্দের সীমানা ধরে কাটা হবে।
 
@@ -147,6 +147,7 @@ You need these things before you paste the prompt:
    - the audio length in seconds, if you have nothing else (the AI will then split the time evenly).
 3. **SVG_COUNT** — how many SVG files you plan to make (for example `4`). If you plan none, write `0`.
 4. **TEASER_WANTED** — `yes` if you want the Audio Teaser (cold open) after the Hook (needs word-level times), otherwise `no`.
+5. **INFOGRAPHIC_WANTED** — `yes` if you want one or more information cards (infographic) that appear in the SVG area at the right time (steps, a list of points, or a left/right comparison), otherwise `no`. Optional: if you leave it out, treat it as `no`.
 
 ## Step 1.2 — Paste this prompt
 
@@ -160,6 +161,7 @@ INPUT
 <<< paste the timestamps here, or: "audio length = 38.5 seconds, no timestamps" >>>
 - SVG_COUNT: <<< number, e.g. 4 >>>
 - TEASER_WANTED: <<< yes or no >>>
+- INFOGRAPHIC_WANTED: <<< yes or no >>>
 
 OUTPUT FORMAT — return exactly this JSON structure and NOTHING else
 (no explanation, no greeting, no Markdown code fence, no comments):
@@ -167,6 +169,15 @@ OUTPUT FORMAT — return exactly this JSON structure and NOTHING else
   "language": "bn",
   "teaser": { "start": 12.4, "end": 17.9 },
   "hookSvg": "svg2",
+  "infographics": [
+    {
+      "start": 6.0,
+      "end": 14.5,
+      "type": "steps",
+      "title": "<short title taken from the hadith>",
+      "items": [ { "text": "<short phrase>" }, { "text": "<short phrase>" } ]
+    }
+  ],
   "segments": [
     {
       "id": 1,
@@ -195,6 +206,8 @@ HARD RULES (a file that breaks any rule is rejected by the video code)
 10. "teaser" is OPTIONAL (a block at the top level, next to "language" and "segments"). Include it ONLY if TEASER_WANTED is "yes" AND AUDIO_TIMING has word-level times. It marks the single STRONGEST phrase of the hadith (the core message, the key promise, warning or advice), which the video plays first as a cold open. Rules: "start" = the start time of the FIRST word of that phrase (ideally right after a pause), "end" = the end time of the LAST word of that phrase, optionally plus up to 0.1 second of the pause after it (the video itself adds a 0.15 s tail after "end", so "end" + 0.15 must still be BEFORE the start of the next spoken word; therefore the phrase must end at a REAL PAUSE: the end of a sentence/clause that is followed by a gap or a new segment; never between two words that are spoken without a gap, because the voice would sound cut off); the phrase is one complete, meaningful clause of 3 to 15 words, lasting between 1 and 10 seconds (never less than 0.5 and never more than 12); it must lie inside the audio, with end > start, and it is NOT cut out of the segments (the segments still cover the whole hadith from the start to the end). Do NOT add "text" to teaser. If TEASER_WANTED is "no", or there are no word-level times, OMIT "teaser" completely.
 11. "hookSvg" is OPTIONAL (a value at the top level, next to "language" and "segments"). It is the SVG shown in the very first moment of the video (the Hook), so it must match the MAIN TOPIC of the hadith (the same topic as the teaser phrase, if you gave one). Include it ONLY if SVG_COUNT is greater than 0: use one value of the form "svg<N>" (letters "svg" + a number, nothing else) where N is between 1 and SVG_COUNT, preferably the "svg" value of the segment that contains the teaser phrase or the segment that carries the core message. If SVG_COUNT is 0, or you are unsure, OMIT "hookSvg" (the video then uses the SVG of the teaser segment automatically).
 
+12. "infographics" is OPTIONAL (an array at the top level, next to "language" and "segments"). Include it ONLY if INFOGRAPHIC_WANTED is "yes"; otherwise OMIT it completely. Each entry is one information card shown for a time range: "start" and "end" in seconds from the start of the .wav (end > start, at least 3 seconds long, inside the audio). Entries are sorted by time and must NOT overlap (the next "start" is >= the previous "end"). Give 1 to 3 entries for a normal hadith (maximum 8). Fields: "type" is exactly one of "steps" (an ordered chain, for example cause -> result), "list" (numbered points the hadith counts or names) or "compare" (two sides, for example good versus bad). "title" is optional (a short Bengali heading, up to 80 characters). "items" has 2 to 6 entries, each { "text": "..." } with a SHORT Bengali phrase (ideally under 40 characters; maximum 120). For "compare" you may add "leftTitle" and "rightTitle" (up to 40 characters each) and give each item "side": "left" or "right" (if you omit side, items alternate left, right, left ...). Each item may have "at" (the second its text should appear, from the start of the .wav); if you omit "at" the items appear evenly during the card's time. VERY IMPORTANT: use ONLY what the hadith text itself says (its own words or a faithful very short wording of them). Do NOT add explanation, fiqh rulings, statistics, names, grades or any fact that is not in HADITH_TEXT. The card should appear while the matching part is being spoken. If you are unsure, OMIT "infographics".
+
 RETURN ONLY THE JSON.
 ```
 
@@ -209,6 +222,7 @@ RETURN ONLY THE JSON.
 - [ ] `sfx.name` is one of `whoosh`, `pop`, `chime`, `ding`, `swoosh`
 - [ ] The last `end` is not (much) larger than the audio length
 - [ ] If you asked for a Teaser: there is one `"teaser": { "start": …, "end": … }` block at the top level; `end` is larger than `start`; the span is between 1 and 10 seconds; its start matches the start of a word, its end is the end of a word (plus at most 0.1 s of pause, and `end` + 0.15 s is still before the next word starts) and ends where the speaker really pauses — so the sentence does not sound cut off; the phrase is really spoken there. If you did not ask for one, there is no `teaser` block
+- [ ] If you asked for an infographic: `"infographics"` is one array at the top level; every entry has `type` (`steps`, `list` or `compare`), `start` < `end`, 2 to 6 `items` with a short `text`; the entries do not overlap and are in time order; every item text really comes from the hadith (nothing added). If you did not ask for one, there is no `infographics`
 
 If one item fails, reply to the AI with the exact problem ("segment 3 has end smaller than start") and ask for the **whole JSON again**.
 

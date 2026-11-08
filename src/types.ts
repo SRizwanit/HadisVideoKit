@@ -139,6 +139,41 @@ export const teaserSchema = z
   .refine((t) => t.end > t.start, { message: "teaser-এর end অবশ্যই start-এর চেয়ে বড় হতে হবে" });
 export type Teaser = z.infer<typeof teaserSchema>;
 
+/**
+ * ইনফোগ্রাফিক (ঐচ্ছিক): হাদিসের মূল পাঠ থেকে নেওয়া তথ্য-কার্ড, SVG-র জায়গায় (`svgBox`) নির্দিষ্ট সময়ে ফোটে।
+ *  - steps   → ধাপে ধাপে ক্রম (নিয়ত → আমল → প্রতিদান), মাঝে তীর
+ *  - list    → সংখ্যা-দেওয়া পয়েন্টের তালিকা
+ *  - compare → দুই পাশ (বাঁ/ডান) তুলনা; প্রতিটা item-এ `side`, না দিলে একটা বাঁয়ে একটা ডানে
+ * `start`/`end` সেকেন্ড, .wav-এর শুরু থেকে (segment-এর সময়ের মতোই)।
+ */
+export const INFOGRAPHIC_TYPES = ["steps", "list", "compare"] as const;
+export const infographicTypeSchema = z.enum(INFOGRAPHIC_TYPES);
+export type InfographicType = z.infer<typeof infographicTypeSchema>;
+
+export const infographicItemSchema = z.object({
+  /** ছোট লেখা (হাদিসের মূল পাঠ থেকে; ৬০ অক্ষরের মধ্যে রাখা ভালো) */
+  text: z.string().min(1).max(120),
+  /** শুধু `compare`-এর জন্য: "left" বা "right" */
+  side: z.enum(["left", "right"]).optional(),
+  /** ঐচ্ছিক: এই item ঠিক কোন সেকেন্ডে ফুটবে (.wav-এর শুরু থেকে)। না দিলে সময় সমান ভাগে */
+  at: z.number().min(0).optional(),
+});
+export type InfographicItem = z.infer<typeof infographicItemSchema>;
+
+export const infographicSchema = z
+  .object({
+    start: z.number().min(0),
+    end: z.number().min(0),
+    type: infographicTypeSchema,
+    title: z.string().min(1).max(80).optional(),
+    /** শুধু `compare`: বাঁ/ডান কলামের শিরোনাম */
+    leftTitle: z.string().min(1).max(40).optional(),
+    rightTitle: z.string().min(1).max(40).optional(),
+    items: z.array(infographicItemSchema).min(2, "ইনফোগ্রাফিকে কমপক্ষে ২টা item দরকার").max(6, "ইনফোগ্রাফিকে সর্বোচ্চ ৬টা item"),
+  })
+  .refine((g) => g.end > g.start, { message: "infographic-এর end অবশ্যই start-এর চেয়ে বড় হতে হবে" });
+export type Infographic = z.infer<typeof infographicSchema>;
+
 export const timestampFileSchema = z
   .object({
     language: z.string().optional(),
@@ -149,9 +184,21 @@ export const timestampFileSchema = z
       .string()
       .regex(/^svg\d+$/, 'hookSvg নাম হতে হবে "svg1", "svg2" ... এই ধাঁচের')
       .optional(),
+    /** ঐচ্ছিক: ইনফোগ্রাফিক-কার্ড (SVG-র জায়গায় নির্দিষ্ট সময়ে)। না দিলে ভিডিও আগের মতোই; সময়ের ক্রমে, একটার উপর আরেকটা নয় */
+    infographics: z.array(infographicSchema).max(8, "সর্বোচ্চ ৮টা infographic").optional(),
     segments: z.array(segmentSchema).min(1, "কমপক্ষে একটা segment দরকার"),
   })
   .superRefine((file, ctx) => {
+    const gs = file.infographics ?? [];
+    for (let i = 1; i < gs.length; i++) {
+      if (gs[i].start < gs[i - 1].end) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["infographics", i, "start"],
+          message: "infographic গুলো সময়ের ক্রমে থাকতে হবে এবং একটার উপর আরেকটা চাপবে না",
+        });
+      }
+    }
     for (let i = 1; i < file.segments.length; i++) {
       if (file.segments[i].start < file.segments[i - 1].start) {
         ctx.addIssue({

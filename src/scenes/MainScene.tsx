@@ -2,6 +2,7 @@ import React from "react";
 import { AbsoluteFill } from "remotion";
 import { Caption } from "../components/Caption";
 import { Header } from "../components/Header";
+import { Infographic } from "../components/Infographic";
 import { SvgStage } from "../components/SvgStage";
 import type { Timing } from "../lib/timing";
 import type { ThemeId } from "../types";
@@ -11,6 +12,8 @@ import type { ThemeId } from "../types";
  *   উপরে  `Header`   (Part 7: লোগো + অ্যাপের নাম + "আজকের হাদিস" + "(কিতাব) নং : (সংখ্যা)")
  *   মাঝে  `SvgStage` (Part 9K–9L: সেগমেন্টের SVG, glow + ভাসা + cross-fade; ভেতরে `AnimatedSvg` ও `svgPicker`)
  *   নিচে  `Caption`  (Part 10: রঙিন অ্যানিমেটেড ক্যাপশন)
+ *   ঐচ্ছিক: JSON-এ `infographics` থাকলে ওই সময়ে `Infographic` কার্ড `svgBox`-এর ঠিক উপরে ফোটে (stage স্লটের ভেতরেই — স্লটের তালিকা অপরিবর্তিত);
+ *   না থাকলে বা সময় না হলে কিছুই আঁকে না, তাই ভিডিও আগের মতোই।
  *
  * ⚠️ এটা Main `<Sequence from={timing.introFrames}>`-এর ভেতরে বসে, তাই `useCurrentFrame()` ০ থেকে শুরু হয়।
  *    তিনটাতেই `frameOffset = timing.introFrames` যায় (Part 7 নোট) — না হলে দিন-রাতের রঙ, SVG ও ক্যাপশনের সেগমেন্ট ভুল হতো।
@@ -63,6 +66,7 @@ export const MainScene: React.FC<MainSceneProps> = ({
           size={size}
           idScope={idScope}
         />
+        <Infographic hadisId={hadisId} theme={theme} timing={timing} frameOffset={offset} size={size} />
       </AbsoluteFill>
       <AbsoluteFill data-main-slot="header" data-frame-offset={offset}>
         <Header

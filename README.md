@@ -23,7 +23,7 @@
 
 প্রতিটা `render` রানে `out/`-এ (টিক তুলে বন্ধ করা যায়):
 
-- `hadis<ID>_thumbnail_9x16_4K.png/.jpg` ও `..._16x9_4K.png/.jpg` — Intro (অ্যাপের নামসহ) + Teaser + Hook এক ছবিতে (উপর → নিচ), **সবসময় 4K** (২১৬০×৩৮৪০ / ৩৮৪০×২১৬০)। Artifacts → `thumbnails`। ইউটিউবের সীমা ২ MB, তাই বড় হলে `.jpg` দাও।
+- `hadis<ID>_thumbnail_9x16_4K.png/.jpg` ও `..._16x9_4K.png/.jpg` — Intro (লোগো + অ্যাপের নাম; **"আজকের হাদিস" রিবন ও কিতাবের নাম/হাদিস নম্বর থাকে না**) + Teaser + Hook এক ছবিতে (উপর → নিচ), **সবসময় 4K** (২১৬০×৩৮৪০ / ৩৮৪০×২১৬০)। Artifacts → `thumbnails`। ইউটিউবের সীমা ২ MB, তাই বড় হলে `.jpg` দাও।
 - `hadis<ID>_publish.txt` — ইউটিউব শিরোনাম (৩ বিকল্প), বিবরণ, ট্যাগ, ফেসবুক ক্যাপশন, হ্যাশট্যাগ। ⚠️ হাদিসের লেখা JSON থেকে হুবহু — প্রকাশের আগে নিজে যাচাই করো।
 - `hadis<ID>.srt` — সাবটাইটেল (ইউটিউব স্টুডিও → Subtitles → Upload file)। Artifacts → `publish-files`।
 
@@ -114,6 +114,25 @@ npm run check      # বান্ডল + ছবি রেন্ডার (out/c
 
 - **প্রোগ্রেস বার:** পুরো ভিডিও জুড়ে (Hook → Outro) নিচে বাঁ→ডানে ভরে; থিমের রঙে, মাথায় উজ্জ্বল বিন্দু। `src/components/ProgressBar.tsx`; বন্ধ করতে `src/constants.ts`-এ `PROGRESS_BAR_ENABLED = false`; উচ্চতা/মার্জিন/অবস্থান ওই ফাইলের `PROGRESS_BAR_*`।
 - **রেন্ডার সেটিং:** H.264, CRF ১৮ (ডিফল্ট; `--crf` দিয়ে বদলানো যায়), AAC ১৯২k, yuv420p, ৩০ fps — YouTube/Shorts-এ কম কম্প্রেশন-ক্ষতি।
+
+## 📊 ইনফোগ্রাফিক (ঐচ্ছিক)
+
+হাদিসের মূল পাঠ থেকে নেওয়া তথ্য-কার্ড, নির্দিষ্ট সময়ে SVG-র জায়গায় ফোটে। timestamp JSON-এ top-level `infographics` অ্যারে দিলেই চলে — না দিলে ভিডিও আগের মতোই।
+
+```json
+"infographics": [
+  { "start": 6.0, "end": 14.5, "type": "steps", "title": "নিয়ত থেকে প্রতিদান",
+    "items": [ { "text": "নিয়ত" }, { "text": "আমল" }, { "text": "প্রতিদান" } ] },
+  { "start": 15.0, "end": 22.0, "type": "compare", "leftTitle": "ভালো", "rightTitle": "মন্দ",
+    "items": [ { "text": "...", "side": "left" }, { "text": "...", "side": "right" } ] }
+]
+```
+
+- `type`: `steps` (ধাপ + তীর) · `list` (সংখ্যা-দেওয়া পয়েন্ট) · `compare` (বাঁ/ডান দুই কলাম)
+- `start`/`end`: সেকেন্ড, `.wav`-এর শুরু থেকে (segment-এর মতোই)। একটার উপর আরেকটা চলবে না, সময়ের ক্রমে দিতে হবে (সর্বোচ্চ ৮টা)
+- `items`: ২–৬টা, প্রতিটায় ছোট `text` (ভালো ৪০ অক্ষরের মধ্যে); ঐচ্ছিক `at` (সেকেন্ড) — না দিলে কার্ডের সময়ে সমান ভাগে ফোটে; `compare`-এ ঐচ্ছিক `side`
+- কোড: `src/components/Infographic.tsx`, `src/lib/infographic.ts` (পিওর হিসাব), স্কিমা `src/types.ts`; `MainScene`-এর stage স্লটের ভেতরে `svgBox`-এর ঠিক উপরে বসে (Header/Caption ঢাকে না)
+- AI দিয়ে বানাতে: `AI_PROMPTS.md` Prompt 1-এ `INFOGRAPHIC_WANTED: yes` (নিয়ম ১২)। ⚠️ লেখা শুধু হাদিসের নিজের কথা থেকে — প্রকাশের আগে নিজে যাচাই করো।
 
 ## ভিজ্যুয়াল হুক (প্রথম মুহূর্তেই বিষয়ের SVG এনিমেশন)
 

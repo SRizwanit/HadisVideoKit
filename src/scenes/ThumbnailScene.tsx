@@ -3,10 +3,10 @@ import { AbsoluteFill, useVideoConfig } from "remotion";
 import { Background } from "../components/Background";
 import { FitText } from "../components/FitText";
 import { Logo } from "../components/Logo";
-import { RIBBON_INK, Ribbon } from "../components/Ribbon";
-import { APP_NAME, HOOK_TEXT, TAGLINE, type TimeMode } from "../constants";
-import { FONT_BODY, FONT_DISPLAY } from "../fonts";
-import { buildHadisLabel, buildSeriesLabel } from "../lib/displayText";
+import { RIBBON_INK } from "../components/Ribbon";
+import { APP_NAME, HOOK_TEXT, type TimeMode } from "../constants";
+import { FONT_DISPLAY } from "../fonts";
+import { buildSeriesLabel } from "../lib/displayText";
 import { useHadisTimestamp } from "../lib/loadHadis";
 import { teaserWords, type TeaserWord } from "../lib/teaser";
 import { getThemeColors, parseColor } from "../themes";
@@ -18,7 +18,8 @@ import { splitAppName } from "./IntroScene";
  * `ThumbnailPortrait` (9:16) ও `ThumbnailLandscape` (16:9) কম্পোজিশন এটাই আঁকে; `render.mjs` `renderStill --scale 2` দিয়ে 4K ছবি বের করে।
  *
  * উপর → নিচ (তিনটা প্যানেল-কার্ড, Intro/Teaser/Hook-র কার্ডের মতোই):
- *   ১. Intro  — লোগো + অ্যাপের নাম (`APP_NAME`) + "আজকের হাদিস" রিবন + "কিতাব হাদিস নং : নম্বর"; কার্ডের ডান-উপরের কোণে সিরিজ ব্যাজ "পর্ব ১২" (`seriesNumber` দিলে)
+ *   ১. Intro  — লোগো + অ্যাপের নাম (`APP_NAME`); কার্ডের ডান-উপরের কোণে সিরিজ ব্যাজ "পর্ব ১২" (`seriesNumber` দিলে)
+ *      ⚠️ থাম্বনেইলে "আজকের হাদিস" রিবন এবং "কিতাবের নাম + হাদিস নং" লেবেল দেখানো হয় না (ভিডিওর Intro/Header-এ আগের মতোই থাকে)
  *   ২. Teaser — হাদিসের শক্তিশালী বাক্যাংশ, উদ্ধৃতি-চিহ্নসহ; সব শব্দ পুরো উজ্জ্বল (ছবিতে "বলা হচ্ছে" ধারণা নেই)
  *   ৩. Hook   — বড় প্রশ্ন (শেষ দুই শব্দ accent রঙে), কৌতূহল জাগানোর জন্য
  * JSON-এ `teaser` না থাকলে (বা `teaserEnabled === false`) মাঝের কার্ড বাদ; Intro ও Hook থাকে।
@@ -29,7 +30,9 @@ import { splitAppName } from "./IntroScene";
 type Props = {
   theme: ThemeId;
   hadisId: string;
+  /** থাম্বনেইলে আর দেখানো হয় না (Root.tsx-এর সাথে সামঞ্জস্যের জন্য প্রপ রাখা) */
   bookname: string;
+  /** থাম্বনেইলে আর দেখানো হয় না (Root.tsx-এর সাথে সামঞ্জস্যের জন্য প্রপ রাখা) */
   number: string;
   /** ফাঁকা/না দিলে `HOOK_TEXT` */
   hookText?: string;
@@ -97,8 +100,6 @@ function withAlpha(color: string, alpha: number): string {
 export const ThumbnailScene: React.FC<Props> = ({
   theme,
   hadisId,
-  bookname,
-  number,
   hookText,
   teaserStartSeconds,
   teaserEndSeconds,
@@ -142,7 +143,6 @@ export const ThumbnailScene: React.FC<Props> = ({
     .split(/\s+/)
     .filter((w) => w.length > 0);
 
-  const label = buildHadisLabel(bookname, number);
   const seriesLabel = buildSeriesLabel(seriesNumber);
 
   // ---------- মাপ ----------
@@ -178,7 +178,7 @@ export const ThumbnailScene: React.FC<Props> = ({
   const teaserFont = thumbnailFontBase(words.length) * (isPortrait ? 1 : 0.75) * u;
   const quoteSize = (isPortrait ? 200 : 150) * u;
 
-  // Intro (লোগো + রিবন + লেবেল)
+  // Intro (লোগো + অ্যাপের নাম)
   const footPadX = (isPortrait ? 48 : 64) * u;
   const footPadY = (isPortrait ? 40 : 28) * u;
   const footGap = (isPortrait ? 40 : 52) * u;
@@ -189,10 +189,6 @@ export const ThumbnailScene: React.FC<Props> = ({
   const [nameLine1, nameLine2] = splitAppName(APP_NAME);
   // Portrait: দুই লাইন (Intro সিনের মতো); Landscape: এক লাইন
   const nameLines = isPortrait ? [nameLine1, nameLine2].filter((l) => l.length > 0) : [APP_NAME];
-  const ribbonH = (isPortrait ? 84 : 70) * u;
-  const ribbonFont = (isPortrait ? 52 : 42) * u;
-  const labelBase = (isPortrait ? 54 : 46) * u;
-  const labelPadX = 36 * u;
 
   return (
     <AbsoluteFill data-thumbnail="" data-thumbnail-teaser={showTeaser ? "1" : "0"}>
@@ -213,7 +209,7 @@ export const ThumbnailScene: React.FC<Props> = ({
           gap: stackGap,
         }}
       >
-        {/* ১. Intro — লোগো + অ্যাপের নাম + "আজকের হাদিস" + কিতাব ও নম্বর (+ সিরিজ ব্যাজ) */}
+        {/* ১. Intro — লোগো + অ্যাপের নাম (+ সিরিজ ব্যাজ); রিবন ও কিতাব-নম্বর লেবেল নেই */}
         <div
           style={{
             ...cardStyle,
@@ -302,36 +298,6 @@ export const ThumbnailScene: React.FC<Props> = ({
                 />
               ))}
             </div>
-            <div style={{ alignSelf: "center" }}>
-              <Ribbon text={TAGLINE} height={ribbonH} fontSize={ribbonFont} accent={p.accent} accent2={p.accent2} />
-            </div>
-            {label ? (
-              <div
-                style={{
-                  width: textW,
-                  boxSizing: "border-box",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: `${12 * u}px ${labelPadX}px`,
-                  borderRadius: 999,
-                  border: `${3 * u}px solid ${p.accent}`,
-                  background: withAlpha("#000000", 0.22),
-                  overflow: "visible",
-                }}
-              >
-                <FitText
-                  text={label}
-                  baseSize={labelBase}
-                  minSize={labelBase * 0.62}
-                  maxWidth={textW - labelPadX * 2 - 6 * u}
-                  color={p.accent2}
-                  fontFamily={FONT_BODY}
-                  fontWeight={700}
-                  lineHeight={1.2}
-                />
-              </div>
-            ) : null}
           </div>
         </div>
         {/* ২. Teaser — হাদিসের শক্তিশালী বাক্যাংশ (সব শব্দ পুরো উজ্জ্বল) */}

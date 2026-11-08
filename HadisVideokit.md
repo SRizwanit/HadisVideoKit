@@ -1222,7 +1222,7 @@ node scripts/render.mjs --id 0101 --book "সহীহ বুখারী" --num
 
 ## Update: bottom progress bar + render settings + thumbnail order
 
-- **Thumbnail order** (top → bottom): Intro (logo + `APP_NAME` + "আজকের হাদিস" ribbon + book/number label + "পর্ব N" series badge) → Teaser → Hook. File: `src/scenes/ThumbnailScene.tsx`.
+- **Thumbnail order** (top → bottom): Intro (logo + `APP_NAME` + "পর্ব N" series badge) → Teaser → Hook. The "আজকের হাদিস" ribbon and the book name / hadith number label are **no longer drawn on the thumbnail** (the video's Intro and Header still show them). `ThumbnailScene` still accepts the `bookname`/`number` props (unused) so `Root.tsx` is unchanged. File: `src/scenes/ThumbnailScene.tsx`.
 - **Progress bar:** `src/components/ProgressBar.tsx`, mounted at the top level of `HadisVideoView` (`src/HadisVideo.tsx`) above all scenes; fills left→right over the whole video (progress = frame ÷ (totalFrames − 1)); theme accent → accent2 gradient + glow head; dark translucent track. Constants in `src/constants.ts`: `PROGRESS_BAR_ENABLED`, `PROGRESS_BAR_HEIGHT`, `PROGRESS_BAR_SIDE_MARGIN`, `PROGRESS_BAR_BOTTOM` (portrait sits in the Shorts safe area, landscape in the bottom margin). Set `PROGRESS_BAR_ENABLED = false` to turn it off.
 - **Render settings** (`scripts/render.mjs` → `renderMedia`): `codec h264`, `crf 18` (default, `--crf` overrides), `audioCodec aac`, `audioBitrate 192k`, `pixelFormat yuv420p`, 30 fps (`FPS`). Everything else in the `renderMedia` options list is unchanged.
 
@@ -1232,3 +1232,16 @@ node scripts/render.mjs --id 0101 --book "সহীহ বুখারী" --num
 - **Which SVG** (`src/lib/hookSvg.ts` → `pickHookSvg`, pure): 1) optional top-level `"hookSvg": "svgN"` in `hadis<ID>_timestamp.json` (must exist in `public/svg/`); 2) the SVG of the segment that contains the teaser start (`teaserStartSeconds`; same rotation/forced-name rules as Main via `pickSvgNames`, so Main's order is untouched); 3) the first segment's SVG; 4) empty folder → fallback star icon. A wrong/missing `hookSvg` silently falls back to step 2.
 - Drawing: `src/components/HookVisual.tsx` reuses `StageLayer` (now exported from `SvgStage.tsx`) + the same glow/disc/float as the Main stage; ids/classes use prefix `hook-s0-`; SVG animation runs on the Hook's own frame 0…; waits for inventory + JSON (their `delayRender`).
 - Schema: `types.ts` → `timestampFileSchema` gets optional `hookSvg` (`/^svg\d+$/`). `AI_PROMPTS.md` Prompt 1: new rule 11 + checklist item (optional). Toggle: `HOOK_VISUAL_ENABLED` in `constants.ts`. `HookScene` new optional props `hadisId`, `teaserStartSeconds` (without `hadisId` it draws text only, as before; `dev/sceneFadeCases.ts` still imports `hookWordStarts` unchanged).
+
+---
+
+## 📊 Infographic cards + thumbnail clean-up (latest change)
+
+- 🖼️ **Thumbnail (both 9:16 and 16:9):** the "আজকের হাদিস" ribbon and the "book name + হাদিস নং : number" label were removed from the Intro card. Everything else stays: logo, app name, "পর্ব N" badge, Teaser card, Hook card, theme/background, 4K output. **Changed:** `src/scenes/ThumbnailScene.tsx`.
+- 📊 **Infographic (optional):** a new optional top-level `infographics` array in the timestamp JSON shows information cards in the SVG area (`svgBox`) at a given time. Types: `steps`, `list`, `compare`. No `infographics` in the JSON → nothing is drawn and the video is unchanged.
+  - JSON shape: `{ start, end, type, title?, leftTitle?, rightTitle?, items: [{ text, side?, at? }] }` — seconds from the start of the .wav; 2–6 items; max 8 cards; cards in time order and not overlapping (checked by `parseTimestampFile`).
+  - Timing: `buildFrameInfographics` (in `src/lib/infographic.ts`) adds the Intro offset and clamps into Main like segments do; the card fades in/out over `min(12, ⌊length ÷ 3⌋)` frames; items without `at` appear evenly (first after 6 frames, the rest inside the first 75% of the card time), each fading in over 10 frames. No CSS transitions — all frame-driven.
+  - Drawing: `src/components/Infographic.tsx` uses `computeLayout().svgBox` (so 4K = exactly 2× HD), the theme palette, `FitText`, Bengali digits for the numbers. The card is opaque so it covers the SVG below it; it sits inside the existing `stage` slot of `MainScene`, so the slot list used by `MainSceneCheck` is unchanged.
+  - AI help: `AI_PROMPTS.md` Prompt 1 has the new optional input `INFOGRAPHIC_WANTED` and rule 12 (use only what the hadith itself says — nothing added), plus a checklist line.
+- 🧩 **New files:** `src/components/Infographic.tsx`, `src/lib/infographic.ts`. **Changed:** `src/types.ts` (`infographics`, `INFOGRAPHIC_TYPES`, `infographicSchema`), `src/scenes/MainScene.tsx`, `src/scenes/ThumbnailScene.tsx`, `AI_PROMPTS.md`, `README.md`, this md.
+- ✅ Checked: `tsc --noEmit` is clean; schema accepts a valid file, rejects a card with fewer than 2 items and overlapping cards; frame conversion and fade/progress values were run once in Node. ⚠️ Not rendered yet — please run `action = check` (or Studio) with a JSON that has `infographics` and look at the card once.
