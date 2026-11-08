@@ -10,6 +10,15 @@ name: Render Hadis Video
 #
 # ⚠️ এই ফাইলটা কিটের ভেতরের সব স্ক্রিপ্ট (scripts/*.mjs) ব্যবহার করে, তাই পরের Part-এ
 #    এটা আর বদলাতে হবে না; শুধু zip আপডেট হবে।
+#
+# 🎣 হুক ও টিজার (নতুন ইনপুট):
+#   hook_text    = ভিডিওর শুরুর বড় লেখা (ফাঁকা = src/constants.ts-এর HOOK_TEXT)
+#   hook_seconds = হুক কত সেকেন্ড (ফাঁকা = অটো, hook.wav-এর দৈর্ঘ্য; সংখ্যা = অন্তত ততটা, অডিও কাটবে না;
+#                  ০ = হুক বন্ধ)
+#   teaser       = টিক থাকলে হুকের পরে অডিও টিজার (cold open): হাদিসের শক্তিশালী অংশ আগে বাজে, তারপর
+#                  Intro → হাদিস শুরু থেকে। অংশটা আসে hadis<id>_timestamp.json-এর "teaser": {"start":..,"end":..} থেকে
+#                  (JSON-এ না থাকলে টিজার হবে না)। টিক তুলে দিলে টিজার বন্ধ।
+#   ক্রম: [ Hook ][ Teaser ][ Intro ][ Main ][ Outro ]
 
 on:
   workflow_dispatch:
@@ -80,6 +89,21 @@ on:
         required: false
         default: "4"
         type: string
+      hook_text:
+        description: "হুকের লেখা (ভিডিওর শুরুর বড় লেখা)। ফাঁকা = ডিফল্ট: এই হাদিসের ব্যাপারে কি আপনার জানা আছে?"
+        required: false
+        default: ""
+        type: string
+      hook_seconds:
+        description: "হুক কত সেকেন্ড। ফাঁকা = অটো (hook.wav-এর দৈর্ঘ্য), সংখ্যা = অন্তত ততটা, ০ = হুক বন্ধ"
+        required: false
+        default: ""
+        type: string
+      teaser:
+        description: "অডিও টিজার (cold open): হুকের পরে হাদিসের শক্তিশালী অংশ আগে বাজবে (JSON-এ teaser থাকলে)"
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -189,6 +213,9 @@ jobs:
           QUALITY: ${{ inputs.quality }}
           INTRO_SECONDS: ${{ inputs.intro_seconds }}
           OUTRO_SECONDS: ${{ inputs.outro_seconds }}
+          HOOK_TEXT: ${{ inputs.hook_text }}
+          HOOK_SECONDS: ${{ inputs.hook_seconds }}
+          TEASER: ${{ inputs.teaser }}
         run: |
           node scripts/render.mjs \
             --id "$HADIS_ID" \
@@ -198,7 +225,10 @@ jobs:
             --orientation "$ORIENTATION" \
             --quality "$QUALITY" \
             --intro "$INTRO_SECONDS" \
-            --outro "$OUTRO_SECONDS"
+            --outro "$OUTRO_SECONDS" \
+            --hook-text "$HOOK_TEXT" \
+            --hook-seconds "$HOOK_SECONDS" \
+            --teaser "$TEASER"
 
       - name: List rendered files
         if: ${{ startsWith(inputs.action, 'render') }}
