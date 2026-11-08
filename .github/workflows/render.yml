@@ -169,12 +169,12 @@ on:
       app_link:
         description: "অ্যাপের লিংক (https://...) — বিবরণ/ক্যাপশনে বসবে। ফাঁকা = লিংক ছাড়া"
         required: false
-        default: ""
+        default: "https://play.google.com/store/apps/details?id=com.srizwan.islamipedia"
         type: string
       background_music:
         description: "ব্যাকগ্রাউন্ড মিউজিক (ঐচ্ছিক): সরাসরি ডাউনলোড লিংক (https://...) অথবা public/ ফোল্ডারের ফাইলের নাম (যেমন background1.mp3)। ফাঁকা = মিউজিক ছাড়া"
         required: false
-        default: ""
+        default: "background1.mp3"
         type: string
 
 permissions:
