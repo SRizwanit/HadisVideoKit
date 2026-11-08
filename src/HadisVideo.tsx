@@ -3,6 +3,8 @@ import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig } from "remotio
 import { Background } from "./components/Background";
 import { HadisAudio } from "./components/HadisAudio";
 import { IntroOutroAudio } from "./components/IntroOutroAudio";
+import { ProgressBar } from "./components/ProgressBar";
+import { PROGRESS_BAR_ENABLED } from "./constants";
 import { SfxPlayer } from "./components/SfxPlayer";
 import { TeaserAudio } from "./components/TeaserAudio";
 import { mainFadeIn, planScenes } from "./lib/sceneFade";
@@ -25,6 +27,7 @@ import type { HadisVideoProps } from "./types";
  *   Intro   `<Sequence from=hook+teaser …>`             → `IntroScene`   (নিজেই শেষে ফেড-আউট; Part 8; Hook/Teaser না থাকলে from=0)
  *   Main    `<Sequence from=intro …>` + ফেড-ইন মোড়ক   → `MainScene`    (Header + SvgStage + Caption; Part 13A)
  *   Outro   `<Sequence from=intro+main …>`              → `OutroScene`   (নিজেই ১২ ফ্রেমে ফেড-ইন/আউট; Part 12)
+ *   `<ProgressBar>`  সবার উপরে, নিচে — পুরো ভিডিও জুড়ে বাঁ→ডানে ভরে (`PROGRESS_BAR_ENABLED`; দর্শককে শেষ পর্যন্ত দেখতে উৎসাহ দেয়)
  *   `<IntroOutroAudio>` (Part 14C-audio)  Intro/Outro-র ভয়েস — শুধু অডিও, ক্যাপশন নেই; `public/audio/intro.wav`, `outro.wav`
  *   `<HadisAudio>` + `<SfxPlayer>`  **মূল স্তরে, কোনো দৃশ্য-Sequence-এর বাইরে** (এদের ফ্রেম ভিডিওর শুরু থেকে মাপা; Part 11)
  *
@@ -159,6 +162,9 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
           </AbsoluteFill>
         </Sequence>
       )}
+
+      {/* নিচের প্রোগ্রেস বার — মূল স্তরে (ভিডিওর শুরু থেকে মাপা), সব দৃশ্যের উপরে */}
+      {PROGRESS_BAR_ENABLED && <ProgressBar theme={props.theme} timing={timing} size={size} />}
 
       {/* ⚠️ মূল স্তরে — কোনো দৃশ্য-Sequence-এর ভেতরে নয় (Part 11) */}
       {audio && <HadisAudio hadisId={props.hadisId} timing={timing} />}

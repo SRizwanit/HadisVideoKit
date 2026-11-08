@@ -956,3 +956,10 @@ node scripts/render.mjs --id 0101 --book "সহীহ বুখারী" --num
 ---
 
 *To continue, write: **"পরের ফাইল"** (= "next file" — 14C file 2: `README.md`)*
+
+
+## Update: bottom progress bar + render settings + thumbnail order
+
+- **Thumbnail order** (top → bottom): Intro (logo + `APP_NAME` + "আজকের হাদিস" ribbon + book/number label + "পর্ব N" series badge) → Teaser → Hook. File: `src/scenes/ThumbnailScene.tsx`.
+- **Progress bar:** `src/components/ProgressBar.tsx`, mounted at the top level of `HadisVideoView` (`src/HadisVideo.tsx`) above all scenes; fills left→right over the whole video (progress = frame ÷ (totalFrames − 1)); theme accent → accent2 gradient + glow head; dark translucent track. Constants in `src/constants.ts`: `PROGRESS_BAR_ENABLED`, `PROGRESS_BAR_HEIGHT`, `PROGRESS_BAR_SIDE_MARGIN`, `PROGRESS_BAR_BOTTOM` (portrait sits in the Shorts safe area, landscape in the bottom margin). Set `PROGRESS_BAR_ENABLED = false` to turn it off.
+- **Render settings** (`scripts/render.mjs` → `renderMedia`): `codec h264`, `crf 18` (default, `--crf` overrides), `audioCodec aac`, `audioBitrate 192k`, `pixelFormat yuv420p`, 30 fps (`FPS`). Everything else in the `renderMedia` options list is unchanged.

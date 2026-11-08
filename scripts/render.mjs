@@ -143,7 +143,7 @@ async function runJob({ job, total, serveUrl }) {
   const concurrency = Math.max(1, Math.min(job.concurrency, framesToRender));
 
   say(
-    `   ${composition.width * job.scale}x${composition.height * job.scale} | ${framesToRender} ফ্রেম (${videoSeconds.toFixed(1)}সে) | concurrency ${concurrency} | crf ${job.crf}`,
+    `   ${composition.width * job.scale}x${composition.height * job.scale} | ${framesToRender} ফ্রেম (${videoSeconds.toFixed(1)}সে) | ${composition.fps}fps | concurrency ${concurrency} | crf ${job.crf} | aac 192k`,
   );
 
   // ২. রেন্ডার — প্রতি ~১০% এ এক লাইন
@@ -152,6 +152,10 @@ async function runJob({ job, total, serveUrl }) {
     serveUrl,
     composition,
     codec: "h264",
+    // YouTube/Shorts-এ কম কম্প্রেশন-ক্ষতি: H.264 + CRF ~18 (job.crf) + AAC 192k + yuv420p (সব প্লেয়ারে চলে); fps = ৩০ (কম্পোজিশন)
+    audioCodec: "aac",
+    audioBitrate: "192k",
+    pixelFormat: "yuv420p",
     outputLocation,
     inputProps: job.inputProps,
     scale: job.scale,

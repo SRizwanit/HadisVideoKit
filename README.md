@@ -23,7 +23,7 @@
 
 প্রতিটা `render` রানে `out/`-এ (টিক তুলে বন্ধ করা যায়):
 
-- `hadis<ID>_thumbnail_9x16_4K.png/.jpg` ও `..._16x9_4K.png/.jpg` — Hook + Teaser + Intro এক ছবিতে, **সবসময় 4K** (২১৬০×৩৮৪০ / ৩৮৪০×২১৬০)। Artifacts → `thumbnails`। ইউটিউবের সীমা ২ MB, তাই বড় হলে `.jpg` দাও।
+- `hadis<ID>_thumbnail_9x16_4K.png/.jpg` ও `..._16x9_4K.png/.jpg` — Intro (অ্যাপের নামসহ) + Teaser + Hook এক ছবিতে (উপর → নিচ), **সবসময় 4K** (২১৬০×৩৮৪০ / ৩৮৪০×২১৬০)। Artifacts → `thumbnails`। ইউটিউবের সীমা ২ MB, তাই বড় হলে `.jpg` দাও।
 - `hadis<ID>_publish.txt` — ইউটিউব শিরোনাম (৩ বিকল্প), বিবরণ, ট্যাগ, ফেসবুক ক্যাপশন, হ্যাশট্যাগ। ⚠️ হাদিসের লেখা JSON থেকে হুবহু — প্রকাশের আগে নিজে যাচাই করো।
 - `hadis<ID>.srt` — সাবটাইটেল (ইউটিউব স্টুডিও → Subtitles → Upload file)। Artifacts → `publish-files`।
 
@@ -64,3 +64,8 @@ npm run check      # বান্ডল + ছবি রেন্ডার (out/c
 - `public/svg/` — `svg1.svg`, `svg2.svg` …
 - `public/sfx/` — `whoosh.mp3` ইত্যাদি
 - `scripts/check.mjs` — অটো-যাচাই স্ক্রিপ্ট; `scripts/render.mjs` — রেন্ডার (Part 14-এ সম্পূর্ণ)
+
+## নিচের প্রোগ্রেস বার ও রেন্ডার সেটিং
+
+- **প্রোগ্রেস বার:** পুরো ভিডিও জুড়ে (Hook → Outro) নিচে বাঁ→ডানে ভরে; থিমের রঙে, মাথায় উজ্জ্বল বিন্দু। `src/components/ProgressBar.tsx`; বন্ধ করতে `src/constants.ts`-এ `PROGRESS_BAR_ENABLED = false`; উচ্চতা/মার্জিন/অবস্থান ওই ফাইলের `PROGRESS_BAR_*`।
+- **রেন্ডার সেটিং:** H.264, CRF ১৮ (ডিফল্ট; `--crf` দিয়ে বদলানো যায়), AAC ১৯২k, yuv420p, ৩০ fps — YouTube/Shorts-এ কম কম্প্রেশন-ক্ষতি।

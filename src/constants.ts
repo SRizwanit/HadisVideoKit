@@ -29,6 +29,22 @@ export const MAX_INTRO_OUTRO_SECONDS = 15;
 /** সিনগুলোর মাঝের ক্রস-ফেড (ফ্রেম) */
 export const TRANSITION_FRAMES = 12;
 
+// ---------- রেন্ডার মান (YouTube/Shorts-এ কম কম্প্রেশন-ক্ষতি) ----------
+/** H.264 + CRF ~18 + AAC 192k + 30 fps (`scripts/render.mjs` ও `scripts/lib/renderPlan.mjs`-এর `DEFAULT_CRF = 18` এই মানই ধরে; fps = `FPS`) */
+export const VIDEO_CODEC = "h264";
+export const VIDEO_CRF = 18;
+export const AUDIO_CODEC = "aac";
+export const AUDIO_BITRATE = "192k";
+
+// ---------- নিচের প্রোগ্রেস বার ----------
+/** পুরো ভিডিও জুড়ে নিচে প্রোগ্রেস বার (দর্শককে শেষ পর্যন্ত দেখতে উৎসাহ দেয়)। বন্ধ করতে `false` */
+export const PROGRESS_BAR_ENABLED = true;
+/** বারের উচ্চতা ও পাশের মার্জিন (১০৮০-বেস unit; 4K-তে আপনা-আপনি ×২) */
+export const PROGRESS_BAR_HEIGHT = 12;
+export const PROGRESS_BAR_SIDE_MARGIN = 60;
+/** নিচের কিনারা থেকে দূরত্ব (unit): Portrait-এ শর্টসের নিরাপদ এলাকায়, Landscape-এ নিচের মার্জিনে */
+export const PROGRESS_BAR_BOTTOM = { portrait: 64, landscape: 22 } as const;
+
 // ---------- টেক্সট ----------
 export const APP_NAME = "ইসলামী বিশ্বকোষ ও আল হাদিস S2";
 export const TAGLINE = "আজকের হাদিস";
