@@ -7,11 +7,17 @@
 //      → বান্ডল একবার → প্রতিটা জব একটার পর একটা: selectComposition → renderMedia → ফাইল যাচাই।
 // কোনো জব ব্যর্থ হলে exit code 1 (আগে শেষ হওয়া mp4 out/ এ থেকে যায়)।
 import { bundle } from "@remotion/bundler";
-import { ensureBrowser, renderMedia, selectComposition } from "@remotion/renderer";
+import { ensureBrowser, renderMedia, renderStill, selectComposition } from "@remotion/renderer";
 import { appendFileSync, existsSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildPlan, checkInputs, formatDryRun, formatReport } from "./lib/renderPlan.mjs";
+import {
+  THUMBNAIL_JPEG_QUALITY,
+  buildPlan,
+  checkInputs,
+  formatDryRun,
+  formatReport,
+} from "./lib/renderPlan.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -191,6 +197,56 @@ async function runJob({ job, total, serveUrl }) {
   };
 }
 
+// ---------- থাম্বনেইল (Hook + Teaser + Intro এক ছবিতে, 4K) ----------
+/**
+ * একটা ওরিয়েন্টেশনের থাম্বনেইল: PNG (লসলেস) + JPG (ছোট ফাইল) — দুটোই `--scale 2` (4K)।
+ * ভিডিও জবের মতোই `selectComposition` (teaser-এর সেকেন্ড `calculateMetadata` থেকে আসে)।
+ * ব্যর্থ হলে throw করে; কল-কারী ধরে ⚠️ দেখায় (ভিডিও আগেই তৈরি, তাই রান ব্যর্থ হয় না)।
+ */
+async function runThumbnail({ thumb, total, serveUrl }) {
+  const startedAt = Date.now();
+  mkdirSync(dirname(resolve(thumb.pngFile)), { recursive: true });
+  say(`\n▶ থাম্বনেইল ${thumb.index}/${total}: ${thumb.label} → ${thumb.pngFile}`);
+
+  const composition = await selectComposition({
+    serveUrl,
+    id: thumb.compositionId,
+    inputProps: thumb.inputProps,
+  });
+  say(`   ${composition.width * thumb.scale}x${composition.height * thumb.scale} | ফ্রেম ${thumb.frame}`);
+
+  const common = {
+    serveUrl,
+    composition,
+    inputProps: thumb.inputProps,
+    frame: Math.min(thumb.frame, composition.durationInFrames - 1),
+    scale: thumb.scale,
+    overwrite: true,
+    timeoutInMilliseconds: 120000,
+    chromiumOptions: { enableMultiProcessOnLinux: true },
+  };
+
+  const outputs = [];
+  for (const [file, format] of [
+    [thumb.pngFile, "png"],
+    [thumb.jpgFile, "jpeg"],
+  ]) {
+    const output = resolve(file);
+    await renderStill({
+      ...common,
+      output,
+      imageFormat: format,
+      ...(format === "jpeg" ? { jpegQuality: THUMBNAIL_JPEG_QUALITY } : {}),
+    });
+    if (!existsSync(output)) throw knownError(`থাম্বনেইল ফাইল তৈরি হয়নি: ${output}`);
+    const size = statSync(output).size;
+    if (size === 0) throw knownError(`থাম্বনেইল ফাইল খালি (০ বাইট): ${output}`);
+    outputs.push({ file, size });
+  }
+  say(`✅ থাম্বনেইল ${thumb.index}/${total} শেষ | ${fmtDuration(Date.now() - startedAt)}`);
+  return { label: thumb.label, width: composition.width * thumb.scale, height: composition.height * thumb.scale, outputs };
+}
+
 // ---------- মূল ফ্লো ----------
 async function main() {
   // ১. আর্গুমেন্ট যাচাই (ব্রাউজার ছাড়া)
@@ -222,6 +278,7 @@ async function main() {
 
   const total = plan.jobs.length;
   say(`\nমোট ${total}টা জব রেন্ডার হবে (একটার পর একটা)।`);
+  if (plan.thumbnails.length > 0) say(`এরপর ${plan.thumbnails.length}টা 4K থাম্বনেইল (PNG + JPG)।`);
 
   // ৪. ব্রাউজার + বান্ডল (একবারই)
   say("▶ ব্রাউজার যাচাই...");
@@ -236,6 +293,8 @@ async function main() {
   // ৫. জবগুলো একে একে
   const done = [];
   const failed = [];
+  const thumbs = [];
+  const thumbFailed = [];
   try {
     for (const job of plan.jobs) {
       try {
@@ -247,6 +306,19 @@ async function main() {
         failed.push({ label: job.label, reason: info.text.split("\n")[0] });
         // ডেটা ফাইলের সমস্যা সব জবেই একই — আর চেষ্টা করে লাভ নেই
         if (info.hadisData) break;
+      }
+    }
+    // থাম্বনেইল: ভিডিওর পরে। এখানকার ব্যর্থতা ভিডিওর রান ব্যর্থ করে না (⚠️ দেখায়); ডেটা-ফাইল ভুল হলে ভিডিও জবই আগে থেমেছে
+    if (failed.length === 0 || done.length > 0) {
+      for (const thumb of plan.thumbnails) {
+        try {
+          thumbs.push(await runThumbnail({ thumb, total: plan.thumbnails.length, serveUrl }));
+        } catch (err) {
+          const info = explainFailure(err);
+          say(`\n⚠️ থাম্বনেইল ${thumb.index}/${plan.thumbnails.length} (${thumb.label}) ব্যর্থ:\n   ${info.text}`);
+          if (info.stack) say(`\n${info.stack}`);
+          thumbFailed.push({ label: thumb.label, reason: info.text.split("\n")[0] });
+        }
       }
     }
   } finally {
@@ -267,6 +339,21 @@ async function main() {
         `| \`${d.file}\` (${d.label}) | ${fmtSize(d.size)} | ${d.videoSeconds.toFixed(1)}সে | ${fmtDuration(d.renderMs)} |`,
       );
     }
+  }
+  if (thumbs.length > 0) {
+    sayMd("\n### 🖼️ থাম্বনেইল (Hook + Teaser + Intro)\n");
+    sayMd("| ফাইল | সাইজ | মাপ |");
+    sayMd("|---|---|---|");
+    for (const t of thumbs) {
+      for (const o of t.outputs) {
+        sayMd(`| \`${o.file}\` (${t.label}) | ${fmtSize(o.size)} | ${t.width}×${t.height} |`);
+      }
+    }
+    sayMd("\n> ইউটিউবের থাম্বনেইল-সীমা ২ MB — PNG বড় হলে `.jpg` ফাইলটা দাও।");
+  }
+  if (thumbFailed.length > 0) {
+    sayMd("\n### ⚠️ থাম্বনেইল ব্যর্থ (ভিডিও ঠিক আছে)\n");
+    for (const f of thumbFailed) sayMd(`- ${f.label}: ${f.reason}`);
   }
   if (failed.length > 0) {
     sayMd("\n### ❌ ব্যর্থ জব\n");

@@ -26,6 +26,16 @@ export const COMPOSITION_IDS = {
   portrait: "HadisPortrait",
   landscape: "HadisLandscape",
 };
+/** থাম্বনেইল (Hook + Teaser + Intro এক ছবিতে) — src/Root.tsx ও src/scenes/ThumbnailScene.tsx-এর সাথে মেলানো */
+export const THUMBNAIL_COMPOSITION_IDS = {
+  portrait: "ThumbnailPortrait",
+  landscape: "ThumbnailLandscape",
+};
+/** থাম্বনেইল সবসময় 4K (বেস সাইজ × ২): 9:16 → ২১৬০×৩৮৪০, 16:9 → ৩৮৪০×২১৬০ */
+export const THUMBNAIL_SCALE = 2;
+/** ব্যাকগ্রাউন্ডের কণা/জোনাকি কোন ফ্রেমে (ThumbnailScene.tsx-এর THUMBNAIL_FRAME-এর কপি) */
+export const THUMBNAIL_FRAME = 45;
+export const THUMBNAIL_JPEG_QUALITY = 95;
 
 // ---------- রেন্ডারের নিজস্ব ডিফল্ট ----------
 export const DEFAULT_OUT_DIR = "out";
@@ -53,6 +63,7 @@ const VALUE_ARGS = {
   "hook-text": "hookText",
   "hook-seconds": "hookSeconds",
   teaser: "teaser",
+  thumbnail: "thumbnail",
   concurrency: "concurrency",
   crf: "crf",
   "out-dir": "outDir",
@@ -214,6 +225,15 @@ export function parseTeaserFlag(rawValue) {
   return { error: `\`--teaser\` ("${text}") ঠিক নয় — চলবে: true বা false (on/off)।` };
 }
 
+/** `--thumbnail`: খালি → true (ডিফল্ট চালু); true/on/yes/1 → true; false/off/no/0 → false */
+export function parseThumbnailFlag(rawValue) {
+  const text = cleanText(rawValue).toLowerCase();
+  if (text === "") return { value: true };
+  if (["true", "on", "yes", "1"].includes(text)) return { value: true };
+  if (["false", "off", "no", "0"].includes(text)) return { value: false };
+  return { error: `\`--thumbnail\` ("${text}") ঠিক নয় — চলবে: true বা false (on/off)।` };
+}
+
 /** পূর্ণসংখ্যা (concurrency/crf): খালি → undefined (ডিফল্ট), সীমার বাইরে হলে সীমায় এনে সতর্কতা */
 function parseClampedInt(rawValue, argName, range, warnings) {
   const text = cleanText(rawValue);
@@ -306,7 +326,8 @@ export function buildPlan(argv) {
   const hookText = cleanText(raw.hookText);
   const hookSeconds = parseHookSeconds(raw.hookSeconds);
   const teaser = parseTeaserFlag(raw.teaser);
-  for (const r of [hookSeconds, teaser]) if (r.error) errors.push(r.error);
+  const thumbnail = parseThumbnailFlag(raw.thumbnail);
+  for (const r of [hookSeconds, teaser, thumbnail]) if (r.error) errors.push(r.error);
 
   // --- book / number (Part 4-এর মতো পরিষ্কার) ---
   const book = cleanText(raw.book);
@@ -372,11 +393,34 @@ export function buildPlan(argv) {
     }
   }
 
+  // --- থাম্বনেইল: প্রতি ওরিয়েন্টেশনে একটা (4K PNG + 4K JPG)। --frames (টেস্ট রেন্ডার) হলে বা --thumbnail false হলে নেই ---
+  const thumbnails = [];
+  if (thumbnail.value && frames.value === undefined) {
+    for (const o of orientations) {
+      const base = BASE_SIZES[o];
+      const baseName = join(outDir, `hadis${id}_thumbnail_${ORIENTATION_LABEL[o]}_${QUALITY_LABEL["4k"]}`);
+      thumbnails.push({
+        index: thumbnails.length + 1,
+        compositionId: THUMBNAIL_COMPOSITION_IDS[o],
+        orientation: o,
+        scale: THUMBNAIL_SCALE,
+        width: base.width * THUMBNAIL_SCALE,
+        height: base.height * THUMBNAIL_SCALE,
+        label: `থাম্বনেইল ${ORIENTATION_LABEL[o]} ${QUALITY_LABEL["4k"]}`,
+        // ভিডিওর ওই ওরিয়েন্টেশনের জবের inputProps-ই (hadisId/কিতাব/নম্বর/থিম/hookText/teaserEnabled)
+        inputProps: jobs.find((j) => j.orientation === o).inputProps,
+        frame: THUMBNAIL_FRAME,
+        pngFile: `${baseName}.png`,
+        jpgFile: `${baseName}.jpg`,
+      });
+    }
+  }
+
   return {
     ok: true,
     errors: [],
     warnings,
-    plan: { id, outDir, dryRun: raw.dryRun === true, jobs },
+    plan: { id, outDir, dryRun: raw.dryRun === true, jobs, thumbnails },
   };
 }
 
@@ -479,6 +523,17 @@ export function formatDryRun(plan) {
     lines.push(`   আউটপুট    : ${job.outputFile}`);
     lines.push(`   concurrency: ${job.concurrency} | crf: ${job.crf} | ফ্রেম: ${frames}`);
   });
+  if (plan.thumbnails && plan.thumbnails.length > 0) {
+    lines.push("");
+    lines.push(`থাম্বনেইল (Hook + Teaser + Intro, ফ্রেম ${plan.thumbnails[0].frame}): ${plan.thumbnails.length}টি`);
+    plan.thumbnails.forEach((t) => {
+      lines.push(`${t.index}. ${t.label} — ${t.compositionId} — ${t.width}x${t.height} (scale ${t.scale})`);
+      lines.push(`   আউটপুট    : ${t.pngFile} + ${t.jpgFile}`);
+    });
+  } else {
+    lines.push("");
+    lines.push("থাম্বনেইল: নেই (--thumbnail false বা --frames টেস্ট রেন্ডার)");
+  }
   const p = plan.jobs[0]?.inputProps;
   if (p) {
     lines.push("");

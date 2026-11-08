@@ -20,6 +20,7 @@ import { SVG_SYNC_PREVIEW_HEIGHT, SvgSyncPreview } from "./dev/SvgSyncPreview";
 import { ThemePreview } from "./dev/ThemePreview";
 import { HadisVideo } from "./HadisVideo";
 import { calculateHadisMetadata } from "./lib/loadHadis";
+import { THUMBNAIL_DURATION_FRAMES, ThumbnailScene } from "./scenes/ThumbnailScene";
 import {
   defaultHadisProps,
   hadisVideoSchema,
@@ -40,6 +41,31 @@ export const forceOrientation =
   (orientation: Orientation): CalculateMetadataFunction<HadisVideoProps> =>
   (options) =>
     calculateHadisMetadata({ ...options, props: { ...options.props, orientation } });
+
+/**
+ * থাম্বনেইল (Hook + Teaser + Intro এক ছবিতে): `forceOrientation`-এর মতোই orientation কম্পোজিশনের ID-তে বাঁধা।
+ * `calculateHadisMetadata` চলে (teaser-এর সেকেন্ড props-এ বসাতে), কিন্তু ফ্রেম-সংখ্যা স্থির `THUMBNAIL_DURATION_FRAMES`
+ * (ভিডিওর দৈর্ঘ্য নয়) — আসল ছবি `render.mjs`-এ `renderStill` দিয়ে `THUMBNAIL_FRAME`-এ, `--scale 2` (4K)।
+ */
+export const forceThumbnail =
+  (orientation: Orientation): CalculateMetadataFunction<HadisVideoProps> =>
+  async (options) => {
+    const meta = await calculateHadisMetadata({ ...options, props: { ...options.props, orientation } });
+    return { ...meta, durationInFrames: THUMBNAIL_DURATION_FRAMES };
+  };
+
+export const HadisThumbnail: React.FC<HadisVideoProps> = (props) => (
+  <ThumbnailScene
+    theme={props.theme}
+    hadisId={props.hadisId}
+    bookname={props.hadisBookname}
+    number={props.hadisNumber}
+    hookText={props.hookText}
+    teaserStartSeconds={props.teaserStartSeconds}
+    teaserEndSeconds={props.teaserEndSeconds}
+    teaserEnabled={props.teaserEnabled}
+  />
+);
 
 export const hadisPortraitDefaults: HadisVideoProps = {
   ...defaultHadisProps,
@@ -75,6 +101,30 @@ export const RemotionRoot: React.FC = () => {
       defaultProps={hadisLandscapeDefaults}
       calculateMetadata={forceOrientation("landscape")}
       durationInFrames={FPS * 13}
+      fps={FPS}
+      width={BASE_SIZES.landscape.width}
+      height={BASE_SIZES.landscape.height}
+    />
+    {/* থাম্বনেইল: Hook + Teaser + Intro এক ছবিতে — 9:16 (১০৮০×১৯২০) ও 16:9 (১৯২০×১০৮০)।
+        CLI-তে: `remotion still ThumbnailPortrait --frame 45 --scale 2` (render.mjs এভাবেই আঁকে → ২১৬০×৩৮৪০ / ৩৮৪০×২১৬০)। */}
+    <Composition
+      id="ThumbnailPortrait"
+      component={HadisThumbnail}
+      schema={hadisVideoSchema}
+      defaultProps={hadisPortraitDefaults}
+      calculateMetadata={forceThumbnail("portrait")}
+      durationInFrames={THUMBNAIL_DURATION_FRAMES}
+      fps={FPS}
+      width={BASE_SIZES.portrait.width}
+      height={BASE_SIZES.portrait.height}
+    />
+    <Composition
+      id="ThumbnailLandscape"
+      component={HadisThumbnail}
+      schema={hadisVideoSchema}
+      defaultProps={hadisLandscapeDefaults}
+      calculateMetadata={forceThumbnail("landscape")}
+      durationInFrames={THUMBNAIL_DURATION_FRAMES}
       fps={FPS}
       width={BASE_SIZES.landscape.width}
       height={BASE_SIZES.landscape.height}

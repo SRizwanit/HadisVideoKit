@@ -591,6 +591,69 @@ check("--dry-run টেবিলে হুক/টিজারের লাইন
   return out.includes("হুক সময়=4s") && out.includes("টিজার=বন্ধ");
 });
 
+// ---------- থাম্বনেইল (Hook + Teaser + Intro এক ছবিতে, সবসময় 4K) ----------
+check("থাম্বনেইল: ডিফল্ট চালু — portrait ১টা, 4K সাইজ, PNG + JPG নাম", () => {
+  const t = buildPlan(base()).plan.thumbnails;
+  return (
+    t.length === 1 &&
+    t[0].compositionId === "ThumbnailPortrait" &&
+    t[0].scale === 2 && t[0].width === 2160 && t[0].height === 3840 &&
+    t[0].pngFile.endsWith("hadis0101_thumbnail_9x16_4K.png") &&
+    t[0].jpgFile.endsWith("hadis0101_thumbnail_9x16_4K.jpg")
+  );
+});
+
+check("থাম্বনেইল: quality hd হলেও থাম্বনেইল 4K", () => {
+  const t = buildPlan(base("--quality", "hd")).plan.thumbnails;
+  return t.length === 1 && t[0].scale === 2;
+});
+
+check("থাম্বনেইল: orientation both → ২টা (portrait, landscape); quality both হলেও ২টাই", () => {
+  const t = buildPlan(base("--orientation", "both", "--quality", "both")).plan.thumbnails;
+  return (
+    t.length === 2 &&
+    t[0].compositionId === "ThumbnailPortrait" && t[0].height === 3840 &&
+    t[1].compositionId === "ThumbnailLandscape" && t[1].width === 3840 && t[1].height === 2160 &&
+    t[1].pngFile.endsWith("hadis0101_thumbnail_16x9_4K.png")
+  );
+});
+
+check("থাম্বনেইল: inputProps ভিডিওর জবের মতোই (কিতাব/নম্বর/থিম/হুক)", () => {
+  const plan = buildPlan(base("--book", "সহীহ বুখারী", "--number", "12", "--theme", "navy", "--hook-text", "প্রশ্ন?")).plan;
+  return same(plan.thumbnails[0].inputProps, plan.jobs[0].inputProps) && plan.thumbnails[0].inputProps.hadisNumber === "১২";
+});
+
+check("থাম্বনেইল: --thumbnail false বা --frames (টেস্ট) হলে নেই", () => {
+  return (
+    buildPlan(base("--thumbnail", "false")).plan.thumbnails.length === 0 &&
+    buildPlan(base("--thumbnail", "off")).plan.thumbnails.length === 0 &&
+    buildPlan(base("--frames", "0-59")).plan.thumbnails.length === 0 &&
+    buildPlan(base("--thumbnail", "true")).plan.thumbnails.length === 1
+  );
+});
+
+check("থাম্বনেইল: --thumbnail ভুল মান → ভুলের বার্তা", () => {
+  const r = buildPlan(base("--thumbnail", "maybe"));
+  return !r.ok && r.errors[0].includes("--thumbnail");
+});
+
+check("থাম্বনেইল: --dry-run টেবিলে থাম্বনেইলের লাইন আছে", () => {
+  const on = formatDryRun(buildPlan(base("--orientation", "both")).plan);
+  const off = formatDryRun(buildPlan(base("--thumbnail", "false")).plan);
+  return on.includes("থাম্বনেইল (Hook + Teaser + Intro") && on.includes("ThumbnailLandscape") && off.includes("থাম্বনেইল: নেই");
+});
+
+check("থাম্বনেইল: কম্পোজিশন ID ও ফ্রেম Root.tsx / ThumbnailScene.tsx-এর সাথে এক", () => {
+  const root = readFileSync(join(projectRoot, "src", "Root.tsx"), "utf8");
+  const scene = readFileSync(join(projectRoot, "src", "scenes", "ThumbnailScene.tsx"), "utf8");
+  const frame = /export const THUMBNAIL_FRAME = (\d+);/.exec(scene);
+  return (
+    root.includes(`id="${RP.THUMBNAIL_COMPOSITION_IDS.portrait}"`) &&
+    root.includes(`id="${RP.THUMBNAIL_COMPOSITION_IDS.landscape}"`) &&
+    frame !== null && Number(frame[1]) === RP.THUMBNAIL_FRAME
+  );
+});
+
 // ---------- ফলাফল ----------
 console.log("");
 console.log(`মোট ${passed + failed}টি কেস: ${passed}টি পাশ, ${failed}টি ফেল`);
