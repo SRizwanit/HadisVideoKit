@@ -3,7 +3,7 @@
 > An **automatic hadith video kit** built with React + Remotion + GitHub Actions.
 > You only put a `.wav` + `_timestamp.json` (+ AI-made SVG/SFX) in the repo, type the **book name** and **hadith number (in Bengali)** in GitHub Actions, press Run, and the video renders. No video editor or PC needed.
 
-**Version 2.53 (English edition) — Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
+**Version 2.54 (English edition) — Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
 
 3 themes: Emerald Night, Royal Navy, Green Day & Night (with fireflies). Book name and Bengali hadith number come straight from GitHub Actions inputs (no book-code list).
 
@@ -753,6 +753,11 @@ node scripts/render.mjs --id 0101 --book "সহীহ বুখারী" --num
 ---
 
 ## 📝 Change log
+
+**Version 2.53 → 2.54**
+- 🖼️ **Landscape Intro only:** the app name is now on **one line** (Portrait keeps two lines), and the app name + "আজকের হাদিস" ribbon + book label are **centered** in the text column (they were left-aligned in Landscape).
+- 🧩 **File changed (1 code file + this md):** `src/scenes/IntroScene.tsx` — `lines = isPortrait ? splitAppName(...) : [APP_NAME]` with `FitText maxLines={1}` in Landscape; Landscape card width `0.74 → 0.80` of the frame (text column ≈ 1022 px, so the one-line name fits at almost the full 66 px; `FitText` still shrinks it down to 55 % if a different app name is longer); `align` is always `"center"`, `textAlign="center"`, ribbon `alignSelf: "center"`. The logo stays on the left of the card, and the card itself stays centered in the frame.
+- 🔒 Nothing else changed: Portrait Intro, Main, Outro, the Bengali clipping fix (2.52), the Intro/Outro voice (2.53), timings, scripts, tests. `splitAppName` is kept (still used for Portrait). Not rendered here — please check the Landscape Intro in your next run.
 
 **Version 2.52 → 2.53**
 - 🔊 **Intro and Outro now play your voice files (audio only, no captions):** `inro.wav` (typo) → `public/audio/intro.wav`, `outro.wav` → `public/audio/outro.wav`.

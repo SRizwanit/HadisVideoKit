@@ -133,7 +133,8 @@ export const IntroScene: React.FC<Props> = ({
   const cardIn = enter(0);
   const logoIn = enter(INTRO_STEPS.logo, 11);
   const [line1, line2] = splitAppName(APP_NAME);
-  const lines = [line1, line2].filter((l) => l.length > 0);
+  // Part 14C-landscape: Landscape-এ অ্যাপের নাম এক লাইনে (Portrait-এ আগের মতো দুই লাইন)
+  const lines = isPortrait ? [line1, line2].filter((l) => l.length > 0) : [APP_NAME];
   const ribbonIn = enter(INTRO_STEPS.ribbon);
   const labelIn = enter(INTRO_STEPS.label);
 
@@ -151,7 +152,8 @@ export const IntroScene: React.FC<Props> = ({
   const pulse = 0.85 + 0.15 * Math.sin((frame / fps) * ((Math.PI * 2) / 2));
 
   // ---------- মাপ ----------
-  const cardW = isPortrait ? width * 0.86 : width * 0.74;
+  // Part 14C-landscape: Landscape কার্ড ০.৭৪ → ০.৮০ চওড়া — অ্যাপের নাম এক লাইনে প্রায় পুরো ফন্টে আঁটে (Portrait অপরিবর্তিত)
+  const cardW = isPortrait ? width * 0.86 : width * 0.8;
   const padX = (isPortrait ? 48 : 64) * u;
   const padY = (isPortrait ? 60 : 48) * u;
   const gap = (isPortrait ? 34 : 56) * u;
@@ -163,7 +165,8 @@ export const IntroScene: React.FC<Props> = ({
   const ribbonFont = (isPortrait ? 56 : 48) * u;
   const labelBase = (isPortrait ? 54 : 50) * u;
   const labelPadX = 36 * u;
-  const align = isPortrait ? "center" : "flex-start";
+  // Part 14C-landscape: দুই অবস্থাতেই অ্যাপের নাম + "আজকের হাদিস" + কিতাবের লেবেল টেক্সট-কলামের মাঝখানে (আগে Landscape-এ বাঁ-ঘেঁষা)
+  const align = "center";
 
   const logoEl = (
     <div
@@ -227,7 +230,8 @@ export const IntroScene: React.FC<Props> = ({
                 fontFamily={FONT_DISPLAY}
                 fontWeight={700}
                 lineHeight={1.3}
-                textAlign={isPortrait ? "center" : "left"}
+                textAlign="center"
+                maxLines={isPortrait ? undefined : 1}
               />
             </div>
           </div>
@@ -237,7 +241,7 @@ export const IntroScene: React.FC<Props> = ({
   );
 
   const ribbonEl = (
-    <div style={{ alignSelf: isPortrait ? "center" : "flex-start", overflow: "hidden" }}>
+    <div style={{ alignSelf: "center", overflow: "hidden" }}>
       <Ribbon
         text={TAGLINE}
         height={ribbonH}
