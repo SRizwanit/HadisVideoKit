@@ -4,23 +4,24 @@ import { Background } from "../components/Background";
 import { FitText } from "../components/FitText";
 import { Logo } from "../components/Logo";
 import { RIBBON_INK, Ribbon } from "../components/Ribbon";
-import { HOOK_TEXT, TAGLINE } from "../constants";
+import { APP_NAME, HOOK_TEXT, TAGLINE } from "../constants";
 import { FONT_BODY, FONT_DISPLAY } from "../fonts";
 import { buildHadisLabel, buildSeriesLabel } from "../lib/displayText";
 import { useHadisTimestamp } from "../lib/loadHadis";
 import { teaserWords, type TeaserWord } from "../lib/teaser";
 import { getThemeColors, parseColor } from "../themes";
 import type { ThemeId } from "../types";
+import { splitAppName } from "./IntroScene";
 
 /**
- * থাম্বনেইল: Hook + Teaser + Intro এক ছবিতে (স্থির ফ্রেম; ভিডিওর মতো কোনো অ্যানিমেশন/ফেড নেই)।
+ * থাম্বনেইল: Intro + Teaser + Hook এক ছবিতে (স্থির ফ্রেম; ভিডিওর মতো কোনো অ্যানিমেশন/ফেড নেই)।
  * `ThumbnailPortrait` (9:16) ও `ThumbnailLandscape` (16:9) কম্পোজিশন এটাই আঁকে; `render.mjs` `renderStill --scale 2` দিয়ে 4K ছবি বের করে।
  *
- * উপর → নিচ (তিনটা প্যানেল-কার্ড, Hook/Teaser/Intro-র কার্ডের মতোই):
- *   ১. Hook   — বড় প্রশ্ন (শেষ দুই শব্দ accent রঙে), কৌতূহল জাগানোর জন্য; কার্ডের ডান-উপরের কোণে সিরিজ ব্যাজ "পর্ব ১২" (`seriesNumber` দিলে)
+ * উপর → নিচ (তিনটা প্যানেল-কার্ড, Intro/Teaser/Hook-র কার্ডের মতোই):
+ *   ১. Intro  — লোগো + অ্যাপের নাম (`APP_NAME`) + "আজকের হাদিস" রিবন + "কিতাব হাদিস নং : নম্বর"; কার্ডের ডান-উপরের কোণে সিরিজ ব্যাজ "পর্ব ১২" (`seriesNumber` দিলে)
  *   ২. Teaser — হাদিসের শক্তিশালী বাক্যাংশ, উদ্ধৃতি-চিহ্নসহ; সব শব্দ পুরো উজ্জ্বল (ছবিতে "বলা হচ্ছে" ধারণা নেই)
- *   ৩. Intro  — লোগো + "আজকের হাদিস" রিবন + "কিতাব হাদিস নং : নম্বর"
- * JSON-এ `teaser` না থাকলে (বা `teaserEnabled === false`) মাঝের কার্ড বাদ; Hook ও Intro-র অংশ থাকে।
+ *   ৩. Hook   — বড় প্রশ্ন (শেষ দুই শব্দ accent রঙে), কৌতূহল জাগানোর জন্য
+ * JSON-এ `teaser` না থাকলে (বা `teaserEnabled === false`) মাঝের কার্ড বাদ; Intro ও Hook থাকে।
  * লেখা সবসময় প্যানেলের উপরে → উজ্জ্বল আকাশেও পড়া যায়। ব্যাকগ্রাউন্ড `<Background>` (থিম অনুযায়ী)।
  * সব মাপ `u = min(width, height) / 1080` দিয়ে — তাই 4K (scale 2) ও dev প্রিভিউ-সাইজে একই চেহারা।
  */
@@ -163,9 +164,13 @@ export const ThumbnailScene: React.FC<Props> = ({
   const footPadX = (isPortrait ? 48 : 64) * u;
   const footPadY = (isPortrait ? 40 : 28) * u;
   const footGap = (isPortrait ? 40 : 52) * u;
-  const logoSize = (isPortrait ? 250 : 200) * u;
+  const logoSize = (isPortrait ? 250 : 220) * u;
   const footInnerW = cardW - footPadX * 2;
   const textW = footInnerW - logoSize - footGap;
+  const nameBase = (isPortrait ? 54 : 44) * u;
+  const [nameLine1, nameLine2] = splitAppName(APP_NAME);
+  // Portrait: দুই লাইন (Intro সিনের মতো); Landscape: এক লাইন
+  const nameLines = isPortrait ? [nameLine1, nameLine2].filter((l) => l.length > 0) : [APP_NAME];
   const ribbonH = (isPortrait ? 84 : 70) * u;
   const ribbonFont = (isPortrait ? 52 : 42) * u;
   const labelBase = (isPortrait ? 54 : 46) * u;
@@ -190,8 +195,18 @@ export const ThumbnailScene: React.FC<Props> = ({
           gap: stackGap,
         }}
       >
-        {/* ১. Hook — বড় প্রশ্ন */}
-        <div style={{ ...cardStyle, padding: `${hookPadY}px ${hookPadX}px` }}>
+        {/* ১. Intro — লোগো + অ্যাপের নাম + "আজকের হাদিস" + কিতাব ও নম্বর (+ সিরিজ ব্যাজ) */}
+        <div
+          style={{
+            ...cardStyle,
+            padding: `${footPadY}px ${footPadX}px`,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: footGap,
+          }}
+        >
           {seriesLabel && (
             <div
               style={{
@@ -219,41 +234,88 @@ export const ThumbnailScene: React.FC<Props> = ({
               {seriesLabel}
             </div>
           )}
+          <div style={{ position: "relative", width: logoSize, height: logoSize, flexShrink: 0 }}>
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                width: logoSize * 1.9,
+                height: logoSize * 1.9,
+                transform: "translate(-50%, -50%)",
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${withAlpha(p.glow, 0.38)} 0%, ${withAlpha(p.glow, 0)} 65%)`,
+              }}
+            />
+            <Logo
+              size={logoSize}
+              ringColor={p.accent}
+              ringColor2={p.accent2}
+              glowColor={p.glow}
+              glowStrength={1.25}
+              pulse={false}
+            />
+          </div>
+
           <div
             style={{
-              width: hookInnerW,
+              width: textW,
               display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "center",
+              flexDirection: "column",
               alignItems: "center",
-              columnGap: hookFont * 0.26,
-              rowGap: hookFont * 0.1,
+              gap: (isPortrait ? 14 : 12) * u,
             }}
           >
-            {hookWords.map((w, i) => {
-              const emphasised = i >= hookWords.length - 2;
-              return (
-                <span
+            {/* অ্যাপের নাম */}
+            <div style={{ width: textW, display: "flex", flexDirection: "column", alignItems: "center" }}>
+              {nameLines.map((text, i) => (
+                <FitText
                   key={i}
-                  style={{
-                    display: "inline-block",
-                    fontFamily: FONT_DISPLAY,
-                    fontWeight: 800,
-                    fontSize: hookFont,
-                    lineHeight: 1.45,
-                    color: emphasised ? p.accent2 : p.text,
-                    textShadow: `0 ${4 * u}px ${18 * u}px rgba(0,0,0,0.35)${
-                      emphasised ? `, 0 0 ${28 * u}px ${withAlpha(p.glow, 0.45)}` : ""
-                    }`,
-                  }}
-                >
-                  {w}
-                </span>
-              );
-            })}
+                  text={text}
+                  baseSize={nameBase}
+                  minSize={nameBase * 0.55}
+                  maxWidth={textW}
+                  color={p.text}
+                  fontFamily={FONT_DISPLAY}
+                  fontWeight={700}
+                  lineHeight={1.3}
+                  textAlign="center"
+                  maxLines={isPortrait ? undefined : 1}
+                />
+              ))}
+            </div>
+            <div style={{ alignSelf: "center" }}>
+              <Ribbon text={TAGLINE} height={ribbonH} fontSize={ribbonFont} accent={p.accent} accent2={p.accent2} />
+            </div>
+            {label ? (
+              <div
+                style={{
+                  width: textW,
+                  boxSizing: "border-box",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: `${12 * u}px ${labelPadX}px`,
+                  borderRadius: 999,
+                  border: `${3 * u}px solid ${p.accent}`,
+                  background: withAlpha("#000000", 0.22),
+                  overflow: "visible",
+                }}
+              >
+                <FitText
+                  text={label}
+                  baseSize={labelBase}
+                  minSize={labelBase * 0.62}
+                  maxWidth={textW - labelPadX * 2 - 6 * u}
+                  color={p.accent2}
+                  fontFamily={FONT_BODY}
+                  fontWeight={700}
+                  lineHeight={1.2}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
-
         {/* ২. Teaser — হাদিসের শক্তিশালী বাক্যাংশ (সব শব্দ পুরো উজ্জ্বল) */}
         {showTeaser && (
           <div style={{ ...cardStyle, padding: `${teaserPadY}px ${teaserPadX}px` }}>
@@ -319,82 +381,43 @@ export const ThumbnailScene: React.FC<Props> = ({
           </div>
         )}
 
-        {/* ৩. Intro — লোগো + "আজকের হাদিস" + কিতাব ও নম্বর */}
-        <div
-          style={{
-            ...cardStyle,
-            padding: `${footPadY}px ${footPadX}px`,
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: footGap,
-          }}
-        >
-          <div style={{ position: "relative", width: logoSize, height: logoSize, flexShrink: 0 }}>
-            <div
-              style={{
-                position: "absolute",
-                left: "50%",
-                top: "50%",
-                width: logoSize * 1.9,
-                height: logoSize * 1.9,
-                transform: "translate(-50%, -50%)",
-                borderRadius: "50%",
-                background: `radial-gradient(circle, ${withAlpha(p.glow, 0.38)} 0%, ${withAlpha(p.glow, 0)} 65%)`,
-              }}
-            />
-            <Logo
-              size={logoSize}
-              ringColor={p.accent}
-              ringColor2={p.accent2}
-              glowColor={p.glow}
-              glowStrength={1.25}
-              pulse={false}
-            />
-          </div>
-
+        {/* ৩. Hook — বড় প্রশ্ন */}
+        <div style={{ ...cardStyle, padding: `${hookPadY}px ${hookPadX}px` }}>
           <div
             style={{
-              width: textW,
+              width: hookInnerW,
               display: "flex",
-              flexDirection: "column",
+              flexWrap: "wrap",
+              justifyContent: "center",
               alignItems: "center",
-              gap: (isPortrait ? 26 : 20) * u,
+              columnGap: hookFont * 0.26,
+              rowGap: hookFont * 0.1,
             }}
           >
-            <div style={{ alignSelf: "center" }}>
-              <Ribbon text={TAGLINE} height={ribbonH} fontSize={ribbonFont} accent={p.accent} accent2={p.accent2} />
-            </div>
-            {label ? (
-              <div
-                style={{
-                  width: textW,
-                  boxSizing: "border-box",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: `${12 * u}px ${labelPadX}px`,
-                  borderRadius: 999,
-                  border: `${3 * u}px solid ${p.accent}`,
-                  background: withAlpha("#000000", 0.22),
-                  overflow: "visible",
-                }}
-              >
-                <FitText
-                  text={label}
-                  baseSize={labelBase}
-                  minSize={labelBase * 0.62}
-                  maxWidth={textW - labelPadX * 2 - 6 * u}
-                  color={p.accent2}
-                  fontFamily={FONT_BODY}
-                  fontWeight={700}
-                  lineHeight={1.2}
-                />
-              </div>
-            ) : null}
+            {hookWords.map((w, i) => {
+              const emphasised = i >= hookWords.length - 2;
+              return (
+                <span
+                  key={i}
+                  style={{
+                    display: "inline-block",
+                    fontFamily: FONT_DISPLAY,
+                    fontWeight: 800,
+                    fontSize: hookFont,
+                    lineHeight: 1.45,
+                    color: emphasised ? p.accent2 : p.text,
+                    textShadow: `0 ${4 * u}px ${18 * u}px rgba(0,0,0,0.35)${
+                      emphasised ? `, 0 0 ${28 * u}px ${withAlpha(p.glow, 0.45)}` : ""
+                    }`,
+                  }}
+                >
+                  {w}
+                </span>
+              );
+            })}
           </div>
         </div>
+
       </div>
     </AbsoluteFill>
   );
