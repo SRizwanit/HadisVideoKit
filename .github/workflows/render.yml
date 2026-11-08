@@ -4,6 +4,7 @@ name: Render Hadis Video
 #   action = check               → যাচাই (বান্ডল + ছবি রেন্ডার), Artifacts: check-images
 #   action = render              → ভিডিও রেন্ডার, Artifacts: videos
 #   action = render_and_release  → রেন্ডার + GitHub Release-এ আপলোড
+#   action = thumbnail_only      → শুধু 4K থাম্বনেইল (ভিডিও নয়; কয়েক মিনিটে) — সিরিজ নম্বর/ব্যাকগ্রাউন্ড ঠিক করতে, Artifacts: thumbnails
 #
 # নতুন zip আপলোড করেছো? zip_file ঘরে zip-এর নাম লেখো (যেমন HadisVideokit-part3.zip);
 # workflow আগে zip খুলে ফাইল কমিট করবে, তারপর কাজ করবে। zip_file ফাঁকা = zip খোলা হবে না।
@@ -24,6 +25,16 @@ name: Render Hadis Video
 #   thumbnail    = টিক থাকলে (ডিফল্ট) ভিডিওর পাশে 4K থাম্বনেইল: Hook + Teaser + Intro এক ছবিতে।
 #                  ওরিয়েন্টেশন অনুযায়ী (9:16 → ২১৬০×৩৮৪০, 16:9 → ৩৮৪০×২১৬০), PNG + JPG; কোয়ালিটি ইনপুট যাই হোক সবসময় 4K।
 #                  Artifacts: thumbnails; render_and_release হলে Release-এও যায়।
+#   series       = সিরিজ নম্বর (যেমন 12 বা ১২) → থাম্বনেইলের ডান-উপরে "পর্ব ১২" ব্যাজ। ফাঁকা = ব্যাজ নেই। ভিডিওতে কিছু বদলায় না।
+#   thumbnail_night = থাম্বনেইলের ব্যাকগ্রাউন্ডের দিন-রাত, ০ (দিন) থেকে ১ (রাত); ফাঁকা = থিমের ডিফল্ট।
+#                  ⚠️ শুধু greenDayNight থিমে প্রভাব ফেলে (emerald/navy স্থির থিম)। যেমন 0 = উজ্জ্বল দিন, 0.5 = সোনালি গোধূলি, 0.9 = রাত + জোনাকি।
+#
+# 📝 প্রকাশের ফাইল (নতুন ইনপুট):
+#   publish_files = টিক থাকলে (ডিফল্ট) ভিডিওর পাশে দুটো ফাইল:
+#                   out/hadis<id>_publish.txt → ইউটিউব শিরোনাম (৩ বিকল্প) + বিবরণ + ট্যাগ + ফেসবুক ক্যাপশন + হ্যাশট্যাগ
+#                   out/hadis<id>.srt         → সাবটাইটেল (ইউটিউব স্টুডিও → Subtitles → Upload file, With timing)
+#                   Artifacts: publish-files; render_and_release হলে Release-এও যায়। হাদিসের লেখা JSON থেকে হুবহু — প্রকাশের আগে নিজে যাচাই করো।
+#   app_link      = অ্যাপের লিংক (https://...); দিলে বিবরণ ও ক্যাপশনে বসে। ফাঁকা = লিংক ছাড়া লাইন।
 
 on:
   workflow_dispatch:
@@ -37,6 +48,7 @@ on:
           - check
           - render
           - render_and_release
+          - thumbnail_only
       zip_file:
         description: "রিপোতে আপলোড করা zip-এর নাম (যেমন HadisVideokit-part3.zip)। ফাঁকা = zip খোলা হবে না"
         required: false
@@ -114,6 +126,26 @@ on:
         required: false
         default: true
         type: boolean
+      series:
+        description: "সিরিজ নম্বর (যেমন 12 বা ১২) → থাম্বনেইলে 'পর্ব ১২' ব্যাজ। ফাঁকা = ব্যাজ নেই"
+        required: false
+        default: ""
+        type: string
+      thumbnail_night:
+        description: "থাম্বনেইলের ব্যাকগ্রাউন্ড ০ (দিন) থেকে ১ (রাত), শুধু greenDayNight থিমে। ফাঁকা = থিমের ডিফল্ট"
+        required: false
+        default: ""
+        type: string
+      publish_files:
+        description: "প্রকাশের ফাইল বানাবে: ইউটিউব/ফেসবুক ক্যাপশন-ট্যাগ (.txt) + সাবটাইটেল (.srt)"
+        required: false
+        default: true
+        type: boolean
+      app_link:
+        description: "অ্যাপের লিংক (https://...) — বিবরণ/ক্যাপশনে বসবে। ফাঁকা = লিংক ছাড়া"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -213,8 +245,9 @@ jobs:
 
       # ---------- action = render / render_and_release ----------
       - name: Render videos
-        if: ${{ startsWith(inputs.action, 'render') }}
+        if: ${{ startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only' }}
         env:
+          ACTION: ${{ inputs.action }}
           HADIS_ID: ${{ inputs.hadis_id }}
           HADIS_BOOKNAME: ${{ inputs.hadis_bookname }}
           HADIS_NUMBER: ${{ inputs.hadis_number }}
@@ -227,7 +260,13 @@ jobs:
           HOOK_SECONDS: ${{ inputs.hook_seconds }}
           TEASER: ${{ inputs.teaser }}
           THUMBNAIL: ${{ inputs.thumbnail }}
+          SERIES: ${{ inputs.series }}
+          THUMB_NIGHT: ${{ inputs.thumbnail_night }}
+          PUBLISH_FILES: ${{ inputs.publish_files }}
+          APP_LINK: ${{ inputs.app_link }}
         run: |
+          THUMB_ONLY=false
+          if [ "$ACTION" = "thumbnail_only" ]; then THUMB_ONLY=true; fi
           node scripts/render.mjs \
             --id "$HADIS_ID" \
             --book "$HADIS_BOOKNAME" \
@@ -240,18 +279,30 @@ jobs:
             --hook-text "$HOOK_TEXT" \
             --hook-seconds "$HOOK_SECONDS" \
             --teaser "$TEASER" \
-            --thumbnail "$THUMBNAIL"
+            --thumbnail "$THUMBNAIL" \
+            --thumbnail-only "$THUMB_ONLY" \
+            --series "$SERIES" \
+            --thumb-night "$THUMB_NIGHT" \
+            --publish-files "$PUBLISH_FILES" \
+            --app-link "$APP_LINK"
 
       - name: List rendered files
-        if: ${{ startsWith(inputs.action, 'render') }}
+        if: ${{ startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only' }}
         run: |
           {
-            echo "### 🎬 রেন্ডার হওয়া ভিডিও"
-            ls -lh out/*.mp4 | awk '{print "- `" $9 "` — " $5}'
+            if ls out/*.mp4 > /dev/null 2>&1; then
+              echo "### 🎬 রেন্ডার হওয়া ভিডিও"
+              ls -lh out/*.mp4 | awk '{print "- `" $9 "` — " $5}'
+            fi
             if ls out/*_thumbnail_* > /dev/null 2>&1; then
               echo ""
               echo "### 🖼️ থাম্বনেইল (4K)"
               ls -lh out/*_thumbnail_* | awk '{print "- `" $9 "` — " $5}'
+            fi
+            if ls out/*_publish.txt out/*.srt > /dev/null 2>&1; then
+              echo ""
+              echo "### 📝 প্রকাশের ফাইল (ক্যাপশন/ট্যাগ + সাবটাইটেল)"
+              ls -lh out/*_publish.txt out/*.srt 2>/dev/null | awk '{print "- `" $9 "` — " $5}'
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -266,13 +317,24 @@ jobs:
           compression-level: 0
 
       - name: Upload thumbnails
-        if: ${{ startsWith(inputs.action, 'render') && inputs.thumbnail }}
+        if: ${{ (startsWith(inputs.action, 'render') && inputs.thumbnail) || inputs.action == 'thumbnail_only' }}
         uses: actions/upload-artifact@v4
         with:
           name: thumbnails
           path: |
             out/*_thumbnail_*.png
             out/*_thumbnail_*.jpg
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload publish files (caption/tags + subtitles)
+        if: ${{ startsWith(inputs.action, 'render') && inputs.publish_files }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-files
+          path: |
+            out/hadis*_publish.txt
+            out/hadis*.srt
           if-no-files-found: warn
           retention-days: 7
 
@@ -287,7 +349,7 @@ jobs:
         run: |
           TAG="hadis${HADIS_ID}-run${RUN_NUMBER}"
           shopt -s nullglob
-          FILES=(out/*.mp4 out/*_thumbnail_*.png out/*_thumbnail_*.jpg)
+          FILES=(out/*.mp4 out/*_thumbnail_*.png out/*_thumbnail_*.jpg out/hadis*_publish.txt out/hadis*.srt)
           gh release create "$TAG" "${FILES[@]}" \
             --title "${HADIS_BOOKNAME} নং : ${HADIS_NUMBER}" \
             --notes "ইসলামী বিশ্বকোষ ও আল হাদিস S2 — hadis${HADIS_ID}"
