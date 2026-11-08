@@ -82,17 +82,17 @@ on:
       intro_seconds:
         description: "Intro কত সেকেন্ড"
         required: false
-        default: "3"
+        default: ""
         type: string
       outro_seconds:
         description: "Outro কত সেকেন্ড"
         required: false
-        default: "4"
+        default: ""
         type: string
       hook_text:
         description: "হুকের লেখা (ভিডিওর শুরুর বড় লেখা)। ফাঁকা = ডিফল্ট: এই হাদিসের ব্যাপারে কি আপনার জানা আছে?"
         required: false
-        default: ""
+        default: "এই হাদিসের ব্যাপারে আপনার জানা আছে কি?"
         type: string
       hook_seconds:
         description: "হুক কত সেকেন্ড। ফাঁকা = অটো (hook.wav-এর দৈর্ঘ্য), সংখ্যা = অন্তত ততটা, ০ = হুক বন্ধ"
