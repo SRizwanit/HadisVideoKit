@@ -17,8 +17,9 @@ Work **one file at a time, one step at a time**. Never ask the AI for several fi
 |---|---|---|---|
 | 0 | `hadis<ID>.wav` (your recorded/generated voice) | `public/hadis/hadis<ID>.wav` | not an AI file |
 | 0b | `hook.wav` (the opening question voice, same for every video) — **optional** | `public/audio/hook.wav` | not an AI file (see "About the Hook" below) |
+| 0c | `hadis<ID>_words.txt` (word timings made in Google Colab; only pasted into Prompt 1, not uploaded to the repo) | not uploaded | **Prompt 0** |
 | 1 | `hadis<ID>_timestamp.json` (optionally with a `teaser` block = Audio Teaser) | `public/hadis/hadis<ID>_timestamp.json` | **Prompt 1** |
-| 2 | `svg1.svg`, `svg2.svg`, … `svgN.svg` (one prompt per file) | `public/svg/svg1.svg` … | **Prompt 2A + 2B** |
+| 2 | `svg1.svg`, `svg2.svg`, … `svgN.svg` (one prompt per file; each SVG has 3 stages, 6 s loop) | `public/svg/svg1.svg` … | **Prompt 2A + 2B** |
 | 3 | SFX list, then each SFX file (one at a time) | `public/sfx/<name>.mp3` | **Prompt 3A + 3B** |
 
 ### About the Hook (opening question) — `public/audio/hook.wav`
@@ -42,6 +43,95 @@ After the Hook, the video can play the **strongest phrase of the hadith first** 
 - To switch the Teaser off for one render: untick `teaser` in GitHub Actions. To switch it off everywhere: `TEASER_ENABLED = false` in `src/constants.ts`.
 
 `<ID>` is the `hadis_id` you type in GitHub Actions, for example `0101` → `hadis0101.wav`, `hadis0101_timestamp.json`. Allowed characters: English letters, digits, `-` and `_` only.
+
+---
+
+# PROMPT 0 — শব্দ-ভিত্তিক সময় বের করা (Google Colab, ফ্রি)
+
+কেন দরকার: Prompt 1 অডিও শুনতে পারে না, সে শুধু আপনার দেওয়া সময় সাজায়। অডিও-দৈর্ঘ্য দিলে সে সমান ভাগে ভাগ করে, তখন টিজার ও ক্যাপশন ঠিক জায়গায় থামে না। তাই আগে `.wav` থেকে প্রতিটা শব্দের আসল সময় বের করে নিন।
+
+## ধাপ 0.1 — Colab খুলুন
+
+1. https://colab.research.google.com → New notebook।
+2. মেনু: Runtime → Change runtime type → **T4 GPU** (দ্রুত হয়; CPU-তেও চলে, ধীর)।
+3. বাঁ পাশের ফাইল-আইকনে `hadis<ID>.wav` আপলোড করুন।
+4. **সেল ১** (ইনস্টল):
+
+```python
+!pip -q install stable-ts
+```
+
+5. **সেল ২**: নিচের `AUDIO_FILE`, `ID`, `HADITH_TEXT` বদলে চালান। `HADITH_TEXT` অবশ্যই অডিওতে যা বলা হয়েছে হুবহু তা-ই হবে।
+
+```python
+import json, re, stable_whisper
+
+AUDIO_FILE = "hadis0101.wav"
+ID = "0101"
+HADITH_TEXT = """এখানে হাদিসের বাংলা টেক্সট হুবহু পেস্ট করুন"""
+MAX_WORDS = 18   # একটি segment-এ সর্বোচ্চ শব্দ (কিটের সীমা 25-এর নিচে)
+
+model = stable_whisper.load_model("large-v3")   # মেমরি কম হলে "medium"
+text = re.sub(r"\s+", " ", HADITH_TEXT).strip()
+result = model.align(AUDIO_FILE, text, language="bn")
+
+# বাক্য-চিহ্নে ভাগ, তারপর বেশি লম্বা হলে শব্দ-সংখ্যায় ভাগ
+result.split_by_punctuation(["।", "॥", "?", "!", ",", "،"])
+result.split_by_length(max_words=MAX_WORDS)
+
+segments = []
+for i, seg in enumerate(result.segments, 1):
+    words = [
+        {"word": w.word.strip(), "start": round(w.start, 2), "end": round(w.end, 2)}
+        for w in seg.words if w.word.strip()
+    ]
+    if not words:
+        continue
+    segments.append({
+        "id": i,
+        "start": words[0]["start"],
+        "end": words[-1]["end"],
+        "text": " ".join(w["word"] for w in words),
+        "words": words,
+    })
+
+# segment-এর মাঝের ছোট ফাঁক বন্ধ করা (overlap/উল্টো সময় যেন না থাকে)
+for a, b in zip(segments, segments[1:]):
+    if b["start"] < a["end"]:
+        b["start"] = a["end"]
+
+out = {"language": "bn", "segments": segments}
+with open(f"hadis{ID}_timestamp.json", "w", encoding="utf-8") as f:
+    json.dump(out, f, ensure_ascii=False, indent=2)
+
+# Prompt 1-এ পেস্ট করার সংক্ষিপ্ত সময়-তালিকা
+with open(f"hadis{ID}_words.txt", "w", encoding="utf-8") as f:
+    for s in segments:
+        for w in s["words"]:
+            f.write(f'{w["start"]:.2f}-{w["end"]:.2f} {w["word"]}\n')
+
+print("segments:", len(segments), "| শেষ সময়:", segments[-1]["end"])
+```
+
+6. বাঁ পাশের ফাইল-তালিকা রিফ্রেশ করে দুটি ফাইল ডাউনলোড করুন:
+   - `hadis<ID>_timestamp.json` (শব্দ-সময়সহ কাঁচা JSON)
+   - `hadis<ID>_words.txt` (প্রতি লাইনে `শুরু-শেষ শব্দ`)
+
+## ধাপ 0.2 — সময় ঠিক আছে কিনা মিলিয়ে নিন (জরুরি)
+
+বাংলায় এই টুলের নির্ভুলতা সীমিত, তাই `.wav` চালিয়ে কয়েক জায়গা শুনে দেখুন:
+- [ ] প্রথম শব্দ আর শেষ শব্দের সময় অডিওর সঙ্গে মেলে
+- [ ] ১০ সেকেন্ড পরপর একটা শব্দ বেছে মিলিয়ে দেখুন, ০.২ সেকেন্ডের বেশি ভুল নেই
+- [ ] শেষ `end` অডিওর দৈর্ঘ্যের চেয়ে বেশি নয়
+- [ ] সব segment-এর `text` জুড়লে হাদিসের টেক্সট হুবহু ফিরে আসে (টুল বানান বদলালে `HADITH_TEXT` ঠিক করে আবার চালান)
+
+কোনো শব্দ খুব ভুল হলে `hadis<ID>_words.txt`-এ সংখ্যাটা হাতে ঠিক করুন।
+
+## ধাপ 0.3 — এরপর কী করবেন
+
+`hadis<ID>_words.txt`-এর পুরো লেখা Prompt 1-এর **AUDIO_TIMING**-এ পেস্ট করুন। সঙ্গে `HADITH_TEXT`, `SVG_COUNT`, `TEASER_WANTED` দিন। AI তখন সময় বানাবে না, শুধু `svg`, `sfx`, `hookSvg`, `teaser` যোগ করে JSON সাজাবে।
+
+> Prompt 1-এর নিয়ম ৫ ("words শুধু শব্দ-স্তরের সময় থাকলেই") এখন সবসময় পূরণ হবে, তাই `words` রাখবেন। টিজারও তখন শব্দের সীমানা ধরে কাটা হবে।
 
 ---
 
@@ -130,17 +220,28 @@ Save as `hadis<ID>_timestamp.json` (same `<ID>` as the `.wav`) → upload to `pu
 
 ---
 
-# PROMPT 2 — Animated SVG (one prompt per SVG file)
+---
 
-The kit plays **one SVG per segment** in the middle of the video. Make them **one file per AI answer**: `svg1.svg`, then `svg2.svg`, and so on.
-Files must be numbered **without gaps** (`svg1`, `svg2`, `svg3` …). The renderer looks for `svg1`, `svg2` … in order and **stops at the first missing number** (maximum 60 files).
+# PROMPT 2 — অ্যানিমেটেড SVG (প্রতিটি ফাইল ৩ ধাপের)
 
-## Step 2.0 — Plan the pictures first (Prompt 2A, one answer, no file)
+কিট প্রতি segment-এর জন্য মাঝখানে **একটা SVG** চালায়। এখন প্রতিটি SVG একটা স্থির ছবি নয়। সে একটা ছোট গল্প বলবে: **৩টি stage**, প্রতি stage ২ সেকেন্ড, মোট ৬ সেকেন্ডের লুপ।
 
-Paste this to get a plan. It creates no file; you only read it and approve it.
+ফাইল নম্বর **ফাঁক ছাড়া** হবে (`svg1`, `svg2`, `svg3` …)। রেন্ডারার প্রথম অনুপস্থিত নম্বরে থেমে যায় (সর্বোচ্চ ৬০টি)।
+
+## Stage কী
+
+| Stage | সময় | কী ঘটে |
+|---|---|---|
+| ১ — শুরু | ০–২ সেকেন্ড | মূল প্রতীক ধীরে ফুটে ওঠে (ছোট থেকে বড়, বা অস্পষ্ট থেকে স্পষ্ট) |
+| ২ — বিকাশ | ২–৪ সেকেন্ড | মূল প্রতীকের চারপাশে নতুন উপাদান যোগ হয় (আলো, তারা, পাতা, নকশা) |
+| ৩ — পরিণতি | ৪–৬ সেকেন্ড | সব মিলে সম্পূর্ণ দৃশ্য আলোকিত হয়, তারপর মসৃণভাবে মিলিয়ে গিয়ে stage ১-এ ফেরে |
+
+গল্পটা segment-এর অর্থের সঙ্গে মিলবে (যেমন বীজ → অঙ্কুর → ফলবান গাছ)।
+
+## ধাপ 2.0 — আগে পরিকল্পনা (Prompt 2A, ফাইল নেই)
 
 ```text
-I am making a short Islamic hadith video. For each text segment below, suggest ONE simple animated picture idea.
+I am making a short Islamic hadith video. For each text segment below, suggest ONE animated picture idea told in THREE STAGES (each stage lasts 2 seconds, total 6 seconds, then it loops).
 
 SEGMENTS (in order):
 1. <<< segment 1 text >>>
@@ -148,50 +249,63 @@ SEGMENTS (in order):
 3. <<< segment 3 text >>>
 
 RULES FOR THE IDEAS
-- NO faces and NO bodies of humans or animals. Use only symbols: geometric patterns, stars, crescents, lanterns, books, a mosque dome silhouette without people, plants, trees, leaves, water drops, sun/moon/clouds, light rays, doors, scales, hearts as simple shapes, hands NOT allowed.
-- Each idea must be drawable with simple shapes (circles, rectangles, paths) and a looping motion (rotate, pulse, float, glow, grow, wave).
-- The picture should hint at the meaning of the segment, not illustrate people.
+- The three stages must tell a tiny story that matches the meaning of the segment: stage 1 = beginning (one main symbol appears), stage 2 = growth (new elements are added around it), stage 3 = completion (the whole scene glows, then fades back toward stage 1).
+- NO faces and NO bodies of humans or animals. Use only symbols: geometric patterns, stars, crescents, lanterns, books, a mosque dome silhouette without people, plants, trees, leaves, seeds, water drops, sun/moon/clouds, light rays, doors, scales, simple heart shapes. Hands are NOT allowed.
+- Each stage must be drawable with simple shapes (circles, rectangles, paths).
+- The three stages must look clearly different from each other, not the same picture with a small wobble.
 
-OUTPUT: a numbered list: "svg1: <idea in one line> — <motion in one line>", "svg2: ...". Same count as the segments, numbering from 1 with no gaps. Nothing else.
+OUTPUT: a numbered list, same count as the segments, numbering from 1 with no gaps, in exactly this form:
+"svg1: <title> | stage1: <one line> | stage2: <one line> | stage3: <one line>"
+Nothing else.
 ```
 
-Read the list. Change any idea you do not like. Then do **Step 2.1 for each number, one at a time.**
+পড়ে অপছন্দের আইডিয়া বদলে নিন, তারপর প্রতিটি নম্বরের জন্য **ধাপ 2.1 একবার করে** চালান।
 
-## Step 2.1 — Paste this prompt for ONE SVG file (repeat for svg1, svg2, svg3 …)
+## ধাপ 2.1 — একটি SVG ফাইলের প্রম্পট (svg1, svg2, svg3 … প্রতিটির জন্য আলাদা)
 
-Replace `N` with the file number and describe the idea from your plan.
+`N` বদলে ফাইল-নম্বর দিন এবং পরিকল্পনা থেকে ৩টি stage পেস্ট করুন।
 
 ```text
 Create ONE animated SVG file named svg<N>.svg. Return ONLY the SVG code (starting with <svg and ending with </svg>), no explanation and no Markdown code fence.
 
-PICTURE IDEA
-<<< e.g. "svg2: a lantern whose light slowly pulses, with small stars twinkling around it" >>>
+PICTURE IDEA (three stages, 2 seconds each, total loop 6 seconds)
+Title: <<< e.g. "a lantern lights up" >>>
+Stage 1 (0-2 s): <<< e.g. "a small lantern fades in at the center" >>>
+Stage 2 (2-4 s): <<< e.g. "light rays and small stars appear around it" >>>
+Stage 3 (4-6 s): <<< e.g. "everything glows brighter, then softly fades so the loop restarts" >>>
 
 TECHNICAL RULES (all are mandatory, the video code depends on them)
 1. Root tag exactly: <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg"> . Do NOT write width or height. Draw inside 0..1000 and keep important shapes inside 80..920.
 2. Background is TRANSPARENT: no full-size background rectangle, no background fill.
 3. Animation only with CSS @keyframes inside one <style> block, or with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>). Never JavaScript.
 4. FORBIDDEN: <script>, <foreignObject>, <iframe>, <object>, <embed>, <link>, <image> with external or data links, external fonts, @import, url(http...), any attribute starting with "on" (onclick, onload ...), javascript: links, <!DOCTYPE>, <?xml ...?>.
-5. Loop: the whole picture repeats every 6 seconds. Every animation duration must divide 6 evenly (2s, 3s or 6s) and loop forever: CSS "infinite" or SMIL repeatCount="indefinite". The last frame must flow smoothly into the first.
-6. SMIL timing must be time-based only: begin="0s" or a negative/positive time such as begin="-2s" or begin="1s", or begin="otherId.end". NEVER begin="click", begin="indefinite", accessKey, or any event.
-7. STYLE WITH CLASSES AND IDS ONLY. Never write bare element selectors in CSS (no "circle { }", "g { }", "path { }", "svg { }"). Name every class, id and @keyframes with the prefix "svg<N>-" (example: .svg<N>-star, #svg<N>-glow, @keyframes svg<N>-spin) so two SVGs on screen never collide.
+5. THREE STAGES IN ONE 6-SECOND LOOP. Every animation that creates the stages has duration exactly 6s and runs forever (CSS "infinite" or SMIL repeatCount="indefinite"). Put the stage timing inside the keyframe percentages:
+   - Stage 1 = 0% to 33%, stage 2 = 33% to 66%, stage 3 = 66% to 100%.
+   - Group the shapes by stage: <g class="svg<N>-s1">, <g class="svg<N>-s2">, <g class="svg<N>-s3">. Stage 1 elements are visible at the start; stage 2 elements fade/grow in around 33%; stage 3 elements fade/grow in around 66%.
+   - At 0% (and 100%) the picture must be in the same state so the loop is seamless: fade the stage 2 and stage 3 groups out between 90% and 100%, keep the stage 1 symbol visible.
+   - Smaller extra animations (twinkle, rotate, pulse) may use 2s, 3s or 6s so they also loop evenly.
+6. SMIL timing must be time-based only: begin="0s" or a negative/positive time such as begin="-2s" or begin="2s", or begin="otherId.end". NEVER begin="click", begin="indefinite", accessKey, or any event.
+7. STYLE WITH CLASSES AND IDS ONLY. Never write bare element selectors in CSS (no "circle { }", "g { }", "path { }", "svg { }"). Name every class, id and @keyframes with the prefix "svg<N>-" so two SVGs on screen never collide.
 8. For rotation or scaling with CSS always set transform-origin in px inside the 1000x1000 space (example: transform-origin: 500px 500px;).
 9. Colours must be readable on three dark backgrounds (dark green, dark navy, night-green): use white (#ffffff), warm gold (#f5d77a, #f0c040), bright green/teal (#2ecc71, #1abc9c), soft sky blue (#8fd3ff). NEVER use pure black or very dark colours. Use opacity for softness.
 10. NO faces and NO bodies of humans or animals (no eyes, no mouths, no hands, no birds, no fish). Symbols, geometry, plants, objects only.
-11. Keep it light: under 150 elements, under 30 KB, no filters with heavy blur (a simple gradient glow is fine).
+11. Keep it light: under 150 elements, under 30 KB, no heavy blur filters (a simple gradient glow is fine).
 12. Text inside the SVG is not allowed (the video shows its own captions).
+13. The three stages must look clearly different. A viewer who watches 2 seconds at a time should see three different pictures that build on one another.
 
 SELF-CHECK BEFORE YOU ANSWER
 - Does the first line start with <svg viewBox="0 0 1000 1000" ?
+- Are there three groups svg<N>-s1, svg<N>-s2, svg<N>-s3 with different content?
+- Do the stage animations use duration 6s, repeat forever, and use the 0-33-66-100% percentages?
+- Is the state at 100% equal to the state at 0%?
 - Is every class/id/keyframes name prefixed with svg<N>- ?
 - Is there any bare selector, <script>, on...= attribute, or external link? (there must be none)
-- Does every duration divide 6 seconds and repeat forever?
 Then return ONLY the SVG code.
 ```
 
-## Step 2.2 — A tiny example of a correct answer (for you to compare)
+## ধাপ 2.2 — সঠিক উত্তরের নমুনা (তুলনার জন্য)
 
-This is the **shape** of a valid file (your picture will be richer):
+এটা ৩-stage ফাইলের **কাঠামো** (আপনার ছবি আরও সমৃদ্ধ হবে):
 
 ```svg
 <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
@@ -201,39 +315,75 @@ This is the **shape** of a valid file (your picture will be richer):
       <stop offset="1" stop-color="#f5d77a" stop-opacity="0"/>
     </radialGradient>
     <style>
+      /* Stage 1: মূল প্রতীক (সবসময় আছে, শুরুতে ছোট থেকে বড় হয়) */
+      @keyframes svg3-k1 {
+        0%   { transform: scale(0.6); opacity: 0.7; }
+        30%  { transform: scale(1);   opacity: 1; }
+        90%  { transform: scale(1);   opacity: 1; }
+        100% { transform: scale(0.6); opacity: 0.7; }
+      }
+      /* Stage 2: ৩৩% এ ফোটে, ৯০% এ মিলিয়ে যায় */
+      @keyframes svg3-k2 {
+        0%, 30%   { opacity: 0; transform: scale(0.8); }
+        45%, 88%  { opacity: 1; transform: scale(1); }
+        100%      { opacity: 0; transform: scale(0.8); }
+      }
+      /* Stage 3: ৬৬% এ ফোটে, ৯০% এ মিলিয়ে যায় */
+      @keyframes svg3-k3 {
+        0%, 63%   { opacity: 0; }
+        78%, 88%  { opacity: 1; }
+        100%      { opacity: 0; }
+      }
       @keyframes svg3-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      @keyframes svg3-pulse { 0%, 100% { transform: scale(0.85); opacity: 0.4; } 50% { transform: scale(1.1); opacity: 1; } }
-      .svg3-star { animation: svg3-spin 6s linear infinite; transform-origin: 500px 500px; }
-      .svg3-halo { animation: svg3-pulse 3s ease-in-out infinite; transform-origin: 500px 500px; }
+      .svg3-s1 { animation: svg3-k1 6s ease-in-out infinite; transform-origin: 500px 500px; }
+      .svg3-s2 { animation: svg3-k2 6s ease-in-out infinite; transform-origin: 500px 500px; }
+      .svg3-s3 { animation: svg3-k3 6s ease-in-out infinite; transform-origin: 500px 500px; }
+      .svg3-ring { animation: svg3-spin 6s linear infinite; transform-origin: 500px 500px; }
     </style>
   </defs>
-  <circle class="svg3-halo" cx="500" cy="500" r="330" fill="url(#svg3-glow)"/>
-  <g class="svg3-star">
-    <rect x="320" y="320" width="360" height="360" rx="16" fill="none" stroke="#f5d77a" stroke-width="14"/>
-    <rect x="320" y="320" width="360" height="360" rx="16" fill="none" stroke="#1abc9c" stroke-width="14" transform="rotate(45 500 500)"/>
+
+  <!-- Stage 1: মূল প্রতীক -->
+  <g class="svg3-s1">
+    <rect x="400" y="400" width="200" height="200" rx="12" fill="none" stroke="#f5d77a" stroke-width="14"/>
+    <circle cx="500" cy="500" r="30" fill="#ffffff"/>
   </g>
-  <circle cx="500" cy="500" r="40" fill="#ffffff">
-    <animate attributeName="r" values="40;56;40" dur="3s" begin="0s" repeatCount="indefinite"/>
-  </circle>
+
+  <!-- Stage 2: চারপাশে ঘূর্ণায়মান নকশা -->
+  <g class="svg3-s2">
+    <g class="svg3-ring">
+      <rect x="320" y="320" width="360" height="360" rx="16" fill="none" stroke="#1abc9c" stroke-width="12" transform="rotate(45 500 500)"/>
+    </g>
+  </g>
+
+  <!-- Stage 3: সম্পূর্ণ আলো -->
+  <g class="svg3-s3">
+    <circle cx="500" cy="500" r="330" fill="url(#svg3-glow)"/>
+    <circle cx="500" cy="190" r="14" fill="#8fd3ff"/>
+    <circle cx="810" cy="500" r="14" fill="#8fd3ff"/>
+    <circle cx="500" cy="810" r="14" fill="#8fd3ff"/>
+    <circle cx="190" cy="500" r="14" fill="#8fd3ff"/>
+  </g>
 </svg>
 ```
 
-## Step 2.3 — Check each SVG before you save it
+## ধাপ 2.3 — প্রতিটি SVG সেভের আগে যাচাই
 
-- [ ] Starts with `<svg viewBox="0 0 1000 1000"` and ends with `</svg>`
-- [ ] No `<script>`, no `onclick=`/`onload=`, no `http` links, no `<image>`
-- [ ] No bare selector like `circle {` in the CSS
-- [ ] All durations are 2s / 3s / 6s and loop forever
-- [ ] No faces, eyes, hands, birds, fish
-- [ ] File name is exactly `svg<N>.svg` and the number follows the previous one (no gap)
+- [ ] `<svg viewBox="0 0 1000 1000"` দিয়ে শুরু, `</svg>` দিয়ে শেষ
+- [ ] তিনটি গ্রুপ আছে: `svg<N>-s1`, `svg<N>-s2`, `svg<N>-s3`, আর তিনটির আকৃতি আলাদা
+- [ ] stage-এর অ্যানিমেশনগুলো `6s` এবং চিরকাল চলে
+- [ ] ০% আর ১০০% এর অবস্থা একই (লুপে ঝাঁকুনি নেই)
+- [ ] `<script>`, `onclick=`/`onload=`, `http` লিংক, `<image>` নেই
+- [ ] `circle {` ধরনের খোলা selector নেই
+- [ ] মুখ, চোখ, হাত, পাখি, মাছ নেই
+- [ ] ফাইলের নাম ঠিক `svg<N>.svg` এবং আগেরটার পরের নম্বর
 
-If something fails, reply to the AI: "Fix only this problem: <problem>. Return the whole SVG again, nothing else."
+কিছু ভুল হলে AI-কে লিখুন: "Fix only this problem: <সমস্যা>. Return the whole SVG again, nothing else."
 
-## Step 2.4 — Save and upload
+## ধাপ 2.4 — সেভ ও আপলোড
 
-Save as `svg<N>.svg` → upload to `public/svg/`. Do the next number only after this one is saved.
+`svg<N>.svg` নামে সেভ করে `public/svg/`-এ আপলোড করুন। আগেরটা সেভ হলে তবেই পরেরটা বানান।
 
-> Your own `svg1.svg` / `svg2.svg` **replace** the sample pictures that came with the kit. If you make fewer SVGs than you have segments, the kit reuses them in a loop. If there is no SVG at all, a simple star appears instead.
+> আপনার `svg1.svg`, `svg2.svg` কিটের নমুনা ছবিগুলোকে **প্রতিস্থাপন** করে। segment-এর চেয়ে SVG কম হলে কিট লুপে আবার ব্যবহার করে। কোনো SVG না থাকলে একটা সাধারণ তারা দেখায়।
 
 ---
 

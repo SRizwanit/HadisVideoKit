@@ -1,64 +1,123 @@
-<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYToyNGQzODBkZi05NjVmLTRmMDQtOWIzMC0wYzE0ZTkyMmJjM2EAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaJrykQROV9v7R7sYON0LxxgAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDoyNjc3NjBkYS05ZGUzLTQ3ZTAtYmNkZi04OWNkMWY5OTg2YWRscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoXdS/G5E3CtPnUvsdeEfuBwAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggWSfLyt3uRKzeESgeF0rGXvSx9PKD4Ak+NyOUN1pr68WkZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaF+kvsOk/cW7Qem8YUFZvC0AAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCBPhdkUNCkdz+XcayqZyf9QB3JQDlRxHPOlvo/XD85HQWRuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBh/Zmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOjI0ZDM4MGRmLTk2NWYtNGYwNC05YjMwLTBjMTRlOTIyYmMzYS9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmJlMjI1YTJjLTMxNTItNGMxZC1hZmI5LWI4YTU4NjMyZjIzY3JjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCBZJ8vK3e5ErN4RKB4XSsZe9LH08oPgCT43I5Q3WmvrxaJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFgg29K1JRtMHu88ERCish9oojrGnISFOYgbLcQttvZOrqyiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggADwSLiUXsSbNyAUG8KR/sV3thC/4L3QeTVK7+OqK1jJ0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQAKy7btsUwOkLxkgjwojp3khaCvFBK+eSwiKLORgt3gm0rYxDilY8+OcEzPQdEFLIzp9UmoaC2NZ2Tl2VPmLFxw=</c2pa:manifest></metadata>
+<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="svg3-glow" cx="50%" cy="50%" r="50%">
       <stop offset="0" stop-color="#fff6c8" stop-opacity="0.9"/>
       <stop offset="1" stop-color="#f5d77a" stop-opacity="0"/>
     </radialGradient>
     <style>
+      /* Stage 1 (0-2s): the heart of intention appears */
+      @keyframes svg3-k1 {
+        0%   { transform: scale(0.65); opacity: 0.7; }
+        30%  { transform: scale(1);    opacity: 1; }
+        90%  { transform: scale(1);    opacity: 1; }
+        100% { transform: scale(0.65); opacity: 0.7; }
+      }
+      /* Stage 2 (2-4s): the deed grows from it (stem and leaves) */
+      @keyframes svg3-k2 {
+        0%, 30%  { opacity: 0; }
+        42%, 88% { opacity: 1; }
+        100%     { opacity: 0; }
+      }
+      /* Stage 3 (4-6s): the reward blooms */
+      @keyframes svg3-k3 {
+        0%, 63%  { opacity: 0; }
+        75%, 88% { opacity: 1; }
+        100%     { opacity: 0; }
+      }
+      @keyframes svg3-draw {
+        0%, 30%   { stroke-dashoffset: 1; }
+        48%, 100% { stroke-dashoffset: 0; }
+      }
+      @keyframes svg3-leaf {
+        0%, 40%   { transform: scale(0); }
+        54%       { transform: scale(1.12); }
+        62%, 100% { transform: scale(1); }
+      }
+      @keyframes svg3-bloom {
+        0%, 63%   { transform: scale(0.2); }
+        80%       { transform: scale(1.12); }
+        88%, 100% { transform: scale(1); }
+      }
+      @keyframes svg3-beat {
+        0%, 100% { transform: scale(0.94); }
+        50%      { transform: scale(1.06); }
+      }
       @keyframes svg3-pulse {
-        0%, 100% { transform: scale(0.8); opacity: 0.45; }
+        0%, 100% { transform: scale(0.9); opacity: 0.55; }
         50%      { transform: scale(1.1); opacity: 1; }
       }
-      @keyframes svg3-flicker {
-        0%, 100% { transform: scale(1, 0.92); }
-        50%      { transform: scale(1, 1.06); }
-      }
       @keyframes svg3-twinkle {
-        0%, 100% { opacity: 0.15; }
-        50%      { opacity: 1; }
+        0%, 100% { opacity: 0.2; transform: scale(0.7); }
+        50%      { opacity: 1;   transform: scale(1.2); }
       }
-      .svg3-halo { animation: svg3-pulse 3s ease-in-out infinite; transform-origin: 500px 490px; }
-      .svg3-handle { fill: none; stroke: #f5d77a; stroke-width: 12; stroke-linecap: round; }
-      .svg3-cap { fill: #f5d77a; fill-opacity: 0.9; stroke: #ffffff; stroke-width: 8; stroke-linejoin: round; }
-      .svg3-body { fill: #f5d77a; fill-opacity: 0.12; stroke: #f5d77a; stroke-width: 12; stroke-linejoin: round; }
-      .svg3-bar { fill: none; stroke: #1abc9c; stroke-width: 10; stroke-linecap: round; }
-      .svg3-base { fill: #f5d77a; fill-opacity: 0.9; stroke: #ffffff; stroke-width: 8; stroke-linejoin: round; }
-      .svg3-knob { fill: #ffffff; }
-      .svg3-flame { animation: svg3-flicker 2s ease-in-out infinite; transform-origin: 500px 575px; }
-      .svg3-flame-out { fill: #f0c040; }
-      .svg3-flame-in { fill: #ffffff; }
-      .svg3-star { fill: #8fd3ff; animation: svg3-twinkle 3s ease-in-out infinite; }
-      .svg3-d1 { animation-delay: -0.375s; }
-      .svg3-d2 { animation-delay: -0.75s; }
-      .svg3-d3 { animation-delay: -1.125s; }
-      .svg3-d4 { animation-delay: -1.5s; }
-      .svg3-d5 { animation-delay: -1.875s; }
-      .svg3-d6 { animation-delay: -2.25s; }
-      .svg3-d7 { animation-delay: -2.625s; }
+      @keyframes svg3-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+      .svg3-s1 { animation: svg3-k1 6s ease-in-out infinite; transform-origin: 500px 720px; }
+      .svg3-s2 { animation: svg3-k2 6s ease-in-out infinite; }
+      .svg3-s3 { animation: svg3-k3 6s ease-in-out infinite; }
+
+      .svg3-halo1 { animation: svg3-pulse 3s ease-in-out infinite; transform-origin: 500px 720px; }
+      .svg3-heart { animation: svg3-beat 3s ease-in-out infinite; transform-origin: 500px 720px; }
+
+      .svg3-stem  { stroke-dasharray: 1; stroke-dashoffset: 1; animation: svg3-draw 6s ease-in-out infinite; }
+      .svg3-leafL { animation: svg3-leaf 6s ease-in-out infinite; transform-origin: 500px 520px; }
+      .svg3-leafR { animation: svg3-leaf 6s ease-in-out infinite; transform-origin: 500px 520px; }
+
+      .svg3-halo3  { animation: svg3-pulse 3s ease-in-out infinite; transform-origin: 500px 330px; }
+      .svg3-flower { animation: svg3-bloom 6s ease-in-out infinite; transform-origin: 500px 330px; }
+      .svg3-ring   { animation: svg3-spin 6s linear infinite; transform-origin: 500px 330px; }
+      .svg3-sp1 { animation: svg3-twinkle 2s ease-in-out infinite;       transform-origin: 330px 180px; }
+      .svg3-sp2 { animation: svg3-twinkle 2s ease-in-out infinite -0.7s; transform-origin: 670px 180px; }
+      .svg3-sp3 { animation: svg3-twinkle 3s ease-in-out infinite -1.4s; transform-origin: 260px 330px; }
+      .svg3-sp4 { animation: svg3-twinkle 3s ease-in-out infinite -0.5s; transform-origin: 740px 330px; }
+      .svg3-sp5 { animation: svg3-twinkle 2s ease-in-out infinite -1.2s; transform-origin: 380px 480px; }
+      .svg3-sp6 { animation: svg3-twinkle 2s ease-in-out infinite -0.3s; transform-origin: 620px 480px; }
     </style>
   </defs>
 
-  <circle class="svg3-halo" cx="500" cy="490" r="300" fill="url(#svg3-glow)"/>
+  <!-- Stage 1: the heart of intention, glowing -->
+  <g class="svg3-s1">
+    <circle class="svg3-halo1" cx="500" cy="720" r="190" fill="url(#svg3-glow)"/>
+    <g class="svg3-heart">
+      <path d="M500 810 C375 725 375 615 450 615 C482 615 500 638 500 662 C500 638 518 615 550 615 C625 615 625 725 500 810 Z" fill="#f5d77a" fill-opacity="0.28" stroke="#f5d77a" stroke-width="12" stroke-linejoin="round"/>
+      <path d="M500 780 C415 722 415 650 458 650 C480 650 500 668 500 686 C500 668 520 650 542 650 C585 650 585 722 500 780 Z" fill="#1abc9c" fill-opacity="0.2" stroke="#2ecc71" stroke-width="6" stroke-linejoin="round"/>
+    </g>
+    <circle cx="500" cy="715" r="20" fill="#ffffff"/>
+  </g>
 
-  <polygon class="svg3-star" points="0,-22 6,-6 22,0 6,6 0,22 -6,6 -22,0 -6,-6" transform="translate(833 628)"/>
-  <polygon class="svg3-star svg3-d1" points="0,-22 6,-6 22,0 6,6 0,22 -6,6 -22,0 -6,-6" transform="translate(638 823)"/>
-  <polygon class="svg3-star svg3-d2" points="0,-22 6,-6 22,0 6,6 0,22 -6,6 -22,0 -6,-6" transform="translate(362 823)"/>
-  <polygon class="svg3-star svg3-d3" points="0,-22 6,-6 22,0 6,6 0,22 -6,6 -22,0 -6,-6" transform="translate(167 628)"/>
-  <polygon class="svg3-star svg3-d4" points="0,-22 6,-6 22,0 6,6 0,22 -6,6 -22,0 -6,-6" transform="translate(167 352)"/>
-  <polygon class="svg3-star svg3-d5" points="0,-22 6,-6 22,0 6,6 0,22 -6,6 -22,0 -6,-6" transform="translate(362 157)"/>
-  <polygon class="svg3-star svg3-d6" points="0,-22 6,-6 22,0 6,6 0,22 -6,6 -22,0 -6,-6" transform="translate(638 157)"/>
-  <polygon class="svg3-star svg3-d7" points="0,-22 6,-6 22,0 6,6 0,22 -6,6 -22,0 -6,-6" transform="translate(833 352)"/>
+  <!-- Stage 2: the deed grows out of the intention (stem and two leaves) -->
+  <g class="svg3-s2">
+    <path class="svg3-stem" pathLength="1" d="M500 615 L500 400" fill="none" stroke="#2ecc71" stroke-width="12" stroke-linecap="round"/>
+    <g class="svg3-leafL">
+      <path d="M500 540 Q405 525 385 440 Q485 450 500 540 Z" fill="#2ecc71" fill-opacity="0.35" stroke="#2ecc71" stroke-width="8" stroke-linejoin="round"/>
+    </g>
+    <g class="svg3-leafR">
+      <path d="M500 500 Q595 485 615 400 Q515 410 500 500 Z" fill="#1abc9c" fill-opacity="0.35" stroke="#1abc9c" stroke-width="8" stroke-linejoin="round"/>
+    </g>
+  </g>
 
-  <path class="svg3-handle" d="M440 230 C440 130 560 130 560 230"/>
-  <path class="svg3-body" d="M400 290 L380 400 Q370 490 380 580 L400 690 L600 690 L620 580 Q630 490 620 400 L600 290 Z"/>
-  <path class="svg3-bar" d="M460 290 Q440 490 460 690"/>
-  <path class="svg3-bar" d="M540 290 Q560 490 540 690"/>
-  <polygon class="svg3-cap" points="400,290 440,230 560,230 600,290"/>
-  <polygon class="svg3-base" points="400,690 600,690 580,740 420,740"/>
-  <circle class="svg3-knob" cx="500" cy="765" r="14"/>
-
-  <g class="svg3-flame">
-    <path class="svg3-flame-out" d="M500 390 C545 450 560 510 500 575 C440 510 455 450 500 390 Z"/>
-    <path class="svg3-flame-in" d="M500 450 C522 485 528 520 500 550 C472 520 478 485 500 450 Z"/>
+  <!-- Stage 3: the reward blooms into a golden flower with light -->
+  <g class="svg3-s3">
+    <circle class="svg3-halo3" cx="500" cy="330" r="240" fill="url(#svg3-glow)"/>
+    <g class="svg3-ring">
+      <circle cx="500" cy="330" r="150" fill="none" stroke="#8fd3ff" stroke-width="5" stroke-dasharray="10 18" opacity="0.8"/>
+    </g>
+    <g class="svg3-flower">
+      <ellipse cx="500" cy="262" rx="26" ry="62" fill="#f5d77a" fill-opacity="0.35" stroke="#f5d77a" stroke-width="8" transform="rotate(0 500 330)"/>
+      <ellipse cx="500" cy="262" rx="26" ry="62" fill="#f0c040" fill-opacity="0.35" stroke="#f0c040" stroke-width="8" transform="rotate(45 500 330)"/>
+      <ellipse cx="500" cy="262" rx="26" ry="62" fill="#f5d77a" fill-opacity="0.35" stroke="#f5d77a" stroke-width="8" transform="rotate(90 500 330)"/>
+      <ellipse cx="500" cy="262" rx="26" ry="62" fill="#f0c040" fill-opacity="0.35" stroke="#f0c040" stroke-width="8" transform="rotate(135 500 330)"/>
+      <ellipse cx="500" cy="262" rx="26" ry="62" fill="#f5d77a" fill-opacity="0.35" stroke="#f5d77a" stroke-width="8" transform="rotate(180 500 330)"/>
+      <ellipse cx="500" cy="262" rx="26" ry="62" fill="#f0c040" fill-opacity="0.35" stroke="#f0c040" stroke-width="8" transform="rotate(225 500 330)"/>
+      <ellipse cx="500" cy="262" rx="26" ry="62" fill="#f5d77a" fill-opacity="0.35" stroke="#f5d77a" stroke-width="8" transform="rotate(270 500 330)"/>
+      <ellipse cx="500" cy="262" rx="26" ry="62" fill="#f0c040" fill-opacity="0.35" stroke="#f0c040" stroke-width="8" transform="rotate(315 500 330)"/>
+      <circle cx="500" cy="330" r="30" fill="#ffffff"/>
+    </g>
+    <circle class="svg3-sp1" cx="330" cy="180" r="9" fill="#ffffff"/>
+    <circle class="svg3-sp2" cx="670" cy="180" r="9" fill="#f0c040"/>
+    <circle class="svg3-sp3" cx="260" cy="330" r="8" fill="#8fd3ff"/>
+    <circle class="svg3-sp4" cx="740" cy="330" r="8" fill="#ffffff"/>
+    <circle class="svg3-sp5" cx="380" cy="480" r="7" fill="#f5d77a"/>
+    <circle class="svg3-sp6" cx="620" cy="480" r="7" fill="#2ecc71"/>
   </g>
 </svg>
