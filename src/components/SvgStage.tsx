@@ -4,6 +4,7 @@ import { useHadisTimestamp } from "../lib/loadHadis";
 import { computeNightFactor } from "../lib/dayNight";
 import { useSvgInventory } from "../lib/svgInventory";
 import { useSvgSource } from "../lib/svgLoad";
+import { useInfographicMix } from "../lib/useInfographicMix";
 import { pickSvgNames } from "../lib/svgPicker";
 import { sanitizeSvg } from "../lib/svgSanitize";
 import { floatOffset, stageGlow } from "../lib/svgStage";
@@ -114,10 +115,12 @@ export const SvgStage: React.FC<SvgStageProps> = ({
 }) => {
   const currentFrame = useCurrentFrame();
   const video = useVideoConfig();
-  const L = computeLayout(size?.width ?? video.width, size?.height ?? video.height);
 
   // ভিডিওর পরম ফ্রেম (Intro-সহ)
   const absFrame = frame ?? currentFrame + frameOffset;
+  // ইনফোগ্রাফিক চলার সময় (Portrait) SVG ছোট হয়ে উপরে থাকে; `infographics` না থাকলে mix = 0 → লেআউট আগের মতোই
+  const infoMix = useInfographicMix(hadisId, timing, absFrame);
+  const L = computeLayout(size?.width ?? video.width, size?.height ?? video.height, infoMix);
 
   const nightFactor = computeNightFactor({
     frame: absFrame,

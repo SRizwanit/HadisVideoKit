@@ -12,8 +12,9 @@ import type { ThemeId } from "../types";
  *   উপরে  `Header`   (Part 7: লোগো + অ্যাপের নাম + "আজকের হাদিস" + "(কিতাব) নং : (সংখ্যা)")
  *   মাঝে  `SvgStage` (Part 9K–9L: সেগমেন্টের SVG, glow + ভাসা + cross-fade; ভেতরে `AnimatedSvg` ও `svgPicker`)
  *   নিচে  `Caption`  (Part 10: রঙিন অ্যানিমেটেড ক্যাপশন)
- *   ঐচ্ছিক: JSON-এ `infographics` থাকলে ওই সময়ে `Infographic` কার্ড `svgBox`-এর ঠিক উপরে ফোটে (stage স্লটের ভেতরেই — স্লটের তালিকা অপরিবর্তিত);
- *   না থাকলে বা সময় না হলে কিছুই আঁকে না, তাই ভিডিও আগের মতোই।
+ *   ঐচ্ছিক: JSON-এ `infographics` থাকলে ওই সময়ে `Infographic` কার্ড নিজের বক্সে (`layout.infoBox`) ফোটে (stage স্লটের ভেতরেই — স্লটের তালিকা অপরিবর্তিত):
+ *     Portrait → SVG ছোট হয়ে উপরে, কার্ড তার নিচে, ক্যাপশন একই; Landscape → SVG একই, ডান কলামে উপরে কার্ড + নিচে ছোট ক্যাপশন-বক্স।
+ *     লেআউট বদল `useInfographicMix` (SvgStage ও Caption একই সংখ্যা পায়)। না থাকলে বা সময় না হলে কিছুই বদলায় না — ভিডিও আগের মতোই।
  *
  * ⚠️ এটা Main `<Sequence from={timing.introFrames}>`-এর ভেতরে বসে, তাই `useCurrentFrame()` ০ থেকে শুরু হয়।
  *    তিনটাতেই `frameOffset = timing.introFrames` যায় (Part 7 নোট) — না হলে দিন-রাতের রঙ, SVG ও ক্যাপশনের সেগমেন্ট ভুল হতো।

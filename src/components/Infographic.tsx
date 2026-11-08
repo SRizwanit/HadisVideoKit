@@ -20,13 +20,16 @@ import { FitText } from "./FitText";
 import { RIBBON_INK } from "./Ribbon";
 
 /**
- * ইনফোগ্রাফিক: timestamp JSON-এর `infographics` থেকে নির্দিষ্ট সময়ে SVG-র জায়গায় (`svgBox`) তথ্য-কার্ড ফোটায়।
+ * ইনফোগ্রাফিক: timestamp JSON-এর `infographics` থেকে নির্দিষ্ট সময়ে তথ্য-কার্ড ফোটায় — `layout.infoBox`-এ (আয়তাকার)।
+ *  - Portrait: SVG তখন ছোট হয়ে উপরে থাকে (`SvgStage`), কার্ড তার ঠিক নিচে; ক্যাপশন নিজের জায়গায়, পুরো আকারে
+ *  - Landscape: SVG বাঁয়ে একই; ডান কলামের উপরে কার্ড, তার নিচে ক্যাপশন-বক্স (ছোট হয়ে)
+ *  - SVG/ক্যাপশনের লেআউট বদল `useInfographicMix` → `computeLayout(w, h, mix)` দিয়ে (সবাই একই সংখ্যা পায়)
  *  - steps   → ধাপে ধাপে ক্রম (সংখ্যা-ব্যাজ + মাঝে তীর)
  *  - list    → সংখ্যা-দেওয়া পয়েন্ট
  *  - compare → বাঁ/ডান দুই কলাম
  * JSON-এ `infographics` না থাকলে বা এখন কোনো ইনফোগ্রাফিকের সময় না হলে **কিছুই আঁকে না** (null) — ভিডিও আগের মতোই।
- * কার্ডটা অস্বচ্ছ (নিচের SVG ঢেকে দেয়), পাশের `Header`/`Caption` ঢাকে না — কারণ ঠিক `svgBox`-এর ভেতরেই থাকে।
- * সব মাপ `svgBox.size`-এর সমানুপাতিক → 4K = ঠিক ২× HD। কোনো CSS transition নেই — সব ফ্রেম থেকে (render-safe)।
+ * কার্ড SVG বা ক্যাপশন ঢাকে না — নিজের আলাদা বক্সে বসে।
+ * সব মাপ কার্ডের ছোট দিকের সমানুপাতিক → 4K = ঠিক ২× HD। কোনো CSS transition নেই — সব ফ্রেম থেকে (render-safe)।
  * Main `<Sequence from={intro}>`-এর ভেতরে বসালে `frameOffset={timing.introFrames}` দিতে হয় (`MainScene` দেয়)।
  */
 
@@ -159,12 +162,16 @@ const InfographicCard: React.FC<{
   g: FrameInfographic;
   frame: number;
   p: Palette;
-  S: number;
-}> = ({ g, frame, p, S }) => {
+  /** কার্ডের প্রস্থ ও উচ্চতা (`layout.infoBox`) — আয়তাকার */
+  W: number;
+  H: number;
+}> = ({ g, frame, p, W, H }) => {
   const visibility = infographicVisibility(g, frame);
+  // সব অনুপাত ছোট দিক ধরে (4K = ঠিক ২× HD)
+  const S = Math.min(W, H);
   const pad = S * 0.05;
-  const innerW = S - pad * 2;
-  const innerH = S - pad * 2;
+  const innerW = W - pad * 2;
+  const innerH = H - pad * 2;
   const titleH = g.title ? S * 0.12 : 0;
   const titleGap = g.title ? S * 0.025 : 0;
   const bodyH = innerH - titleH - titleGap;
@@ -271,8 +278,8 @@ const InfographicCard: React.FC<{
       data-infographic-index={g.index}
       style={{
         position: "relative",
-        width: S,
-        height: S,
+        width: W,
+        height: H,
         boxSizing: "border-box",
         padding: pad,
         borderRadius: S * 0.06,
@@ -333,11 +340,11 @@ export const Infographic: React.FC<InfographicProps> = ({ hadisId, theme, timing
     timeMode: timing.timeMode,
   });
   const p = getThemeColors(theme, nightFactor);
-  const { x, y, size: S } = L.svgBox;
+  const { x, y, width: W, height: H } = L.infoBox;
 
   return (
-    <div style={{ position: "absolute", left: x, top: y, width: S, height: S }}>
-      <InfographicCard g={active} frame={absFrame} p={p} S={S} />
+    <div style={{ position: "absolute", left: x, top: y, width: W, height: H }}>
+      <InfographicCard g={active} frame={absFrame} p={p} W={W} H={H} />
     </div>
   );
 };

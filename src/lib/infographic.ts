@@ -116,3 +116,47 @@ export function infographicItemProgress(item: FrameInfographicItem, frame: numbe
 export function compareSideOf(item: FrameInfographicItem, index: number): "left" | "right" {
   return item.side ?? (index % 2 === 0 ? "left" : "right");
 }
+
+/** পাশাপাশি দুই কার্ডের মাঝের ফাঁক এর চেয়ে ছোট (ফ্রেম) হলে লেআউট ছোটই থাকে — SVG বারবার লাফায় না */
+export const INFOGRAPHIC_MERGE_GAP_FRAMES = 45;
+
+/**
+ * লেআউট কতটা "ইনফোগ্রাফিক-মোডে" (০ = স্বাভাবিক, ১ = SVG ছোট/ক্যাপশন ছোট)।
+ * কাছাকাছি কার্ডগুলো (ফাঁক ≤ `INFOGRAPHIC_MERGE_GAP_FRAMES`) এক দল ধরা হয়; দলের শুরুতে মসৃণ ছোট হয়, শেষে মসৃণ বড় হয়।
+ * কোনো কার্ড না থাকলে সবসময় ০ — তাই `infographics` ছাড়া ভিডিও আগের মতোই।
+ */
+export function infographicLayoutMix(list: FrameInfographic[], frame: number): number {
+  if (list.length === 0) return 0;
+  let gStart = list[0].startFrame;
+  let gEnd = list[0].endFrame;
+  const groups: Array<[number, number]> = [];
+  for (let i = 1; i < list.length; i++) {
+    const g = list[i];
+    if (g.startFrame - gEnd <= INFOGRAPHIC_MERGE_GAP_FRAMES) {
+      gEnd = Math.max(gEnd, g.endFrame);
+    } else {
+      groups.push([gStart, gEnd]);
+      gStart = g.startFrame;
+      gEnd = g.endFrame;
+    }
+  }
+  groups.push([gStart, gEnd]);
+
+  for (const [a, b] of groups) {
+    if (frame < a || frame >= b) continue;
+    const fade = Math.max(0, Math.min(INFOGRAPHIC_FADE_FRAMES, Math.floor((b - a) / 3)));
+    if (fade <= 0) return 1;
+    const inP = interpolate(frame, [a, a + fade], [0, 1], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.inOut(Easing.cubic),
+    });
+    const outP = interpolate(frame, [b - fade, b], [1, 0], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.inOut(Easing.cubic),
+    });
+    return Math.min(inP, outP);
+  }
+  return 0;
+}

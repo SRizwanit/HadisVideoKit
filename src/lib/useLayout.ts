@@ -22,6 +22,11 @@ export type Layout = {
   headerHeight: number;
   svgBox: SquareBox;
   captionBox: Box;
+  /**
+   * ইনফোগ্রাফিক-কার্ডের বক্স (সবসময় চূড়ান্ত জায়গায়; কার্ড না থাকলে আঁকাই হয় না)।
+   * Portrait: ছোট হওয়া SVG-র ঠিক নিচে (পুরনো SVG-বক্সের নিচ পর্যন্ত); Landscape: ডান কলামের উপরের অংশ।
+   */
+  infoBox: Box;
   fontSizes: {
     appName: number;
     tagline: number;
@@ -35,7 +40,19 @@ export type Layout = {
 
 const BASE = 1080;
 
-export function computeLayout(width: number, height: number): Layout {
+/** ইনফোগ্রাফিক চলার সময় Portrait-এ SVG-র আকার (স্বাভাবিক আকারের ভগ্নাংশ) */
+export const INFOGRAPHIC_SVG_SHRINK = 0.34;
+/** Landscape-এ ইনফোগ্রাফিক-কার্ড ডান কলামের উচ্চতার কত অংশ নেয় (বাকিটা ক্যাপশন) */
+export const INFOGRAPHIC_LANDSCAPE_SHARE = 0.56;
+
+const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+
+/**
+ * @param infoMix ইনফোগ্রাফিক-লেআউটের অগ্রগতি ০–১ (`infographicLayoutMix`; ডিফল্ট ০ = আগের লেআউট হুবহু)।
+ *   Portrait: SVG ছোট হয়ে উপরে থাকে (বর্গ, মাঝখানে), ক্যাপশন একই। Landscape: SVG একই, ক্যাপশন-বক্স ছোট হয়ে নিচে নামে।
+ */
+export function computeLayout(width: number, height: number, infoMix = 0): Layout {
+  const mix = Math.min(1, Math.max(0, Number.isFinite(infoMix) ? infoMix : 0));
   const isPortrait = height >= width;
   const unit = Math.min(width, height) / BASE;
 
@@ -45,20 +62,32 @@ export function computeLayout(width: number, height: number): Layout {
     const top = height * 0.035;
     const gap = height * 0.015;
     const headerHeight = height * 0.18;
-    const svgSize = Math.min(height * 0.43, width - padding * 2);
+    const fullSvgSize = Math.min(height * 0.43, width - padding * 2);
     const captionHeight = height * 0.24;
+    const svgSize = lerp(fullSvgSize, fullSvgSize * INFOGRAPHIC_SVG_SHRINK, mix);
 
     const headerBox: Box = { x: padding, y: top, width: width - padding * 2, height: headerHeight };
+    const svgY = headerBox.y + headerBox.height + gap;
     const svgBox: SquareBox = {
       x: (width - svgSize) / 2,
-      y: headerBox.y + headerBox.height + gap,
+      y: svgY,
       size: svgSize,
     };
+    // ক্যাপশন সবসময় স্বাভাবিক জায়গায় (SVG ছোট হলেও নড়ে না)
     const captionBox: Box = {
       x: padding,
-      y: svgBox.y + svgBox.size + gap,
+      y: svgY + fullSvgSize + gap,
       width: width - padding * 2,
       height: captionHeight,
+    };
+    // ইনফোগ্রাফিক-কার্ড: ছোট SVG-র নিচে, পুরনো SVG-বক্সের নিচ পর্যন্ত
+    const infoGap = height * 0.012;
+    const infoY = svgY + fullSvgSize * INFOGRAPHIC_SVG_SHRINK + infoGap;
+    const infoBox: Box = {
+      x: padding,
+      y: infoY,
+      width: width - padding * 2,
+      height: Math.max(1, svgY + fullSvgSize - infoY),
     };
     return {
       isPortrait,
@@ -71,6 +100,7 @@ export function computeLayout(width: number, height: number): Layout {
       headerHeight,
       svgBox,
       captionBox,
+      infoBox,
       fontSizes: {
         appName: 46 * unit,
         tagline: 40 * unit,
@@ -95,11 +125,16 @@ export function computeLayout(width: number, height: number): Layout {
   const svgSize = Math.min(bodyHeight, width * 0.4);
   const svgBox: SquareBox = { x: padding, y: bodyY + (bodyHeight - svgSize) / 2, size: svgSize };
   const captionX = svgBox.x + svgSize + width * 0.03;
+  const captionW = width - padding - captionX;
+  // ইনফোগ্রাফিক: ডান কলামের উপরে কার্ড, ক্যাপশন-বক্স ছোট হয়ে নিচে নামে (SVG বাঁয়ে একই)
+  const infoH = bodyHeight * INFOGRAPHIC_LANDSCAPE_SHARE;
+  const infoGap = height * 0.025;
+  const infoBox: Box = { x: captionX, y: bodyY, width: captionW, height: infoH };
   const captionBox: Box = {
     x: captionX,
-    y: bodyY,
-    width: width - padding - captionX,
-    height: bodyHeight,
+    y: lerp(bodyY, bodyY + infoH + infoGap, mix),
+    width: captionW,
+    height: lerp(bodyHeight, bodyHeight - infoH - infoGap, mix),
   };
   return {
     isPortrait,
@@ -112,6 +147,7 @@ export function computeLayout(width: number, height: number): Layout {
     headerHeight,
     svgBox,
     captionBox,
+    infoBox,
     fontSizes: {
       appName: 40 * unit,
       tagline: 34 * unit,

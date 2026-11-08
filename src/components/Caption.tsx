@@ -17,6 +17,7 @@ import {
 import { computeNightFactor } from "../lib/dayNight";
 import { useHadisTimestamp } from "../lib/loadHadis";
 import { buildFrameSegments, type FrameSegment, type Timing } from "../lib/timing";
+import { useInfographicMix } from "../lib/useInfographicMix";
 import { computeLayout, type Layout } from "../lib/useLayout";
 import { getThemeColors, mixColors, parseColor, type Palette } from "../themes";
 import type { ThemeId } from "../types";
@@ -56,6 +57,8 @@ export type CaptionViewProps = {
   absFrame: number;
   /** লেআউট যে সাইজের হিসাবে হবে (ভিডিওর সাইজ, বা প্রিভিউয়ে অন্য সাইজ) */
   size: { width: number; height: number };
+  /** ইনফোগ্রাফিক-লেআউট মিশ্রণ ০–১ (Landscape-এ ক্যাপশন-বক্স ছোট হয়ে নামে)। ডিফল্ট ০ = আগের লেআউট */
+  layoutMix?: number;
 };
 
 export type CaptionProps = {
@@ -307,8 +310,8 @@ const CaptionBox: React.FC<{
 };
 
 /** সেগমেন্ট + ফ্রেম ধরে ক্যাপশন আঁকে (ডেটা-লোড ছাড়া — প্রিভিউ সরাসরি এটা ডাকে) */
-export const CaptionView: React.FC<CaptionViewProps> = ({ segments, theme, timing, absFrame, size }) => {
-  const L0 = computeLayout(size.width, size.height);
+export const CaptionView: React.FC<CaptionViewProps> = ({ segments, theme, timing, absFrame, size, layoutMix = 0 }) => {
+  const L0 = computeLayout(size.width, size.height, layoutMix);
   // নিরাপদ মার্জিন: বাক্স layout.safe-এর বাইরে গেলে ভেতরে টেনে আনা (এখনকার layout-এ আগে থেকেই ভেতরে, তাই কিছু বদলায় না)
   const L: Layout = { ...L0, captionBox: clampBoxToSafe(L0.captionBox, L0.safe, { width: L0.width, height: L0.height }) };
 
@@ -347,6 +350,8 @@ export const Caption: React.FC<CaptionProps> = ({ hadisId, theme, timing, frameO
     [timestamp, timing.fps, timing.introFrames, timing.mainFrames, timing.outroFrames, timing.totalFrames],
   );
 
+  const layoutMix = useInfographicMix(hadisId, timing, absFrame);
+
   return (
     <CaptionView
       segments={segments}
@@ -354,6 +359,7 @@ export const Caption: React.FC<CaptionProps> = ({ hadisId, theme, timing, frameO
       timing={timing}
       absFrame={absFrame}
       size={size ?? { width: video.width, height: video.height }}
+      layoutMix={layoutMix}
     />
   );
 };

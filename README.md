@@ -131,7 +131,8 @@ npm run check      # বান্ডল + ছবি রেন্ডার (out/c
 - `type`: `steps` (ধাপ + তীর) · `list` (সংখ্যা-দেওয়া পয়েন্ট) · `compare` (বাঁ/ডান দুই কলাম)
 - `start`/`end`: সেকেন্ড, `.wav`-এর শুরু থেকে (segment-এর মতোই)। একটার উপর আরেকটা চলবে না, সময়ের ক্রমে দিতে হবে (সর্বোচ্চ ৮টা)
 - `items`: ২–৬টা, প্রতিটায় ছোট `text` (ভালো ৪০ অক্ষরের মধ্যে); ঐচ্ছিক `at` (সেকেন্ড) — না দিলে কার্ডের সময়ে সমান ভাগে ফোটে; `compare`-এ ঐচ্ছিক `side`
-- কোড: `src/components/Infographic.tsx`, `src/lib/infographic.ts` (পিওর হিসাব), স্কিমা `src/types.ts`; `MainScene`-এর stage স্লটের ভেতরে `svgBox`-এর ঠিক উপরে বসে (Header/Caption ঢাকে না)
+- **লেআউট (SVG/ক্যাপশন ঢাকে না):** কার্ড চলার সময় **Portrait**-এ SVG মসৃণভাবে ছোট (আগের ~৩৪%) হয়ে উপরে থাকে আর কার্ড তার ঠিক নিচে বসে; ক্যাপশন নিজের জায়গায় পুরো আকারে থাকে। **Landscape**-এ SVG বাঁয়ে একই থাকে; ডান কলামের উপরে কার্ড, তার নিচে ক্যাপশন-বক্স ছোট হয়ে নামে। কার্ড শেষ হলে সব আগের মাপে ফেরে। কাছাকাছি কার্ড (ফাঁক ≤ ১.৫ সেকেন্ড) এক দল ধরা হয়, তাই মাঝে SVG লাফায় না।
+- কোড: `src/components/Infographic.tsx`, `src/lib/infographic.ts` (পিওর হিসাব), `src/lib/useInfographicMix.ts`, `src/lib/useLayout.ts` (`computeLayout(w, h, mix)`, `infoBox`), স্কিমা `src/types.ts`; `SvgStage` ও `Caption` একই mix পায়; `MainScene`-এর stage স্লটের ভেতরে বসে
 - AI দিয়ে বানাতে: `AI_PROMPTS.md` Prompt 1-এ `INFOGRAPHIC_WANTED: yes` (নিয়ম ১২)। ⚠️ লেখা শুধু হাদিসের নিজের কথা থেকে — প্রকাশের আগে নিজে যাচাই করো।
 
 ## ভিজ্যুয়াল হুক (প্রথম মুহূর্তেই বিষয়ের SVG এনিমেশন)
