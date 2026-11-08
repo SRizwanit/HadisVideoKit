@@ -37,6 +37,11 @@ export const hadisVideoSchema = z.object({
   orientation: orientationSchema,
   introSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS),
   outroSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS),
+  /**
+   * Hook দৃশ্যের সেকেন্ড — ব্যবহারকারী দেয় না; `calculateMetadata` hook.wav-এর দৈর্ঘ্য থেকে বসায়
+   * (না থাকলে/০ = Hook নেই)। যাতে কম্পোনেন্টের `timingFromConfig` ঠিক একই সংখ্যা পায়।
+   */
+  hookSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS).optional(),
 });
 
 export type HadisVideoProps = z.infer<typeof hadisVideoSchema>;

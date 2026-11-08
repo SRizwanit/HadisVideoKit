@@ -1,4 +1,7 @@
 import { TRANSITION_FRAMES } from "../constants";
+import { fitHookSeconds, planIntroOutroAudio } from "../lib/introOutroAudio";
+import { computeTiming, introOnlyFrames, timingFromConfig } from "../lib/timing";
+import { hookWordStarts } from "../scenes/HookScene";
 import {
   MAIN_FADE_FRAMES,
   MAIN_FADE_SCALE_START,
@@ -183,6 +186,60 @@ const DEFS: Def[] = [
         expect(c.intro === null && c.outro === null && c.main?.from === 0 && c.main.frames === 180, "দুটোই 0"),
         expect(d.intro === null && d.outro === null && d.main?.from === 0, "NaN/ঋণাত্মক"),
         expect(planScenes(90, 0, 120).main === null, "Main 0 → null"),
+      );
+    },
+  },
+  {
+    id: "scenes-hook",
+    title: "Hook: Hook 126 · Intro 90 · Main 180 · Outro 120 → 0 / 126 / 216 / 396",
+    rule: "introFrames = Hook + Intro (Main-এর শুরু); Hook না থাকলে আগের মতোই; Hook ছাড়া Intro ০ হলে Hook → Main",
+    run: () => {
+      const p = planScenes(216, 180, 120, 126);
+      const noHook = planScenes(90, 180, 120);
+      const hookOnly = planScenes(126, 180, 120, 126);
+      return first(
+        expect(p.hook?.from === 0 && p.hook.frames === 126, "hook"),
+        expect(p.intro?.from === 126 && p.intro.frames === 90, "intro Hook-এর পরে"),
+        expect(p.main?.from === 216 && p.outro?.from === 396, "main/outro"),
+        expect(noHook.hook === null && noHook.intro?.from === 0 && noHook.intro.frames === 90, "Hook ছাড়া অপরিবর্তিত"),
+        expect(hookOnly.hook?.frames === 126 && hookOnly.intro === null && hookOnly.main?.from === 126, "Intro ০"),
+        expect(planScenes(50, 180, 120, 999).intro === null, "Hook > Intro+Hook ছেঁটে যায়"),
+      );
+    },
+  },
+  {
+    id: "hook-timing-audio",
+    title: "Hook সময়: hook.wav ৪.০৮s → ৪.২s (১২৬ ফ্রেম); অডিও-কিউ Hook → Intro → Outro",
+    rule: "computeTiming = timingFromConfig; ভয়েস Hook ০, Intro Hook-এর পরে, Outro Main-এর পরে; অডিও না থাকলে Hook ০",
+    run: () => {
+      const hs = fitHookSeconds(4.08);
+      const t = computeTiming({ introSeconds: 3, outroSeconds: 4, audioSeconds: 14, hookSeconds: hs });
+      const t2 = timingFromConfig(t.totalFrames, { introSeconds: 3, outroSeconds: 4, hookSeconds: hs });
+      const a = planIntroOutroAudio(t);
+      const plain = computeTiming({ introSeconds: 3, outroSeconds: 4, audioSeconds: 14 });
+      return first(
+        expect(near(hs, 4.2) && t.hookFrames === 126 && t.introFrames === 216 && introOnlyFrames(t) === 90, "ফ্রেম"),
+        expect(JSON.stringify(t) === JSON.stringify(t2), "computeTiming ≠ timingFromConfig"),
+        expect(a.hook?.from === 0 && a.hook.durationFrames === 126, "hook কিউ"),
+        expect(a.intro?.from === 126 && a.intro.durationFrames === 90, "intro কিউ"),
+        expect(a.outro?.from === 636 && a.outro.durationFrames === 120, "outro কিউ"),
+        expect(fitHookSeconds(null) === 0 && fitHookSeconds(0) === 0 && fitHookSeconds(Number.NaN) === 0, "অডিও নেই → ০"),
+        expect(plain.hookFrames === undefined && plain.introFrames === 90 && planIntroOutroAudio(plain).hook === null, "Hook ছাড়া অপরিবর্তিত"),
+      );
+    },
+  },
+  {
+    id: "hook-word-stagger",
+    title: "Hook শব্দ-স্টাগার: বাড়ন্ত ক্রম, ≤ ১.৬s ও Hook-এর ৫৫%-এর মধ্যে",
+    rule: "৭ শব্দ · ১২৬ ফ্রেম → প্রথম ৬, শেষ ≤ ৪৮; ছোট Hook-এ চেপে আসে; ০ শব্দ → []",
+    run: () => {
+      const s = hookWordStarts(7, 126, 30);
+      const tiny = hookWordStarts(7, 20, 30);
+      return first(
+        expect(s.length === 7 && s[0] === 6 && s[6] <= 48 && s[6] <= 126 * 0.55, "দীর্ঘ Hook"),
+        expect(s.every((v, i) => i === 0 || v >= s[i - 1]), "বাড়ন্ত"),
+        expect(tiny.length === 7 && tiny.every((v) => v >= 0 && v <= 20), "ছোট Hook"),
+        expect(hookWordStarts(0, 126, 30).length === 0 && hookWordStarts(1, 126, 30)[0] === 6, "০/১ শব্দ"),
       );
     },
   },

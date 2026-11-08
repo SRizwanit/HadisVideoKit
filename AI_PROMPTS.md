@@ -16,9 +16,19 @@ Work **one file at a time, one step at a time**. Never ask the AI for several fi
 | Step | File you create | Where it goes in the repo | Prompt |
 |---|---|---|---|
 | 0 | `hadis<ID>.wav` (your recorded/generated voice) | `public/hadis/hadis<ID>.wav` | not an AI file |
+| 0b | `hook.wav` (the opening question voice, same for every video) — **optional** | `public/audio/hook.wav` | not an AI file (see "About the Hook" below) |
 | 1 | `hadis<ID>_timestamp.json` | `public/hadis/hadis<ID>_timestamp.json` | **Prompt 1** |
 | 2 | `svg1.svg`, `svg2.svg`, … `svgN.svg` (one prompt per file) | `public/svg/svg1.svg` … | **Prompt 2A + 2B** |
 | 3 | SFX list, then each SFX file (one at a time) | `public/sfx/<name>.mp3` | **Prompt 3A + 3B** |
+
+### About the Hook (opening question) — `public/audio/hook.wav`
+
+Every video can start with a **Hook**: a big on-screen question **"এই হাদিসের ব্যাপারে কি আপনার জানা আছে?"** while `hook.wav` plays, then Intro → hadith (Main) → Outro.
+- **Nothing to type in GitHub Actions** — the Hook is automatic. Its length = the length of `hook.wav` (+ 0.12 s), so a longer/shorter voice file simply makes a longer/shorter Hook.
+- **No `public/audio/hook.wav` = no Hook** (the video starts with Intro, exactly as before). To switch the Hook off without deleting the file, set `HOOK_ENABLED = false` in `src/constants.ts`.
+- The Hook text is the constant `HOOK_TEXT` in `src/constants.ts`. If you record a different question, change that text to match the voice **word for word**.
+- `hook.wav` is a voice file, so it is **not** made with the prompts below. One file is shared by all hadiths; keep it small (a few seconds) and clear, with no background music.
+- Hook, Intro and Outro show **no captions** (captions exist only in Main).
 
 `<ID>` is the `hadis_id` you type in GitHub Actions, for example `0101` → `hadis0101.wav`, `hadis0101_timestamp.json`. Allowed characters: English letters, digits, `-` and `_` only.
 
@@ -276,6 +286,7 @@ After downloading: rename the file to `<NAME>.mp3` (all lower-case) → upload t
 
 # After all files are ready — final upload checklist
 
+0. (once) `public/audio/hook.wav` — opening question voice (optional; no file = no Hook)
 1. `public/hadis/hadis<ID>.wav`
 2. `public/hadis/hadis<ID>_timestamp.json`
 3. `public/svg/svg1.svg` … `svgN.svg` (no gaps)

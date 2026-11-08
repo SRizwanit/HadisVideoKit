@@ -1,12 +1,16 @@
 import {
   FPS,
+  HOOK_AUDIO_FADE_OUT_FRAMES,
+  HOOK_AUDIO_TAIL_SECONDS,
+  HOOK_AUDIO_VOLUME,
+  HOOK_ENABLED,
   INTRO_OUTRO_AUDIO_ENABLED,
   INTRO_OUTRO_AUDIO_FADE_OUT_FRAMES,
   INTRO_OUTRO_AUDIO_TAIL_SECONDS,
   INTRO_OUTRO_AUDIO_VOLUME,
   MAX_INTRO_OUTRO_SECONDS,
 } from "../constants";
-import type { Timing } from "./timing";
+import { hookFramesOf, introOnlyFrames, type Timing } from "./timing";
 
 /**
  * Part 14C-audio: Intro/Outro ভয়েসের বিশুদ্ধ (pure) হিসাব — React/Remotion ছাড়া, কখনো throw করে না।
@@ -31,6 +35,18 @@ export function fitSecondsToAudio(setSeconds: number, audioSeconds: number | nul
   return Math.min(MAX_INTRO_OUTRO_SECONDS, Math.max(s, need));
 }
 
+/**
+ * Hook দৃশ্যের সেকেন্ড = hook.wav-এর দৈর্ঘ্য + ছোট বাড়তি (অডিও কাটে না), `MAX_INTRO_OUTRO_SECONDS`-এ সীমিত।
+ * অডিও না থাকলে (null/০/অবৈধ) বা `HOOK_ENABLED = false` হলে ০ (Hook দৃশ্য নেই)।
+ */
+export function fitHookSeconds(audioSeconds: number | null | undefined, fps: number = FPS): number {
+  if (!HOOK_ENABLED) return 0;
+  const a = finite(audioSeconds, 0);
+  if (!(a > 0)) return 0;
+  const f = finite(fps, FPS) > 0 ? finite(fps, FPS) : FPS;
+  return Math.min(MAX_INTRO_OUTRO_SECONDS, Math.ceil((a + HOOK_AUDIO_TAIL_SECONDS) * f) / f);
+}
+
 export type VoiceCue = {
   /** ভিডিওর শুরু থেকে শুরুর ফ্রেম */
   from: number;
@@ -40,26 +56,47 @@ export type VoiceCue = {
   fadeFrames: number;
 };
 
-export type IntroOutroAudioPlan = { intro: VoiceCue | null; outro: VoiceCue | null };
+export type IntroOutroAudioPlan = { hook: VoiceCue | null; intro: VoiceCue | null; outro: VoiceCue | null };
 
-function cue(from: number, frames: number): VoiceCue | null {
+function cue(from: number, frames: number, maxFade: number = INTRO_OUTRO_AUDIO_FADE_OUT_FRAMES): VoiceCue | null {
   const n = Math.floor(finite(frames, 0));
   if (n < 1) return null;
-  const fade = Math.min(Math.max(0, Math.floor(INTRO_OUTRO_AUDIO_FADE_OUT_FRAMES)), Math.floor(n / 4));
+  const fade = Math.min(Math.max(0, Math.floor(maxFade)), Math.floor(n / 4));
   return { from: Math.max(0, Math.floor(finite(from, 0))), durationFrames: n, fadeFrames: fade };
 }
 
-/** Intro ০ ফ্রেম হলে `intro: null`, Outro ০ ফ্রেম হলে `outro: null` */
-export function planIntroOutroAudio(timing: Pick<Timing, "introFrames" | "mainFrames" | "outroFrames">): IntroOutroAudioPlan {
-  const intro = finite(timing?.introFrames, 0);
+/**
+ * Hook ০ ফ্রেম হলে `hook: null`, Intro ০ ফ্রেম হলে `intro: null`, Outro ০ ফ্রেম হলে `outro: null`।
+ * Hook ভিডিওর শুরু (ফ্রেম ০) থেকে; Intro Hook শেষ হওয়ার ফ্রেম থেকে (Hook না থাকলে ফ্রেম ০ — আগের মতো)।
+ * `timing.introFrames` = Hook + Intro (Main কোথায় শুরু), তাই Outro-র শুরু আগের সূত্রেই `introFrames + mainFrames`।
+ */
+export function planIntroOutroAudio(
+  timing: Pick<Timing, "introFrames" | "mainFrames" | "outroFrames"> & { hookFrames?: number },
+): IntroOutroAudioPlan {
+  const pre = finite(timing?.introFrames, 0);
   const main = finite(timing?.mainFrames, 0);
   const outro = finite(timing?.outroFrames, 0);
-  return { intro: cue(0, intro), outro: cue(intro + main, outro) };
+  const hook = hookFramesOf({ introFrames: pre, hookFrames: timing?.hookFrames });
+  const introOnly = introOnlyFrames({ introFrames: pre, hookFrames: timing?.hookFrames });
+  return {
+    hook: cue(0, hook, HOOK_AUDIO_FADE_OUT_FRAMES),
+    intro: cue(hook, introOnly),
+    outro: cue(pre + main, outro),
+  };
+}
+
+/** Hook কিউয়ের ভলিউম (শেষে রৈখিক ফেড-আউট; ০–১) */
+export function hookGain(localFrame: number, c: Pick<VoiceCue, "durationFrames" | "fadeFrames">): number {
+  return introOutroGain(localFrame, c, clamp01(HOOK_AUDIO_VOLUME));
 }
 
 /** কিউয়ের নিজের ফ্রেমে (শুরু = ০) ভলিউম: শেষে রৈখিক ফেড-আউট; কখনো NaN বা ০–১-এর বাইরে নয় */
-export function introOutroGain(localFrame: number, c: Pick<VoiceCue, "durationFrames" | "fadeFrames">): number {
-  const base = clamp01(INTRO_OUTRO_AUDIO_VOLUME);
+export function introOutroGain(
+  localFrame: number,
+  c: Pick<VoiceCue, "durationFrames" | "fadeFrames">,
+  baseVolume: number = INTRO_OUTRO_AUDIO_VOLUME,
+): number {
+  const base = clamp01(baseVolume);
   if (!Number.isFinite(localFrame) || c.fadeFrames <= 0) return base;
   const left = c.durationFrames - localFrame;
   if (left >= c.fadeFrames) return base;

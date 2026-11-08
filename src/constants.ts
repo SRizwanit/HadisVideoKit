@@ -83,3 +83,19 @@ export const INTRO_OUTRO_AUDIO_VOLUME = 1;
 export const INTRO_OUTRO_AUDIO_FADE_OUT_FRAMES = 6;
 /** দৃশ্যের দৈর্ঘ্য কমপক্ষে (অডিও + এই বাড়তি সেকেন্ড) — অডিও কেটে যায় না */
 export const INTRO_OUTRO_AUDIO_TAIL_SECONDS = 0.1;
+
+// ---------- Hook (Intro-র আগের প্রশ্ন-দৃশ্য) ----------
+/**
+ * ভিডিওর একদম শুরুতে Hook: বড় লেখা (`HOOK_TEXT`) + `public/audio/hook.wav`-এর ভয়েস।
+ * ক্রম: [ Hook ][ Intro ][ Main ][ Outro ]
+ * Hook-এর দৈর্ঘ্য = hook.wav-এর দৈর্ঘ্য (+ `HOOK_AUDIO_TAIL_SECONDS`) — আলাদা সেকেন্ড দিতে হয় না, workflow বদলাতে হয় না।
+ * `public/audio/hook.wav` না থাকলে Hook দৃশ্যই বসে না (ভিডিও আগের মতো Intro দিয়ে শুরু)। বন্ধ করতে `HOOK_ENABLED = false`।
+ */
+export const HOOK_TEXT = "এই হাদিসের ব্যাপারে কি আপনার জানা আছে?";
+export const HOOK_AUDIO_PATH = `${AUDIO_DIR}/hook.wav`;
+export const HOOK_ENABLED = true;
+export const HOOK_AUDIO_VOLUME = 1;
+/** অডিওর শেষে ছোট ফেড-আউট (ফ্রেম) */
+export const HOOK_AUDIO_FADE_OUT_FRAMES = 6;
+/** Hook দৃশ্য = অডিও + এই বাড়তি সেকেন্ড (শেষ শব্দ কেটে যায় না; ফেড-আউটের জায়গা) */
+export const HOOK_AUDIO_TAIL_SECONDS = 0.12;

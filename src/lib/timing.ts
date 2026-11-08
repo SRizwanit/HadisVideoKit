@@ -4,13 +4,19 @@ import type { HadisVideoProps, SfxCue, TimestampFile } from "../types";
 /**
  * Part 5: সময় (সেকেন্ড) ↔ ফ্রেম হিসাব।
  *
- * ভিডিওর গঠন:  [ Intro ][ Main = .wav-এর দৈর্ঘ্য ][ Outro ]
+ * ভিডিওর গঠন:  [ Hook ][ Intro ][ Main = .wav-এর দৈর্ঘ্য ][ Outro ]   (Hook ঐচ্ছিক — hook.wav থাকলে; `introFrames` = Hook + Intro)
  * Timestamp JSON-এর সময় .wav-এর শুরু থেকে মাপা, তাই ভিডিও-ফ্রেম পেতে Intro-র অফসেট যোগ হয়।
  */
 
 export type Timing = {
   fps: number;
+  /**
+   * Main শুরুর আগের সব ফ্রেম = Hook + Intro (Main, Caption, SVG, অডিও, দিন-রাত — সবাই এটাকেই "Main কোথায় শুরু" ধরে;
+   * তাই Hook যোগ হলেও ওই কোড বদলাতে হয়নি)। শুধু Intro-র নিজের দৈর্ঘ্য = `introFrames − hookFrames` (`introOnlyFrames`)।
+   */
   introFrames: number;
+  /** Hook-এর ফ্রেম (ভিডিওর শুরুতে; `introFrames`-এর ভেতরেই ধরা)। নেই/০ = Hook নেই */
+  hookFrames?: number;
   mainFrames: number;
   outroFrames: number;
   totalFrames: number;
@@ -41,20 +47,35 @@ export type FrameSegment = {
 export const secondsToFrames = (seconds: number, fps: number = FPS): number =>
   Math.round(seconds * fps);
 
+/** Hook-এর ফ্রেম (নেই/অবৈধ = ০; `introFrames`-এর বেশি হয় না) */
+export const hookFramesOf = (t: Pick<Timing, "introFrames" | "hookFrames">): number => {
+  const h = t.hookFrames;
+  if (typeof h !== "number" || !Number.isFinite(h) || h <= 0) return 0;
+  return Math.min(Math.floor(h), Math.max(0, Math.floor(t.introFrames)));
+};
+
+/** শুধু Intro দৃশ্যের ফ্রেম (Hook বাদ দিয়ে) */
+export const introOnlyFrames = (t: Pick<Timing, "introFrames" | "hookFrames">): number =>
+  Math.max(0, Math.floor(t.introFrames) - hookFramesOf(t));
+
 /** Intro/Main/Outro ফ্রেম। Main কমপক্ষে ১ ফ্রেম (ফাঁকা অডিওতেও ভিডিও ভাঙে না) */
 export function computeTiming(args: {
   introSeconds: number;
   outroSeconds: number;
   audioSeconds: number;
+  /** Hook-এর সেকেন্ড (ঐচ্ছিক; নেই/০ = Hook নেই) */
+  hookSeconds?: number;
   fps?: number;
 }): Timing {
   const fps = args.fps ?? FPS;
-  const introFrames = secondsToFrames(args.introSeconds, fps);
+  const hookFrames = Math.max(0, secondsToFrames(args.hookSeconds ?? 0, fps));
+  const introFrames = hookFrames + secondsToFrames(args.introSeconds, fps);
   const outroFrames = secondsToFrames(args.outroSeconds, fps);
   const mainFrames = Math.max(1, Math.ceil(args.audioSeconds * fps));
   return {
     fps,
     introFrames,
+    ...(hookFrames > 0 ? { hookFrames } : {}),
     mainFrames,
     outroFrames,
     totalFrames: introFrames + mainFrames + outroFrames,
@@ -67,13 +88,21 @@ export function computeTiming(args: {
  */
 export function timingFromConfig(
   durationInFrames: number,
-  props: Pick<HadisVideoProps, "introSeconds" | "outroSeconds">,
+  props: Pick<HadisVideoProps, "introSeconds" | "outroSeconds"> & { hookSeconds?: number },
   fps: number = FPS,
 ): Timing {
-  const introFrames = secondsToFrames(props.introSeconds, fps);
+  const hookFrames = Math.max(0, secondsToFrames(props.hookSeconds ?? 0, fps));
+  const introFrames = hookFrames + secondsToFrames(props.introSeconds, fps);
   const outroFrames = secondsToFrames(props.outroSeconds, fps);
   const mainFrames = Math.max(1, durationInFrames - introFrames - outroFrames);
-  return { fps, introFrames, mainFrames, outroFrames, totalFrames: durationInFrames };
+  return {
+    fps,
+    introFrames,
+    ...(hookFrames > 0 ? { hookFrames } : {}),
+    mainFrames,
+    outroFrames,
+    totalFrames: durationInFrames,
+  };
 }
 
 /** টেক্সট স্পেস ধরে শব্দে ভাগ (বাংলা অক্ষর কখনো ভাঙে না; ZWJ/ZWNJ অক্ষত) */

@@ -45,8 +45,9 @@ npm run check      # বান্ডল + ছবি রেন্ডার (out/c
 - `src/lib/outroPlan.ts`, `src/components/PlayBadge.tsx`, `src/scenes/OutroScene.tsx` — Outro সিন: লোগো + অ্যাপের নাম + টাইপ-হওয়া CTA লেখা + Google Play badge (bounce-in, pulse, shine, ট্যাপ-ইঙ্গিত)
 - `src/scenes/MainScene.tsx` — Main সিন: Header + SvgStage + Caption
 - `src/HadisVideo.tsx`, `src/lib/sceneFade.ts` — পুরো ভিডিও: Background + Intro + Main (নরম ফেড-ইন) + Outro + ভয়েস/SFX; কম্পোজিশন `HadisPortrait` (১০৮০×১৯২০) ও `HadisLandscape` (১৯২০×১০৮০) `src/Root.tsx`-এ
-- `src/dev/HadisVideoPreview.tsx` — (dev) পুরো ভিডিওর যাচাই-ছবি: ৩৩টা ঘর + ২৮টা স্বয়ংক্রিয় সারি; `public/sfx/whoosh.mp3` — নমুনা SFX (নিজের ফাইল দিলে সেটাই চলবে)
+- `src/dev/HadisVideoPreview.tsx` — (dev) পুরো ভিডিওর যাচাই-ছবি: ৩৩টা ঘর + ৩১টা স্বয়ংক্রিয় সারি; `public/sfx/whoosh.mp3` — নমুনা SFX (নিজের ফাইল দিলে সেটাই চলবে)
 - `src/dev/ThemePreview.tsx`, `DataCheck.tsx`, `BackgroundPreview.tsx`, `HeaderPreview.tsx`, `IntroPreview.tsx` — যাচাইয়ের ছবি; Outro-র যাচাই: `OutroPreview.tsx` (`out/check-OutroPreview.png`)
+- `src/scenes/HookScene.tsx` — Hook দৃশ্য (Intro-র আগে বড় প্রশ্ন-লেখা "এই হাদিসের ব্যাপারে কি আপনার জানা আছে?"); ভয়েস `public/audio/hook.wav` (না থাকলে Hook নেই; দৈর্ঘ্য = অডিওর দৈর্ঘ্য)
 - `public/hadis/` — `hadis0101.wav` ও `hadis0101_timestamp.json` (`hadis0000` নমুনা, যাচাইয়ের জন্য)
 - `public/svg/` — `svg1.svg`, `svg2.svg` …
 - `public/sfx/` — `whoosh.mp3` ইত্যাদি

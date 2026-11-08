@@ -29,7 +29,7 @@ import { runSceneFadeCases, SCENE_FADE_CASE_COUNT } from "./sceneFadeCases";
  *   ২. Landscape ৬টা: emerald (Intro · Main · Outro), navy Main, greenDayNight দিনের Main ও রাতের Outro
  *   ৩. বিশেষ সময় ১০টা: Intro ০ · ১s · ১০s, Outro ০ · ১s · ১০s, দুটোই ০, Main-এর ফাঁক (`hadis0000gap`), Outro-র ঢোকা, লম্বা কিতাবের নাম
  *   ৪. 4K ২টা (২১৬০×৩৮৪০, ৩৮৪০×২১৬০ — ছোট করে আঁকা আসল ঘর)
- * উপরে ১৬টা স্বয়ংক্রিয় সারি (DOM পড়ে + বিশুদ্ধ হিসাব + নমুনা-ফাইল) আর `sceneFade.ts`-এর ১২টা বিশুদ্ধ কেস — মাথায় "সব ✅ · n/total"।
+ * উপরে ১৬টা স্বয়ংক্রিয় সারি (DOM পড়ে + বিশুদ্ধ হিসাব + নমুনা-ফাইল) আর `sceneFade.ts`-এর ১৫টা বিশুদ্ধ কেস — মাথায় "সব ✅ · n/total"।
  *
  * ⚠️ ছবিতে অডিও নেই (`audio={false}`, `sfx={false}`): আসল ভয়েস/SFX-এর শব্দ ও সময় শুধু তুমি Studio-তে/প্রথম ভিডিওতে বিচার করবে।
  *    এখানে অডিও-পরিকল্পনা (`planSfx`) ও নমুনা ফাইল (`hadis0000.wav`, `sfx/whoosh.mp3`) হিসাব করে মেলানো হয়।

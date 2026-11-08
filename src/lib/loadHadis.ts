@@ -11,12 +11,14 @@ import {
   BASE_SIZES,
   hadisAudioPath,
   hadisTimestampPath,
+  HOOK_AUDIO_PATH,
+  HOOK_ENABLED,
   INTRO_AUDIO_PATH,
   INTRO_OUTRO_AUDIO_ENABLED,
   OUTRO_AUDIO_PATH,
 } from "../constants";
 import { parseTimestampFile, type HadisVideoProps, type TimestampFile } from "../types";
-import { fitSecondsToAudio } from "./introOutroAudio";
+import { fitHookSeconds, fitSecondsToAudio } from "./introOutroAudio";
 import { computeTiming } from "./timing";
 
 /**
@@ -128,7 +130,7 @@ export async function loadHadis(hadisId: string): Promise<LoadedHadis> {
 
 /**
  * Composition-এর calculateMetadata:
- *   durationInFrames = (intro + .wav + outro) × FPS  (intro/outro = max(দেওয়া সেকেন্ড, ভয়েসের দৈর্ঘ্য) — Part 14C-audio)
+ *   durationInFrames = (hook + intro + .wav + outro) × FPS  (intro/outro = max(দেওয়া সেকেন্ড, ভয়েসের দৈর্ঘ্য) — Part 14C-audio)
  *   width/height     = orientation অনুযায়ী (বেস HD সাইজ; 4K-তে render scale=2)
  * Studio-তে props প্যানেলে hadisId/orientation/intro/outro বদলালে নিজে নিজে আবার চলে।
  */
@@ -146,14 +148,18 @@ export const calculateHadisMetadata: CalculateMetadataFunction<HadisVideoProps> 
   const introSeconds = fitSecondsToAudio(props.introSeconds, introAudio);
   const outroSeconds = fitSecondsToAudio(props.outroSeconds, outroAudio);
 
-  const timing = computeTiming({ introSeconds, outroSeconds, audioSeconds });
+  // Hook: public/audio/hook.wav থাকলে Intro-র আগে Hook দৃশ্য — দৈর্ঘ্য = hook.wav (+ ছোট বাড়তি); না থাকলে ০ (আগের মতো)
+  const hookAudio = HOOK_ENABLED ? await loadVoiceSeconds(HOOK_AUDIO_PATH) : null;
+  const hookSeconds = fitHookSeconds(hookAudio);
+
+  const timing = computeTiming({ introSeconds, outroSeconds, audioSeconds, hookSeconds });
   const size = BASE_SIZES[props.orientation];
 
   return {
     durationInFrames: timing.totalFrames,
     width: size.width,
     height: size.height,
-    props: { ...props, introSeconds, outroSeconds },
+    props: { ...props, introSeconds, outroSeconds, hookSeconds },
   };
 };
 

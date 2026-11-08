@@ -68,18 +68,27 @@ export function mainFadeIn(localFrame: number, introFrames: number, mainFrames: 
 
 /** ভিডিওর তিন দৃশ্যের ফ্রেম-ভাগ: কোন দৃশ্য আঁকা হবে (০-ফ্রেমের `<Sequence>` কখনো নয় — Part 13 নিয়ম) */
 export type ScenePlan = {
+  /** ভিডিওর শুরুতে Hook (hook.wav থাকলে); নেই = null */
+  hook: { from: number; frames: number } | null;
   intro: { from: number; frames: number } | null;
   main: { from: number; frames: number } | null;
   outro: { from: number; frames: number } | null;
 };
 
-export function planScenes(introFrames: number, mainFrames: number, outroFrames: number): ScenePlan {
-  const i = toCount(introFrames);
+/**
+ * @param introFrames Main শুরুর আগের সব ফ্রেম (= Hook + Intro; `timing.introFrames`)
+ * @param hookFrames  এর মধ্যে Hook-এর ফ্রেম (ডিফল্ট ০ = Hook নেই, আচরণ আগের মতো)
+ */
+export function planScenes(introFrames: number, mainFrames: number, outroFrames: number, hookFrames: number = 0): ScenePlan {
+  const pre = toCount(introFrames);
+  const h = Math.min(toCount(hookFrames), pre);
+  const i = pre - h;
   const m = toCount(mainFrames);
   const o = toCount(outroFrames);
   return {
-    intro: i > 0 ? { from: 0, frames: i } : null,
-    main: m > 0 ? { from: i, frames: m } : null,
-    outro: o > 0 ? { from: i + m, frames: o } : null,
+    hook: h > 0 ? { from: 0, frames: h } : null,
+    intro: i > 0 ? { from: h, frames: i } : null,
+    main: m > 0 ? { from: pre, frames: m } : null,
+    outro: o > 0 ? { from: pre + m, frames: o } : null,
   };
 }
