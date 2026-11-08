@@ -1,6 +1,7 @@
 import React from "react";
 import { Img, useCurrentFrame } from "remotion";
 import badge from "../google-play-badge.png";
+import handCursor from "../hand-cursor.png";
 import {
   BADGE_ASPECT,
   BADGE_MAX_SCALE,
@@ -8,12 +9,14 @@ import {
   OUTRO_TAP_ENABLED,
   SHINE_ANGLE_DEG,
   SHINE_BAND,
+  CLICK_PRESS_SCALE,
   badgeIsSharp,
   badgeSize,
   planOutro,
   scaledBox,
   shineCenter,
   tapLook,
+  type ClickLook,
   type OutroPlan,
 } from "../lib/outroPlan";
 import type { Box } from "../lib/useLayout";
@@ -22,6 +25,8 @@ import type { Box } from "../lib/useLayout";
  * Part 12B: Google Play ব্যাজ — ছবি + আস্পেক্ট রেশিও + clear space + spring bounce-in।
  * Part 12C (এই ফাইলেই যোগ): ধীর pulse, একবারের shine sweep (ব্যাজের আকারে মাস্ক করা), ঐচ্ছিক "ট্যাপ" ইঙ্গিত, রাতের জন্য হালকা গাঢ় halo।
  * 12B-র আঁকা ও জায়গা (rest box) বদলায়নি।
+ * Cursor-আপডেট: পুরনো তীর-ইঙ্গিত সরিয়ে `src/hand-cursor.png` (হাত + ক্লিক-রেখা) বসানো — নিচ থেকে উঠে এসে ব্যাজে ক্লিক করে (চাপ + রিং-ঢেউ + ব্যাজে হালকা হাইলাইট), তারপর নেমে যায়; Outro লম্বা হলে চক্র চলতে থাকে।
+ *   সময়/ধাপ সব `outroPlan.ts`-এর `clickLook` থেকে; এখানে শুধু আঁকা। `tapBox` এখন শুধু "কার্সর চালু কি না"-র সংকেত (জায়গা ব্যাজের ওপরেই)।
  *
  * - সব সংখ্যা `outroPlan.ts` থেকে আসে (`planOutro().badge`, `badgeSize`, `badgeIsSharp`); এখানে কোনো সময়/মাপের হিসাব নেই।
  * - সবকিছু ফ্রেম থেকে হিসাব (CSS animation / Math.random() / remotion `spring()` নেই) → রেন্ডারে নিরাপদ।
@@ -84,8 +89,10 @@ export type PlayBadgeLook = {
     bandWidth: number;
     angleDeg: number;
   };
-  /** ট্যাপ-ইঙ্গিত (সিনের স্থানাঙ্কে) */
+  /** ট্যাপ-ইঙ্গিতের পুরনো বাক্স/ওঠানামা (সিনের স্থানাঙ্কে) — আঁকা হয় না, শুধু আগের হিসাবের সাথে সামঞ্জস্যের জন্য রাখা */
   tap: { visible: boolean; opacity: number; box: Box; offsetY: number };
+  /** হাতের ক্লিক-কার্সর (Play ব্যাজে ক্লিক) — `plan.click`; কার্সর বন্ধ/স্থির দৃশ্য/`tapBox` নেই হলে অদৃশ্য */
+  click: ClickLook;
   /** halo-র শক্তি (০…) */
   haloAlpha: number;
 };
@@ -95,6 +102,17 @@ export const BADGE_CORNER_RATIO = 0.12;
 /** halo: দিনে ও রাতে গাঢ় ছায়ার alpha (ব্যাজ ফায়ারফ্লাই/তারার মাঝে পরিষ্কার থাকে) */
 export const BADGE_HALO_DAY = 0.25;
 export const BADGE_HALO_NIGHT = 0.5;
+
+/** হাতের কার্সরের আইকনে আঙুলের ডগা (ছবির ভগ্নাংশে) — এই বিন্দুটাই ব্যাজের লক্ষ্যে বসে ও চাপের সময় এখান ধরে ছোট হয় */
+export const HAND_TIP = { x: 0.4, y: 0.14 } as const;
+/** হাতের আইকনের মাপ = ব্যাজের উচ্চতা × এই */
+export const HAND_SIZE_RATIO = 0.95;
+/** ব্যাজের কোথায় ক্লিক পড়ে (ব্যাজের প্রস্থ/উচ্চতার ভগ্নাংশ) */
+export const CLICK_TARGET = { x: 0.74, y: 0.52 } as const;
+/** বিশ্রামের জায়গা: লক্ষ্য থেকে ডান-নিচে (হাতের মাপের ভগ্নাংশ) */
+export const HAND_REST_OFFSET = { x: 0.18, y: 0.62 } as const;
+
+const NO_CLICK_LOOK: ClickLook = { active: false, opacity: 0, approach: 0, press: 0, ripple: 0, rippleOpacity: 0 };
 
 const NO_TAP = { visible: false, opacity: 0, box: { x: 0, y: 0, width: 0, height: 0 }, offsetY: 0 };
 
@@ -147,6 +165,10 @@ export function playBadgeLook(
     };
   }
 
+  const tapValid = !!tb && finiteNum(tb.width, 0) > 0 && finiteNum(tb.height, 0) > 0;
+  const click: ClickLook =
+    plan && !plan.isStatic && tapValid && (opts.showTap ?? OUTRO_TAP_ENABLED) && plan.click ? plan.click : NO_CLICK_LOOK;
+
   const night = Math.min(1, Math.max(0, finiteNum(opts.nightFactor, 0)));
   return {
     visible,
@@ -159,6 +181,7 @@ export function playBadgeLook(
     sharp: badgeIsSharp(size.width),
     shine,
     tap,
+    click,
     haloAlpha: BADGE_HALO_DAY + (BADGE_HALO_NIGHT - BADGE_HALO_DAY) * night,
   };
 }
@@ -184,9 +207,18 @@ export const PlayBadge: React.FC<PlayBadgeProps> = ({
   // প্রস্থ অবৈধ/০ বা Outro ০ ফ্রেম → কিছুই আঁকা হয় না (crash নেই)
   if (!plan || look.rest.width <= 0 || look.rest.height <= 0) return null;
 
-  const { rest, shine, tap } = look;
+  const { rest, shine, click } = look;
   const radius = rest.height * BADGE_CORNER_RATIO;
-  const tapSize = tap.box.width;
+
+  // হাতের কার্সর: আঙুলের ডগা বিশ্রামের জায়গা (ব্যাজের ডান-নিচে) থেকে ব্যাজের লক্ষ্যে যায়; চাপের সময় ডগা ধরে ছোট হয়
+  const handSize = rest.height * HAND_SIZE_RATIO;
+  const targetX = rest.x + rest.width * CLICK_TARGET.x;
+  const targetY = rest.y + rest.height * CLICK_TARGET.y;
+  const away = 1 - click.approach;
+  const tipX = targetX + away * handSize * HAND_REST_OFFSET.x;
+  const tipY = targetY + away * handSize * HAND_REST_OFFSET.y;
+  const handScale = 1 - (1 - CLICK_PRESS_SCALE) * click.press;
+  const rippleD = rest.height * (0.3 + 1.0 * click.ripple);
   return (
     <>
       <div
@@ -264,6 +296,24 @@ export const PlayBadge: React.FC<PlayBadgeProps> = ({
             />
           </div>
         ) : null}
+        {/* ক্লিকের মুহূর্তে ব্যাজে হালকা সাদা হাইলাইট (shine-এর মতো ব্যাজের আকারে মাস্ক করা) */}
+        {click.press > 0 ? (
+          <div
+            data-badge-press="1"
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `rgba(255, 255, 255, ${(0.18 * click.press).toFixed(3)})`,
+              WebkitMaskImage: `url(${badge})`,
+              maskImage: `url(${badge})`,
+              WebkitMaskSize: "100% 100%",
+              maskSize: "100% 100%",
+              WebkitMaskRepeat: "no-repeat",
+              maskRepeat: "no-repeat",
+              pointerEvents: "none",
+            }}
+          />
+        ) : null}
         {debugOutline ? (
           <>
             {/* আসল ব্যাজ-বাক্স */}
@@ -290,34 +340,45 @@ export const PlayBadge: React.FC<PlayBadgeProps> = ({
           </>
         ) : null}
       </div>
-      {/* ট্যাপ-ইঙ্গিত: ব্যাজের `outer`-এর নিচে (clear space-এর বাইরে); উপরমুখী তীর + ছড়িয়ে-পড়া রিং, নিচে-ওপরে দুলছে */}
-      {tap.visible ? (
-        <svg
-          data-badge-tap="1"
-          viewBox="0 0 100 100"
+      {/* ক্লিকের রিং-ঢেউ: আঙুলের ডগা যেখানে ব্যাজ ছোঁয় সেখান থেকে ছড়ায় */}
+      {click.rippleOpacity > 0 ? (
+        <div
+          data-badge-ripple="1"
           style={{
             position: "absolute",
-            left: tap.box.x,
-            top: tap.box.y + tap.offsetY,
-            width: tapSize,
-            height: tap.box.height,
-            opacity: tap.opacity,
-            overflow: "visible",
+            left: targetX - rippleD / 2,
+            top: targetY - rippleD / 2,
+            width: rippleD,
+            height: rippleD,
+            boxSizing: "border-box",
+            borderRadius: "50%",
+            border: `${Math.max(2, rest.height * 0.03)}px solid ${tapColor}`,
+            background: "rgba(255, 255, 255, 0.18)",
+            opacity: click.rippleOpacity,
             pointerEvents: "none",
-            filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.55))",
           }}
-        >
-          <circle cx="50" cy="28" r="20" fill="none" stroke={tapColor} strokeWidth="4" opacity="0.45" />
-          <circle cx="50" cy="28" r="9" fill={tapColor} />
-          <path
-            d="M50 94 L50 46 M30 64 L50 44 L70 64"
-            fill="none"
-            stroke={tapColor}
-            strokeWidth="9"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        />
+      ) : null}
+      {/* হাতের কার্সর (`src/hand-cursor.png`): নিচ থেকে উঠে ব্যাজে ক্লিক করে, তারপর নেমে যায় */}
+      {click.active ? (
+        <Img
+          data-badge-cursor="1"
+          data-cursor-approach={click.approach.toFixed(3)}
+          data-cursor-press={click.press.toFixed(3)}
+          src={handCursor}
+          style={{
+            position: "absolute",
+            left: tipX - HAND_TIP.x * handSize,
+            top: tipY - HAND_TIP.y * handSize,
+            width: handSize,
+            height: handSize,
+            opacity: click.opacity,
+            transform: `scale(${handScale})`,
+            transformOrigin: `${HAND_TIP.x * 100}% ${HAND_TIP.y * 100}%`,
+            pointerEvents: "none",
+            filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.45))",
+          }}
+        />
       ) : null}
     </>
   );

@@ -220,6 +220,58 @@ export function tapLook(baseT: number, enabled: boolean = OUTRO_TAP_ENABLED): Ta
   };
 }
 
+// ---------- হাতের ক্লিক-কার্সর (Play ব্যাজে ক্লিক) ----------
+/** কার্সরের প্রথম চক্র শুরু (বেস ফ্রেম): ট্যাপ-ইঙ্গিতের ১০ ফ্রেম আগে, যাতে ফেড-আউটের (১০৮) আগেই একবার ক্লিক দেখা যায় */
+export const CLICK_START = OUTRO_STEPS.tap - 10;
+/** একটা পুরো চক্র (বেস ফ্রেম): নিচ থেকে আসা → ক্লিক → নেমে যাওয়া → বিরতি; Outro লম্বা হলে চক্র চলতে থাকে */
+export const CLICK_PERIOD_FRAMES = 48;
+/** চক্রের ধাপের শেষ-ফ্রেম (চক্রের নিজের ফ্রেমে): আসা · চাপ · ছাড়া · নামা */
+export const CLICK_PHASES = { approach: 12, press: 17, release: 21, retreat: 33 } as const;
+/** রিং-ঢেউ শুরু ও দৈর্ঘ্য (চক্রের নিজের ফ্রেমে) */
+export const CLICK_RIPPLE_START = 16;
+export const CLICK_RIPPLE_FRAMES = 14;
+export const CLICK_RIPPLE_PEAK_OPACITY = 0.7;
+/** ক্লিকের মুহূর্তে হাত যত গুণ ছোট হয় (চাপ) */
+export const CLICK_PRESS_SCALE = 0.88;
+
+export type ClickLook = {
+  /** এখন হাত দেখা যাচ্ছে কি */
+  active: boolean;
+  /** ০…১ */
+  opacity: number;
+  /** ০ = বিশ্রামের জায়গা (ব্যাজের নিচে), ১ = আঙুলের ডগা ব্যাজের ওপর */
+  approach: number;
+  /** ০…১: আঙুল চাপছে (ক্লিকের মুহূর্তে ১) */
+  press: number;
+  /** রিং-ঢেউয়ের অগ্রগতি ০…১ (০ = শুরু হয়নি/শেষ) */
+  ripple: number;
+  /** রিং-ঢেউয়ের স্বচ্ছতা ০…`CLICK_RIPPLE_PEAK_OPACITY` */
+  rippleOpacity: number;
+};
+
+const NO_CLICK: ClickLook = { active: false, opacity: 0, approach: 0, press: 0, ripple: 0, rippleOpacity: 0 };
+
+/** হাতের ক্লিক-কার্সরের চলমান মান; `enabled = false` বা শুরুর আগে সবসময় অদৃশ্য। কখনো throw করে না */
+export function clickLook(baseT: number, enabled: boolean = OUTRO_TAP_ENABLED): ClickLook {
+  const t = finite(baseT, 0) - CLICK_START;
+  if (!enabled || t <= 0) return NO_CLICK;
+  const c = t % CLICK_PERIOD_FRAMES;
+  const { approach: A, press: P, release: R, retreat: B } = CLICK_PHASES;
+  const approach = c < A ? easeOutCubic(c / A) : c < R ? 1 : c < B ? 1 - smoothstep((c - R) / (B - R)) : 0;
+  const opacity = c < B ? Math.min(clamp01(c / 6), clamp01((B - c) / 6)) : 0;
+  const press = c < A ? 0 : c < P ? smoothstep((c - A) / (P - A)) : c < R ? 1 - smoothstep((c - P) / (R - P)) : 0;
+  const rp = (c - CLICK_RIPPLE_START) / CLICK_RIPPLE_FRAMES;
+  const rippling = rp > 0 && rp < 1;
+  return {
+    active: opacity > 0,
+    opacity,
+    approach,
+    press,
+    ripple: rippling ? rp : 0,
+    rippleOpacity: rippling ? CLICK_RIPPLE_PEAK_OPACITY * (1 - rp) : 0,
+  };
+}
+
 /** ব্যাজের bounce-in-এর সর্বোচ্চ স্কেল (স্প্রিংয়ের ছাড়িয়ে যাওয়া সহ) — `BADGE_MAX_SCALE` ঠিক রাখতে */
 export const BADGE_BOUNCE_PEAK = (() => {
   let peak = 0;
@@ -263,6 +315,8 @@ export type OutroPlan = {
   pulse: number;
   shine: ShineLook;
   tap: TapLook;
+  /** হাতের ক্লিক-কার্সর (Play ব্যাজে ক্লিক) */
+  click: ClickLook;
 };
 
 /**
@@ -327,6 +381,7 @@ export function planOutro(frame: number, outroFrames: number): OutroPlan | null 
     pulse: isStatic ? 1 : pulseScale(t),
     shine: isStatic ? { active: false, position: 1, opacity: 0 } : shineLook(t),
     tap: isStatic ? { opacity: 0, offsetUnits: 0 } : tapLook(t),
+    click: isStatic ? NO_CLICK : clickLook(t),
   };
 }
 

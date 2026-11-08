@@ -15,9 +15,9 @@ export const normalizeHadisNumber = (number: string | number | null | undefined)
   toBnDigits(cleanText(number === null || number === undefined ? "" : String(number)));
 
 /**
- * "সহীহ বুখারী নং : ১২৩"
+ * "সহীহ বুখারী হাদিস নং : ১২৩"
  * - দুটোই থাকলে পুরো লেবেল
- * - শুধু নম্বর থাকলে "নং : ১২৩"
+ * - শুধু নম্বর থাকলে "হাদিস নং : ১২৩"
  * - শুধু কিতাব থাকলে "সহীহ বুখারী"
  * - দুটোই ফাঁকা হলে ""
  */

@@ -33,8 +33,8 @@ export const TRANSITION_FRAMES = 12;
 export const APP_NAME = "ইসলামী বিশ্বকোষ ও আল হাদিস S2";
 export const TAGLINE = "আজকের হাদিস";
 export const OUTRO_TEXT = "আজই প্লে স্টোর থেকে ইনস্টল করুন:";
-/** "সহীহ বুখারী নং : ১২৩" এর "নং :" অংশ */
-export const NUMBER_LABEL = "নং :";
+/** "সহীহ বুখারী হাদিস নং : ১২৩" এর "হাদিস নং :" অংশ ("নং" = নম্বর-এর সংক্ষেপ; হাদিসের ক্রম বোঝাতে এটাই মানানসই) */
+export const NUMBER_LABEL = "হাদিস নং :";
 
 // ---------- public/ ফোল্ডারের পাথ (staticFile() এর সাথে ব্যবহার) ----------
 export const HADIS_DIR = "hadis";
