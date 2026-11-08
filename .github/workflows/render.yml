@@ -2,16 +2,20 @@ name: Render Hadis Video
 
 # একটাই workflow — সব কাজ এখান থেকে (ফোন থেকেই):
 #   action = check               → যাচাই (বান্ডল + ছবি রেন্ডার), Artifacts: check-images
-#   action = render              → ভিডিও রেন্ডার; **প্রতিটা জব শেষ হওয়ার সাথে সাথেই** আলাদা Artifact আপলোড (নিচে দেখো)
+#   action = render              → ভিডিও রেন্ডার; **প্রতিটা জব শেষ হওয়ার সাথে সাথেই** Artifact আপলোড — ভিডিওর সাথে থাম্বনেইল + প্রকাশের ফাইলও একই Artifact-এ (নিচে দেখো)
 #   action = render_and_release  → রেন্ডার + GitHub Release-এ আপলোড
-#   action = thumbnail_only      → শুধু 4K থাম্বনেইল (ভিডিও নয়; কয়েক মিনিটে) — সিরিজ নম্বর/ব্যাকগ্রাউন্ড ঠিক করতে, Artifacts: thumbnails
+#   action = thumbnail_only      → শুধু 4K থাম্বনেইল (ভিডিও নয়; কয়েক মিনিটে) — সিরিজ নম্বর/ব্যাকগ্রাউন্ড ঠিক করতে, Artifacts: thumbnails (শুধু এই action-এ আলাদা)
 #
 # 📦 Artifact আপলোড (প্রতিটা জব শেষ হলেই — সব শেষ হওয়ার অপেক্ষা নেই):
-#   থাম্বনেইল (টিক থাকলে)      → আগে তৈরি হয়ে সাথে সাথে আপলোড: Artifacts → thumbnails
+#   ✅ এখন প্রতিটা ভিডিও Artifact-এর ভেতরেই সব থাকে — আলাদা thumbnails / publish-files Artifact আর হয় না:
+#       🎬 ভিডিও (.mp4) + 🖼️ থাম্বনেইল (PNG + JPG, টিক থাকলে) + 📝 প্রকাশের ফাইল (publish.txt + .srt, টিক থাকলে)
+#   থাম্বনেইল (টিক থাকলে)      → আগে তৈরি হয় (দ্রুত), প্রতিটা ভিডিও Artifact-এর সাথে আপলোড হয়
+#   প্রকাশের ফাইল (txt + srt) → প্রথম রেন্ডার জবের সময় তৈরি হয়, প্রতিটা ভিডিও Artifact-এর সাথে আপলোড হয়
 #   জব ১ 9:16 HD  শেষ → video-9x16-HD   │ জব ২ 9:16 4K শেষ → video-9x16-4K
 #   জব ৩ 16:9 HD  শেষ → video-16x9-HD   │ জব ৪ 16:9 4K শেষ → video-16x9-4K
 #   (যে জবগুলো orientation/quality ইনপুটে বাছা হয়নি সেগুলো বাদ; ক্রম সবসময় 9:16 HD → 9:16 4K → 16:9 HD → 16:9 4K)
-#   প্রকাশের ফাইল (txt + srt) → প্রথম জবের ভিডিওর সাথেই তৈরি, তার আপলোডের পরেই আপলোড: Artifacts → publish-files
+#   ⚠️ প্রথম জব ব্যর্থ হলে (প্রকাশের ফাইল তখনো তৈরি হয়নি) পরের জবের Artifact-এ প্রকাশের ফাইল নাও থাকতে পারে।
+#   (শুধু action = thumbnail_only হলে ভিডিও নেই, তাই থাম্বনেইল আলাদা Artifact: thumbnails)
 #   একটা জব ব্যর্থ হলে আগে শেষ হওয়া জবের Artifact আগেই আপলোড হয়ে গেছে; বাকি জবগুলো তবু চলে, আর শেষে রান ❌ দেখায়।
 #   render_and_release: সব জব সফল হলে তবেই শেষে GitHub Release (ব্যর্থ হলে Release হয় না)।
 #
@@ -33,7 +37,7 @@ name: Render Hadis Video
 # 🖼️ থাম্বনেইল (নতুন ইনপুট):
 #   thumbnail    = টিক থাকলে (ডিফল্ট) ভিডিওর পাশে 4K থাম্বনেইল: Hook + Teaser + Intro এক ছবিতে।
 #                  ওরিয়েন্টেশন অনুযায়ী (9:16 → ২১৬০×৩৮৪০, 16:9 → ৩৮৪০×২১৬০), PNG + JPG; কোয়ালিটি ইনপুট যাই হোক সবসময় 4K।
-#                  Artifacts: thumbnails; render_and_release হলে Release-এও যায়।
+#                  Artifacts: প্রতিটা ভিডিও Artifact-এর ভেতরে (thumbnail_only হলে আলাদা thumbnails); render_and_release হলে Release-এও যায়।
 #   series       = সিরিজ নম্বর (যেমন 12 বা ১২) → থাম্বনেইলের ডান-উপরে "পর্ব ১২" ব্যাজ। ফাঁকা = ব্যাজ নেই। ভিডিওতে কিছু বদলায় না।
 #   thumbnail_night = থাম্বনেইলের ব্যাকগ্রাউন্ডের দিন-রাত, ০ (দিন) থেকে ১ (রাত); ফাঁকা = থিমের ডিফল্ট।
 #                  ⚠️ শুধু greenDayNight থিমে প্রভাব ফেলে (emerald/navy স্থির থিম)। যেমন 0 = উজ্জ্বল দিন, 0.5 = সোনালি গোধূলি, 0.9 = রাত + জোনাকি।
@@ -42,8 +46,20 @@ name: Render Hadis Video
 #   publish_files = টিক থাকলে (ডিফল্ট) ভিডিওর পাশে দুটো ফাইল:
 #                   out/hadis<id>_publish.txt → ইউটিউব শিরোনাম (৩ বিকল্প) + বিবরণ + ট্যাগ + ফেসবুক ক্যাপশন + হ্যাশট্যাগ
 #                   out/hadis<id>.srt         → সাবটাইটেল (ইউটিউব স্টুডিও → Subtitles → Upload file, With timing)
-#                   Artifacts: publish-files; render_and_release হলে Release-এও যায়। হাদিসের লেখা JSON থেকে হুবহু — প্রকাশের আগে নিজে যাচাই করো।
+#                   Artifacts: প্রতিটা ভিডিও Artifact-এর ভেতরে; render_and_release হলে Release-এও যায়। হাদিসের লেখা JSON থেকে হুবহু — প্রকাশের আগে নিজে যাচাই করো।
 #   app_link      = অ্যাপের লিংক (https://...); দিলে বিবরণ ও ক্যাপশনে বসে। ফাঁকা = লিংক ছাড়া লাইন।
+#
+# 🎵 ব্যাকগ্রাউন্ড মিউজিক + অডিও (নতুন ইনপুট):
+#   background_music = ঐচ্ছিক। এই দুটোর যেকোনো একটা দেওয়া যায়:
+#                   ১) সরাসরি ডাউনলোড লিংক (https://.../song.mp3) → ডাউনলোড + ffprobe যাচাই করে public/background1.<ext> নামে সেভ
+#                      (আগের background1.* মুছে ওভাররাইট হয়, আর রিপোতেও কমিট হয় — পরের বার শুধু ফাইলের নাম দিলেই চলে)
+#                   ২) public/ ফোল্ডারে থাকা ফাইলের নাম (যেমন background1.mp3) → ওই ফাইলই সরাসরি ব্যবহার; না থাকলে স্পষ্ট এরর
+#                   ফাঁকা = ব্যাকগ্রাউন্ড মিউজিক ছাড়া, আগের মতোই। লিংক/ফাইল নষ্ট বা পড়া না গেলে ⚠️ দিয়ে মিউজিক ছাড়াই রেন্ডার চলে।
+#   অডিও নিয়ম (সব রেন্ডার জবের ভিডিওতে; কোড scripts/lib/audioMix.mjs, FFmpeg):
+#                   • ভয়েস সবসময় ≈ -14 LUFS (two-pass loudnorm; মিউজিক থাকুক বা না থাকুক)
+#                   • মিউজিক খুব নরম (ভলিউম 0.08 ≈ ভয়েসের চেয়ে -22 dB নিচে; audioMix.mjs-এর `bgVolume`) + ভয়েস বাজলে আরও নেমে যায় (ducking)
+#                   • মিউজিক ভিডিওর চেয়ে বড় হলে ছাঁটা (শেষে ফেড-আউট), ছোট হলে লুপ — ঠিক ভিডিওর দৈর্ঘ্য পর্যন্ত
+#                   • ভিডিও স্ট্রিম কপি হয় (কোয়ালিটি অপরিবর্তিত), অডিও AAC 192k
 
 on:
   workflow_dispatch:
@@ -152,6 +168,11 @@ on:
         type: boolean
       app_link:
         description: "অ্যাপের লিংক (https://...) — বিবরণ/ক্যাপশনে বসবে। ফাঁকা = লিংক ছাড়া"
+        required: false
+        default: ""
+        type: string
+      background_music:
+        description: "ব্যাকগ্রাউন্ড মিউজিক (ঐচ্ছিক): সরাসরি ডাউনলোড লিংক (https://...) অথবা public/ ফোল্ডারের ফাইলের নাম (যেমন background1.mp3)। ফাঁকা = মিউজিক ছাড়া"
         required: false
         default: ""
         type: string
@@ -267,6 +288,38 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+      # ---------- 🎵 অডিও: FFmpeg + ব্যাকগ্রাউন্ড মিউজিক (শুধু render / render_and_release) ----------
+      # FFmpeg: ভয়েস -14 LUFS (loudnorm), মিউজিক ducking (sidechaincompress), লুপ/ট্রিম — scripts/lib/audioMix.mjs
+      - name: Install FFmpeg (audio mixing)
+        if: ${{ startsWith(inputs.action, 'render') }}
+        run: |
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          ffmpeg -version | head -n 1
+
+      # background_music ফাঁকা হলে কিছুই করে না (মিউজিক ছাড়া রেন্ডার)। লিংক হলে ডাউনলোড → public/background1.<ext>; ফাইলের নাম হলে public/ থেকে।
+      # সফল হলে BG_MUSIC_FILE (ও BG_MUSIC_DOWNLOADED) পরের স্টেপগুলোর জন্য সেট হয়। ডাউনলোড/যাচাই ব্যর্থ = ⚠️, মিউজিক ছাড়াই চলবে।
+      - name: Prepare background music
+        id: bgmusic
+        if: ${{ startsWith(inputs.action, 'render') }}
+        env:
+          BACKGROUND_MUSIC: ${{ inputs.background_music }}
+        run: node scripts/prepare-bgmusic.mjs
+
+      # ডাউনলোড করা হলে ফাইলটা রিপোতেও রাখি, যাতে পরের বার শুধু নাম (background1.mp3) দিলেই চলে। ব্যর্থ হলে রেন্ডার থামে না।
+      - name: Save background music to repo (public/background1.*)
+        if: ${{ startsWith(inputs.action, 'render') && env.BG_MUSIC_DOWNLOADED == 'true' }}
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- 'public/background1.*'
+          if git diff --cached --quiet; then
+            echo "background1 অপরিবর্তিত — কমিট লাগবে না।"
+          else
+            git commit -q -m "chore: save background music (public/background1)"
+            git push || { git pull --rebase && git push; }
+          fi
+
       # ---------- action = render / render_and_release / thumbnail_only ----------
       # একটাই সহায়ক স্ক্রিপ্ট সব `node scripts/render.mjs` কল বানায় (আর্গুমেন্ট এক জায়গায়): bash render-helper.sh <orientation> <quality> <thumbnail> <publish_files> <thumbnail_only>
       - name: Prepare render helper
@@ -308,8 +361,9 @@ jobs:
         if: ${{ (startsWith(inputs.action, 'render') && inputs.thumbnail) || inputs.action == 'thumbnail_only' }}
         run: bash "$RUNNER_TEMP/render-helper.sh" "$ORIENTATION" "$QUALITY" true false true
 
+      # শুধু thumbnail_only-তে আলাদা Artifact। render / render_and_release-এ থাম্বনেইল প্রতিটা ভিডিও Artifact-এর ভেতরে যায়।
       - name: Upload thumbnails
-        if: ${{ !cancelled() && steps.thumbs.outcome == 'success' }}
+        if: ${{ !cancelled() && inputs.action == 'thumbnail_only' && steps.thumbs.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: thumbnails
@@ -320,7 +374,8 @@ jobs:
           retention-days: 7
 
       # ---------- ভিডিও জব: প্রতিটা শেষ হলেই আপলোড (ক্রম = render.mjs-এর ক্রম) ----------
-      # প্রকাশের ফাইল (txt + srt) শুধু প্রথম জবে বানানো হয় (বাকিগুলোতে `false`), আর সেই জবের ভিডিও আপলোডের পরেই আপলোড হয়।
+      # প্রকাশের ফাইল (txt + srt) শুধু প্রথম জবে বানানো হয় (বাকিগুলোতে `false`), কিন্তু out/-এ থেকে যায় — তাই প্রতিটা ভিডিও Artifact-এ
+# ভিডিওর সাথে থাম্বনেইল + প্রকাশের ফাইলও একসাথে আপলোড হয় (আলাদা Artifact নেই)।
       # জব 1: 9x16 HD
       - name: Render 9x16 HD
         id: job_p_hd
@@ -333,21 +388,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: video-9x16-HD
-          path: out/*_9x16_HD.mp4
+          path: |
+            out/*_9x16_HD.mp4
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+            out/hadis*_publish.txt
+            out/hadis*.srt
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
-
-      - name: Upload publish files (caption/tags + subtitles)
-        if: ${{ !cancelled() && steps.job_p_hd.outcome == 'success' && inputs.publish_files }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: publish-files
-          path: |
-            out/hadis*_publish.txt
-            out/hadis*.srt
-          if-no-files-found: warn
-          retention-days: 7
 
       # জব 2: 9x16 4K
       - name: Render 9x16 4K
@@ -361,21 +410,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: video-9x16-4K
-          path: out/*_9x16_4K.mp4
+          path: |
+            out/*_9x16_4K.mp4
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+            out/hadis*_publish.txt
+            out/hadis*.srt
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
-
-      - name: Upload publish files (caption/tags + subtitles)
-        if: ${{ !cancelled() && steps.job_p_4k.outcome == 'success' && (inputs.publish_files && inputs.quality == '4k') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: publish-files
-          path: |
-            out/hadis*_publish.txt
-            out/hadis*.srt
-          if-no-files-found: warn
-          retention-days: 7
 
       # জব 3: 16x9 HD
       - name: Render 16x9 HD
@@ -389,21 +432,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: video-16x9-HD
-          path: out/*_16x9_HD.mp4
+          path: |
+            out/*_16x9_HD.mp4
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+            out/hadis*_publish.txt
+            out/hadis*.srt
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
-
-      - name: Upload publish files (caption/tags + subtitles)
-        if: ${{ !cancelled() && steps.job_l_hd.outcome == 'success' && (inputs.publish_files && inputs.orientation == 'landscape') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: publish-files
-          path: |
-            out/hadis*_publish.txt
-            out/hadis*.srt
-          if-no-files-found: warn
-          retention-days: 7
 
       # জব 4: 16x9 4K
       - name: Render 16x9 4K
@@ -417,21 +454,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: video-16x9-4K
-          path: out/*_16x9_4K.mp4
+          path: |
+            out/*_16x9_4K.mp4
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+            out/hadis*_publish.txt
+            out/hadis*.srt
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
-
-      - name: Upload publish files (caption/tags + subtitles)
-        if: ${{ !cancelled() && steps.job_l_4k.outcome == 'success' && (inputs.publish_files && inputs.orientation == 'landscape' && inputs.quality == '4k') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: publish-files
-          path: |
-            out/hadis*_publish.txt
-            out/hadis*.srt
-          if-no-files-found: warn
-          retention-days: 7
 
       - name: List rendered files
         if: ${{ !cancelled() && (startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only') }}
@@ -476,6 +507,15 @@ jobs:
             exit 1
           fi
           echo "✅ সব জব সফল।"
+
+      # background_music-এ দেওয়া ফাইলের নাম public/-এ না পাওয়া গেলে: ভিডিও (মিউজিক ছাড়া) তৈরি হয়ে Artifact-এ উঠে গেছে,
+      # কিন্তু রান ❌ দেখায় ও Release হয় না — নাম ঠিক করে (বা লিংক দিয়ে) আবার চালাও।
+      - name: Fail if background music file was not found
+        if: ${{ !cancelled() && env.BG_MUSIC_ERROR != '' }}
+        run: |
+          echo "::error::$BG_MUSIC_ERROR"
+          echo "ভিডিওগুলো ব্যাকগ্রাউন্ড মিউজিক ছাড়া তৈরি হয়েছে। ফাইলের নাম ঠিক করে আবার চালাও।"
+          exit 1
 
       - name: Create GitHub Release
         if: ${{ inputs.action == 'render_and_release' }}
