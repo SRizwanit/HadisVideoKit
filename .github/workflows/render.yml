@@ -2,9 +2,18 @@ name: Render Hadis Video
 
 # একটাই workflow — সব কাজ এখান থেকে (ফোন থেকেই):
 #   action = check               → যাচাই (বান্ডল + ছবি রেন্ডার), Artifacts: check-images
-#   action = render              → ভিডিও রেন্ডার, Artifacts: videos
+#   action = render              → ভিডিও রেন্ডার; **প্রতিটা জব শেষ হওয়ার সাথে সাথেই** আলাদা Artifact আপলোড (নিচে দেখো)
 #   action = render_and_release  → রেন্ডার + GitHub Release-এ আপলোড
 #   action = thumbnail_only      → শুধু 4K থাম্বনেইল (ভিডিও নয়; কয়েক মিনিটে) — সিরিজ নম্বর/ব্যাকগ্রাউন্ড ঠিক করতে, Artifacts: thumbnails
+#
+# 📦 Artifact আপলোড (প্রতিটা জব শেষ হলেই — সব শেষ হওয়ার অপেক্ষা নেই):
+#   থাম্বনেইল (টিক থাকলে)      → আগে তৈরি হয়ে সাথে সাথে আপলোড: Artifacts → thumbnails
+#   জব ১ 9:16 HD  শেষ → video-9x16-HD   │ জব ২ 9:16 4K শেষ → video-9x16-4K
+#   জব ৩ 16:9 HD  শেষ → video-16x9-HD   │ জব ৪ 16:9 4K শেষ → video-16x9-4K
+#   (যে জবগুলো orientation/quality ইনপুটে বাছা হয়নি সেগুলো বাদ; ক্রম সবসময় 9:16 HD → 9:16 4K → 16:9 HD → 16:9 4K)
+#   প্রকাশের ফাইল (txt + srt) → প্রথম জবের ভিডিওর সাথেই তৈরি, তার আপলোডের পরেই আপলোড: Artifacts → publish-files
+#   একটা জব ব্যর্থ হলে আগে শেষ হওয়া জবের Artifact আগেই আপলোড হয়ে গেছে; বাকি জবগুলো তবু চলে, আর শেষে রান ❌ দেখায়।
+#   render_and_release: সব জব সফল হলে তবেই শেষে GitHub Release (ব্যর্থ হলে Release হয় না)।
 #
 # নতুন zip আপলোড করেছো? zip_file ঘরে zip-এর নাম লেখো (যেমন HadisVideokit-part3.zip);
 # workflow আগে zip খুলে ফাইল কমিট করবে, তারপর কাজ করবে। zip_file ফাঁকা = zip খোলা হবে না।
@@ -158,6 +167,21 @@ jobs:
   run:
     runs-on: ubuntu-24.04
     timeout-minutes: 350
+    env:
+      HADIS_ID: ${{ inputs.hadis_id }}
+      HADIS_BOOKNAME: ${{ inputs.hadis_bookname }}
+      HADIS_NUMBER: ${{ inputs.hadis_number }}
+      THEME: ${{ inputs.theme }}
+      ORIENTATION: ${{ inputs.orientation }}
+      QUALITY: ${{ inputs.quality }}
+      INTRO_SECONDS: ${{ inputs.intro_seconds }}
+      OUTRO_SECONDS: ${{ inputs.outro_seconds }}
+      HOOK_TEXT: ${{ inputs.hook_text }}
+      HOOK_SECONDS: ${{ inputs.hook_seconds }}
+      TEASER: ${{ inputs.teaser }}
+      SERIES: ${{ inputs.series }}
+      THUMB_NIGHT: ${{ inputs.thumbnail_night }}
+      APP_LINK: ${{ inputs.app_link }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -243,51 +267,174 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-      # ---------- action = render / render_and_release ----------
-      - name: Render videos
+      # ---------- action = render / render_and_release / thumbnail_only ----------
+      # একটাই সহায়ক স্ক্রিপ্ট সব `node scripts/render.mjs` কল বানায় (আর্গুমেন্ট এক জায়গায়): bash render-helper.sh <orientation> <quality> <thumbnail> <publish_files> <thumbnail_only>
+      - name: Prepare render helper
         if: ${{ startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only' }}
-        env:
-          ACTION: ${{ inputs.action }}
-          HADIS_ID: ${{ inputs.hadis_id }}
-          HADIS_BOOKNAME: ${{ inputs.hadis_bookname }}
-          HADIS_NUMBER: ${{ inputs.hadis_number }}
-          THEME: ${{ inputs.theme }}
-          ORIENTATION: ${{ inputs.orientation }}
-          QUALITY: ${{ inputs.quality }}
-          INTRO_SECONDS: ${{ inputs.intro_seconds }}
-          OUTRO_SECONDS: ${{ inputs.outro_seconds }}
-          HOOK_TEXT: ${{ inputs.hook_text }}
-          HOOK_SECONDS: ${{ inputs.hook_seconds }}
-          TEASER: ${{ inputs.teaser }}
-          THUMBNAIL: ${{ inputs.thumbnail }}
-          SERIES: ${{ inputs.series }}
-          THUMB_NIGHT: ${{ inputs.thumbnail_night }}
-          PUBLISH_FILES: ${{ inputs.publish_files }}
-          APP_LINK: ${{ inputs.app_link }}
         run: |
-          THUMB_ONLY=false
-          if [ "$ACTION" = "thumbnail_only" ]; then THUMB_ONLY=true; fi
+          cat > "$RUNNER_TEMP/render-helper.sh" <<'HELPER_EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          ORI="$1"
+          QUAL="$2"
+          THUMB="$3"
+          PUB="$4"
+          THUMB_ONLY="$5"
           node scripts/render.mjs \
             --id "$HADIS_ID" \
             --book "$HADIS_BOOKNAME" \
             --number "$HADIS_NUMBER" \
             --theme "$THEME" \
-            --orientation "$ORIENTATION" \
-            --quality "$QUALITY" \
+            --orientation "$ORI" \
+            --quality "$QUAL" \
             --intro "$INTRO_SECONDS" \
             --outro "$OUTRO_SECONDS" \
             --hook-text "$HOOK_TEXT" \
             --hook-seconds "$HOOK_SECONDS" \
             --teaser "$TEASER" \
-            --thumbnail "$THUMBNAIL" \
+            --thumbnail "$THUMB" \
             --thumbnail-only "$THUMB_ONLY" \
             --series "$SERIES" \
             --thumb-night "$THUMB_NIGHT" \
-            --publish-files "$PUBLISH_FILES" \
+            --publish-files "$PUB" \
             --app-link "$APP_LINK"
+          HELPER_EOF
+          chmod +x "$RUNNER_TEMP/render-helper.sh"
+
+      # ---------- থাম্বনেইল (আগে, দ্রুত; ভিডিও জবের আগেই আপলোড) ----------
+      - name: Render thumbnails
+        id: thumbs
+        continue-on-error: true
+        if: ${{ (startsWith(inputs.action, 'render') && inputs.thumbnail) || inputs.action == 'thumbnail_only' }}
+        run: bash "$RUNNER_TEMP/render-helper.sh" "$ORIENTATION" "$QUALITY" true false true
+
+      - name: Upload thumbnails
+        if: ${{ !cancelled() && steps.thumbs.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: thumbnails
+          path: |
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+          if-no-files-found: warn
+          retention-days: 7
+
+      # ---------- ভিডিও জব: প্রতিটা শেষ হলেই আপলোড (ক্রম = render.mjs-এর ক্রম) ----------
+      # প্রকাশের ফাইল (txt + srt) শুধু প্রথম জবে বানানো হয় (বাকিগুলোতে `false`), আর সেই জবের ভিডিও আপলোডের পরেই আপলোড হয়।
+      # জব 1: 9x16 HD
+      - name: Render 9x16 HD
+        id: job_p_hd
+        continue-on-error: true
+        if: ${{ !cancelled() && startsWith(inputs.action, 'render') && (inputs.orientation != 'landscape' && inputs.quality != '4k') }}
+        run: bash "$RUNNER_TEMP/render-helper.sh" portrait hd false "${{ inputs.publish_files }}" false
+
+      - name: Upload 9x16 HD video
+        if: ${{ !cancelled() && steps.job_p_hd.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-9x16-HD
+          path: out/*_9x16_HD.mp4
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      - name: Upload publish files (caption/tags + subtitles)
+        if: ${{ !cancelled() && steps.job_p_hd.outcome == 'success' && inputs.publish_files }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-files
+          path: |
+            out/hadis*_publish.txt
+            out/hadis*.srt
+          if-no-files-found: warn
+          retention-days: 7
+
+      # জব 2: 9x16 4K
+      - name: Render 9x16 4K
+        id: job_p_4k
+        continue-on-error: true
+        if: ${{ !cancelled() && startsWith(inputs.action, 'render') && (inputs.orientation != 'landscape' && inputs.quality != 'hd') }}
+        run: bash "$RUNNER_TEMP/render-helper.sh" portrait 4k false "${{ inputs.publish_files && inputs.quality == '4k' }}" false
+
+      - name: Upload 9x16 4K video
+        if: ${{ !cancelled() && steps.job_p_4k.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-9x16-4K
+          path: out/*_9x16_4K.mp4
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      - name: Upload publish files (caption/tags + subtitles)
+        if: ${{ !cancelled() && steps.job_p_4k.outcome == 'success' && (inputs.publish_files && inputs.quality == '4k') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-files
+          path: |
+            out/hadis*_publish.txt
+            out/hadis*.srt
+          if-no-files-found: warn
+          retention-days: 7
+
+      # জব 3: 16x9 HD
+      - name: Render 16x9 HD
+        id: job_l_hd
+        continue-on-error: true
+        if: ${{ !cancelled() && startsWith(inputs.action, 'render') && (inputs.orientation != 'portrait' && inputs.quality != '4k') }}
+        run: bash "$RUNNER_TEMP/render-helper.sh" landscape hd false "${{ inputs.publish_files && inputs.orientation == 'landscape' }}" false
+
+      - name: Upload 16x9 HD video
+        if: ${{ !cancelled() && steps.job_l_hd.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-16x9-HD
+          path: out/*_16x9_HD.mp4
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      - name: Upload publish files (caption/tags + subtitles)
+        if: ${{ !cancelled() && steps.job_l_hd.outcome == 'success' && (inputs.publish_files && inputs.orientation == 'landscape') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-files
+          path: |
+            out/hadis*_publish.txt
+            out/hadis*.srt
+          if-no-files-found: warn
+          retention-days: 7
+
+      # জব 4: 16x9 4K
+      - name: Render 16x9 4K
+        id: job_l_4k
+        continue-on-error: true
+        if: ${{ !cancelled() && startsWith(inputs.action, 'render') && (inputs.orientation != 'portrait' && inputs.quality != 'hd') }}
+        run: bash "$RUNNER_TEMP/render-helper.sh" landscape 4k false "${{ inputs.publish_files && inputs.orientation == 'landscape' && inputs.quality == '4k' }}" false
+
+      - name: Upload 16x9 4K video
+        if: ${{ !cancelled() && steps.job_l_4k.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-16x9-4K
+          path: out/*_16x9_4K.mp4
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      - name: Upload publish files (caption/tags + subtitles)
+        if: ${{ !cancelled() && steps.job_l_4k.outcome == 'success' && (inputs.publish_files && inputs.orientation == 'landscape' && inputs.quality == '4k') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-files
+          path: |
+            out/hadis*_publish.txt
+            out/hadis*.srt
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: List rendered files
-        if: ${{ startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only' }}
+        if: ${{ !cancelled() && (startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only') }}
         run: |
           {
             if ls out/*.mp4 > /dev/null 2>&1; then
@@ -306,37 +453,29 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload videos
-        if: ${{ startsWith(inputs.action, 'render') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: videos
-          path: out/*.mp4
-          if-no-files-found: error
-          retention-days: 7
-          compression-level: 0
-
-      - name: Upload thumbnails
-        if: ${{ (startsWith(inputs.action, 'render') && inputs.thumbnail) || inputs.action == 'thumbnail_only' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: thumbnails
-          path: |
-            out/*_thumbnail_*.png
-            out/*_thumbnail_*.jpg
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload publish files (caption/tags + subtitles)
-        if: ${{ startsWith(inputs.action, 'render') && inputs.publish_files }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: publish-files
-          path: |
-            out/hadis*_publish.txt
-            out/hadis*.srt
-          if-no-files-found: warn
-          retention-days: 7
+      # কোনো জব ব্যর্থ হলে রান ❌ (জবগুলো `continue-on-error`-এ চলে যাতে আগের শেষ হওয়া জবের Artifact আগেই আপলোড হয়); Release-ও তখন হয় না
+      - name: Check render results
+        if: ${{ !cancelled() && (startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only') }}
+        env:
+          R_THUMBS: ${{ steps.thumbs.outcome }}
+          R_P_HD: ${{ steps.job_p_hd.outcome }}
+          R_P_4K: ${{ steps.job_p_4k.outcome }}
+          R_L_HD: ${{ steps.job_l_hd.outcome }}
+          R_L_4K: ${{ steps.job_l_4k.outcome }}
+        run: |
+          failed=0
+          for pair in "থাম্বনেইল=$R_THUMBS" "9:16 HD=$R_P_HD" "9:16 4K=$R_P_4K" "16:9 HD=$R_L_HD" "16:9 4K=$R_L_4K"; do
+            name="${pair%%=*}"; outcome="${pair#*=}"
+            if [ "$outcome" = "failure" ]; then
+              echo "::error::জব ব্যর্থ: $name"
+              failed=1
+            fi
+          done
+          if [ "$failed" = "1" ]; then
+            echo "যে জবগুলো শেষ হয়েছিল তাদের Artifact আগেই আপলোড হয়ে গেছে। ব্যর্থ জবের কারণ ওপরের স্টেপের লগে।"
+            exit 1
+          fi
+          echo "✅ সব জব সফল।"
 
       - name: Create GitHub Release
         if: ${{ inputs.action == 'render_and_release' }}
