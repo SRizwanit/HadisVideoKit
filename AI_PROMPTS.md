@@ -24,21 +24,22 @@ Work **one file at a time, one step at a time**. Never ask the AI for several fi
 ### About the Hook (opening question) — `public/audio/hook.wav`
 
 Every video can start with a **Hook**: a big on-screen question **"এই হাদিসের ব্যাপারে কি আপনার জানা আছে?"** while `hook.wav` plays, then Intro → hadith (Main) → Outro.
-- **Nothing to type in GitHub Actions** — the Hook is automatic. Its length = the length of `hook.wav` (+ 0.12 s), so a longer/shorter voice file simply makes a longer/shorter Hook.
-- **No `public/audio/hook.wav` = no Hook** (the video starts with Intro, exactly as before). To switch the Hook off without deleting the file, set `HOOK_ENABLED = false` in `src/constants.ts`.
-- The Hook text is the constant `HOOK_TEXT` in `src/constants.ts`. If you record a different question, change that text to match the voice **word for word**.
+- **GitHub Actions has two optional fields for the Hook** (leave them empty and everything is automatic):
+  - `hook_text` — the big on-screen text. Empty = the default question above (the constant `HOOK_TEXT` in `src/constants.ts`). If you type a different text, it must match the voice in `hook.wav` **word for word**.
+  - `hook_seconds` — how long the Hook lasts. Empty = automatic: the length of `hook.wav` (+ 0.12 s). A number = at least that many seconds (a longer `hook.wav` always wins — the voice is never cut; with no `hook.wav` the Hook is silent for that many seconds). `0` = no Hook.
+- **No `public/audio/hook.wav` and no `hook_seconds` = no Hook** (the video starts with Intro, exactly as before). To switch the Hook off for every video without deleting the file, set `HOOK_ENABLED = false` in `src/constants.ts`.
 - `hook.wav` is a voice file, so it is **not** made with the prompts below. One file is shared by all hadiths; keep it small (a few seconds) and clear, with no background music.
 - Hook, Intro and Outro show **no captions** (captions exist only in Main).
 
 ### About the Audio Teaser (cold open) — optional, chosen inside the timestamp JSON
 
 After the Hook, the video can play the **strongest phrase of the hadith first** (big text, the spoken word glows), and then Intro → the full hadith from the very beginning. Order: **Hook → Teaser → Intro → Hadith → Outro**.
-- **"Selected" = the JSON has a `teaser` block.** Prompt 1 below can make it for you. **No `teaser` = no Teaser** (the video is exactly as before). Nothing to type in GitHub Actions; `render.yml` is unchanged.
+- **Two things must both be true for the Teaser to play:** (1) the GitHub Actions tick-box **`teaser`** is ON (it is on by default), and (2) the JSON has a `teaser` block. Prompt 1 below can make that block for you. **No `teaser` block = no Teaser** (the video is exactly as before), even if the tick-box is on. **Tick-box OFF = no Teaser**, even if the JSON has the block (so one JSON works both ways).
 - `teaser` is `{ "start": 12.4, "end": 17.9 }` in seconds, measured from the start of the hadith `.wav` (same clock as the segments). The audio of exactly that part is played, with a tiny fade at both ends.
 - Length rules (the code enforces them): shorter than 0.5 s → ignored; longer than 12 s → cut to 12 s; `end` beyond the audio → cut to the audio length. The Teaser scene lasts the phrase + 0.15 s.
 - The words shown come from the `words` timings of the segments inside that range (so **word-level times give the best result**). Without `words` the segment text is split evenly. Optional `"text"` inside `teaser` is only a fallback when no segment matches.
 - **Pick a complete, meaningful phrase** (a full clause, ideally 3–15 words) that starts and ends exactly at word boundaries — never in the middle of a word. The phrase must be a part of the hadith that is really spoken there; the AI must never write new words.
-- To switch the Teaser off everywhere without editing JSON files: `TEASER_ENABLED = false` in `src/constants.ts`.
+- To switch the Teaser off for one render: untick `teaser` in GitHub Actions. To switch it off everywhere: `TEASER_ENABLED = false` in `src/constants.ts`.
 
 `<ID>` is the `hadis_id` you type in GitHub Actions, for example `0101` → `hadis0101.wav`, `hadis0101_timestamp.json`. Allowed characters: English letters, digits, `-` and `_` only.
 
@@ -306,6 +307,6 @@ After downloading: rename the file to `<NAME>.mp3` (all lower-case) → upload t
 2. `public/hadis/hadis<ID>_timestamp.json`
 3. `public/svg/svg1.svg` … `svgN.svg` (no gaps)
 4. `public/sfx/<name>.mp3` for the effects you use
-5. GitHub → **Actions → Render Hadis Video → Run workflow** → `action = render`, `hadis_id = <ID>`, `hadis_bookname`, `hadis_number` (Bengali digits are best), theme, orientation, quality. Leave `zip_file` empty.
+5. GitHub → **Actions → Render Hadis Video → Run workflow** → `action = render`, `hadis_id = <ID>`, `hadis_bookname`, `hadis_number` (Bengali digits are best), theme, orientation, quality. Optional: `hook_text`, `hook_seconds` (both empty = automatic) and the `teaser` tick-box (on = play the Teaser if the JSON has one). Leave `zip_file` empty.
 
 If the run fails, copy the **red text** of the failed step and send it. Most file problems are reported in Bengali with the file name and what to do.
