@@ -5,6 +5,7 @@ import {
   MAX_INTRO_OUTRO_SECONDS,
   ORIENTATIONS,
   THEME_IDS,
+  TIME_MODES,
 } from "./constants";
 
 /**
@@ -17,6 +18,9 @@ import {
 
 export const themeIdSchema = z.enum(THEME_IDS);
 export type ThemeId = z.infer<typeof themeIdSchema>;
+
+/** সময়ের মোড: day / night / dayToNight / nightToDay (`constants.ts`-এর `TIME_MODES`) */
+export const timeModeSchema = z.enum(TIME_MODES);
 
 export const orientationSchema = z.enum(ORIENTATIONS);
 export type Orientation = z.infer<typeof orientationSchema>;
@@ -34,6 +38,11 @@ export const hadisVideoSchema = z.object({
   /** ভিডিওতে দেখানো হাদিস নম্বর (বাংলা বা ইংরেজি সংখ্যা; Part 4 বাংলায় রূপান্তর করবে) */
   hadisNumber: z.string(),
   theme: themeIdSchema,
+  /**
+   * দিন-রাতের মোড (workflow-এর `time_mode`)। না দিলে = `dayToNight` (আগের আচরণ)। শুধু দিন-রাতের থিমে
+   * (greenDayNight, monsoon, winter, spring) প্রভাব ফেলে; emerald/navy স্থির।
+   */
+  timeMode: timeModeSchema.optional(),
   orientation: orientationSchema,
   introSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS),
   outroSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS),
@@ -57,7 +66,7 @@ export const hadisVideoSchema = z.object({
   teaserEndSeconds: z.number().min(0).optional(),
   /** থাম্বনেইলের সিরিজ ব্যাজ: "১২" → "পর্ব ১২" (ফাঁকা/না দিলে ব্যাজ নেই)। ভিডিওতে কিছু বদলায় না — শুধু থাম্বনেইল (`ThumbnailScene`) */
   seriesNumber: z.string().optional(),
-  /** থাম্বনেইলের ব্যাকগ্রাউন্ডের দিন-রাত (০ = দিন, ১ = রাত)। ফাঁকা/না দিলে থিমের ডিফল্ট (`THUMBNAIL_NIGHT_BY_THEME`)। শুধু greenDayNight-এ প্রভাব ফেলে */
+  /** থাম্বনেইলের ব্যাকগ্রাউন্ডের দিন-রাত (০ = দিন, ১ = রাত)। ফাঁকা/না দিলে `timeMode` বা থিমের ডিফল্ট (`THUMBNAIL_NIGHT_BY_THEME`)। শুধু দিন-রাতের থিমে (greenDayNight, monsoon, winter, spring) প্রভাব ফেলে */
   thumbnailNight: z.number().min(0).max(1).optional(),
 });
 

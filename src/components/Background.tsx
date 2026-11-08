@@ -2,25 +2,31 @@ import React from "react";
 import { AbsoluteFill, random, useCurrentFrame, useVideoConfig } from "remotion";
 import { DayNightSky } from "./DayNightSky";
 import { Fireflies } from "./Fireflies";
+import { SeasonEffects } from "./SeasonEffects";
 import { computeNightFactor } from "../lib/dayNight";
 import type { Timing } from "../lib/timing";
 import { getThemeColors, skyGradient, THEMES } from "../themes";
 import type { ThemeId } from "../types";
+import type { TimeMode } from "../constants";
 
 /**
- * Part 6: ৩ থিমের ব্যাকগ্রাউন্ড।
- *  - emerald / navy : গ্রেডিয়েন্ট + ধীর ঘূর্ণায়মান জিওমেট্রিক প্যাটার্ন (emerald) + ভাসমান কণা
- *  - greenDayNight  : DayNightSky + Fireflies
+ * Part 6: থিমের ব্যাকগ্রাউন্ড।
+ *  - emerald / navy : গ্রেডিয়েন্ট + ধীর ঘূর্ণায়মান জিওমেট্রিক প্যাটার্ন (emerald) + ভাসমান কণা (স্থির — সময়ের মোডে প্রভাব নেই)
+ *  - greenDayNight, monsoon, winter, spring (দিন-রাতের থিম): DayNightSky + (ঋতুর এফেক্ট: বৃষ্টি / কুয়াশা / ঝরা পাপড়ি) + Fireflies
  * সব অ্যানিমেশন useCurrentFrame() ভিত্তিক।
  *
- * nightFactor আসে `timing` থেকে (Intro ০ → Main-এ ধীরে ~০.৯৫ → Outro ১)।
- * dev প্রিভিউয়ের জন্য `nightFactor` ও `size` সরাসরি দেওয়া যায়।
+ * nightFactor আসে `timing` থেকে, সময়ের মোড (`timing.timeMode`) অনুযায়ী:
+ *   dayToNight (ডিফল্ট) Intro ০ → Main-এ ধীরে ~০.৯৫ → Outro ১; nightToDay এর উল্টো; day = সবসময় ০; night = সবসময় ১।
+ * dev প্রিভিউয়ের জন্য `nightFactor` ও `size` সরাসরি দেওয়া যায়; `timeMode` সরাসরি দিলে `timing.timeMode`-কে ছাপিয়ে যায়
+ * (nightToDay-তে সূর্য-চাঁদের পথ আয়নার মতো উল্টে যায়)।
  */
 
 type Props = {
   theme: ThemeId;
   timing?: Timing;
   nightFactor?: number;
+  /** সময়ের মোড (থাম্বনেইল/dev প্রিভিউয়ের জন্য সরাসরি); না দিলে `timing.timeMode`, তা-ও না থাকলে dayToNight */
+  timeMode?: TimeMode;
   size?: { width: number; height: number };
 };
 
@@ -106,12 +112,13 @@ const Particles: React.FC<{
   );
 };
 
-export const Background: React.FC<Props> = ({ theme, timing, nightFactor, size }) => {
+export const Background: React.FC<Props> = ({ theme, timing, nightFactor, timeMode, size }) => {
   const frame = useCurrentFrame();
   const config = useVideoConfig();
   const width = size?.width ?? config.width;
   const height = size?.height ?? config.height;
 
+  const mode: TimeMode | undefined = timeMode ?? timing?.timeMode;
   const nf =
     nightFactor ??
     (timing
@@ -120,16 +127,20 @@ export const Background: React.FC<Props> = ({ theme, timing, nightFactor, size }
           introFrames: timing.introFrames,
           mainFrames: timing.mainFrames,
           outroFrames: timing.outroFrames,
+          timeMode: mode,
         })
       : 0);
 
   const def = THEMES[theme];
   const palette = getThemeColors(theme, nf);
 
-  if (def.id === "greenDayNight" && def.scenery) {
+  if (!def.isStatic && def.scenery) {
     return (
       <AbsoluteFill style={{ overflow: "hidden" }}>
-        <DayNightSky width={width} height={height} nightFactor={nf} />
+        <DayNightSky width={width} height={height} nightFactor={nf} themeId={def.id} mirror={mode === "nightToDay"} />
+        {def.scenery.effect && (
+          <SeasonEffects width={width} height={height} nightFactor={nf} effect={def.scenery.effect} />
+        )}
         <Fireflies
           width={width}
           height={height}

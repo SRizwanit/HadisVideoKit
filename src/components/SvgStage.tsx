@@ -124,6 +124,7 @@ export const SvgStage: React.FC<SvgStageProps> = ({
     introFrames: timing.introFrames,
     mainFrames: timing.mainFrames,
     outroFrames: timing.outroFrames,
+    timeMode: timing.timeMode,
   });
 
   const timestamp = useHadisTimestamp(hadisId);

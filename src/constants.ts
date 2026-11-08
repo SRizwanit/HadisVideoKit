@@ -6,7 +6,25 @@
 // ---------- ভিডিও ----------
 export const FPS = 30;
 
-export const THEME_IDS = ["emerald", "navy", "greenDayNight"] as const;
+/**
+ * থিম: emerald/navy = স্থির; greenDayNight + ঋতু-থিম (monsoon = বর্ষা, winter = শীত, spring = বসন্ত) = দিন-রাত বদলায়।
+ * ⚠️ এই তালিকা `scripts/lib/renderPlan.mjs`-এর `THEME_IDS`-এ কপি করা আছে (test-render-plan.mjs মিলিয়ে দেখে) — বদলালে দুই জায়গাতেই।
+ */
+export const THEME_IDS = ["emerald", "navy", "greenDayNight", "monsoon", "winter", "spring"] as const;
+
+/**
+ * সময়ের মোড (workflow-এর `time_mode`) — প্রতিটা দিন-রাতের থিমে (greenDayNight, monsoon, winter, spring) কাজ করে:
+ *   day        = পুরো ভিডিও জুড়ে দিন (জোনাকি প্রায় নেই)
+ *   night      = পুরো ভিডিও জুড়ে রাত (তারা + পূর্ণ জোনাকি)
+ *   dayToNight = দিন → গোধূলি → রাত; জোনাকি ধীরে ফোটে (আগের ডিফল্ট আচরণ)
+ *   nightToDay = রাত → ভোর/গোধূলি → দিন; চাঁদ ডুবে সূর্য ওঠে, তারা ও জোনাকি মিলিয়ে যায়
+ * emerald/navy স্থির থিম — তাদের উপর কোনো প্রভাব নেই।
+ * ⚠️ এই তালিকা `scripts/lib/renderPlan.mjs`-এর `TIME_MODES`-এ কপি করা আছে (test-render-plan.mjs মিলিয়ে দেখে)।
+ */
+export const TIME_MODES = ["day", "night", "dayToNight", "nightToDay"] as const;
+export type TimeMode = (typeof TIME_MODES)[number];
+/** না দিলে = আগের মতোই: দিন → রাত */
+export const DEFAULT_TIME_MODE: TimeMode = "dayToNight";
 export const ORIENTATIONS = ["portrait", "landscape"] as const;
 export const QUALITIES = ["hd", "4k"] as const;
 

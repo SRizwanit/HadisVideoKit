@@ -3,9 +3,9 @@
 > An **automatic hadith video kit** built with React + Remotion + GitHub Actions.
 > You only put a `.wav` + `_timestamp.json` (+ AI-made SVG/SFX) in the repo, type the **book name** and **hadith number (in Bengali)** in GitHub Actions, press Run, and the video renders. No video editor or PC needed.
 
-**Version 2.57 (English edition) — Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
+**Version 2.58 (English edition) — add-on ✅: 3 season themes + `time_mode` | Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
 
-3 themes: Emerald Night, Royal Navy, Green Day & Night (with fireflies). Book name and Bengali hadith number come straight from GitHub Actions inputs (no book-code list).
+6 themes: Emerald Night, Royal Navy, Green Day & Night (with fireflies) **+ 3 season themes: Monsoon (বর্ষা), Winter (শীত), Spring (বসন্ত)** — and a new **`time_mode`** input (Day / Night / DayToNight with fireflies / NightToDay) for every day-night theme. Book name and Bengali hadith number come straight from GitHub Actions inputs (no book-code list).
 
 > 📝 In this version the finished-Part notes (9K–13C) are condensed again: checklists, "how it was verified" stories, preview-image details and the old change log are removed. **All files/APIs/fixed rules/numbers/constants that Parts 14–15 or later edits still need are kept, and the Part 14 plan is kept in full (now spread across 14A–14C).**
 > ℹ️ User-facing strings inside code (the YAML, Bengali on-screen text such as "আজকের হাদিস") stay in Bengali on purpose, because that is what the video and your repo actually use. Only comments/explanations are translated.
@@ -98,9 +98,36 @@ name: Render Hadis Video
 
 # একটাই workflow — সব কাজ এখান থেকে (ফোন থেকেই):
 #   action = check               → যাচাই (বান্ডল + ছবি রেন্ডার), Artifacts: check-images
-#   action = render              → ভিডিও রেন্ডার, Artifacts: videos
+#   action = render              → ভিডিও রেন্ডার; **প্রতিটা জব শেষ হওয়ার সাথে সাথেই** Artifact আপলোড — ভিডিওর সাথে থাম্বনেইল + প্রকাশের ফাইলও একই Artifact-এ (নিচে দেখো)
 #   action = render_and_release  → রেন্ডার + GitHub Release-এ আপলোড
-#   action = thumbnail_only      → শুধু 4K থাম্বনেইল (ভিডিও নয়; কয়েক মিনিটে) — সিরিজ নম্বর/ব্যাকগ্রাউন্ড ঠিক করতে, Artifacts: thumbnails
+#   action = thumbnail_only      → শুধু 4K থাম্বনেইল (ভিডিও নয়; কয়েক মিনিটে) — সিরিজ নম্বর/ব্যাকগ্রাউন্ড ঠিক করতে, Artifacts: thumbnails (শুধু এই action-এ আলাদা)
+#
+# 📦 Artifact আপলোড (প্রতিটা জব শেষ হলেই — সব শেষ হওয়ার অপেক্ষা নেই):
+#   ✅ এখন প্রতিটা ভিডিও Artifact-এর ভেতরেই সব থাকে — আলাদা thumbnails / publish-files Artifact আর হয় না:
+#       🎬 ভিডিও (.mp4) + 🖼️ থাম্বনেইল (PNG + JPG, টিক থাকলে) + 📝 প্রকাশের ফাইল (publish.txt + .srt, টিক থাকলে)
+#   থাম্বনেইল (টিক থাকলে)      → আগে তৈরি হয় (দ্রুত), প্রতিটা ভিডিও Artifact-এর সাথে আপলোড হয়
+#   প্রকাশের ফাইল (txt + srt) → প্রথম রেন্ডার জবের সময় তৈরি হয়, প্রতিটা ভিডিও Artifact-এর সাথে আপলোড হয়
+#   জব ১ 9:16 HD  শেষ → video-9x16-HD   │ জব ২ 9:16 4K শেষ → video-9x16-4K
+#   জব ৩ 16:9 HD  শেষ → video-16x9-HD   │ জব ৪ 16:9 4K শেষ → video-16x9-4K
+#   (যে জবগুলো orientation/quality ইনপুটে বাছা হয়নি সেগুলো বাদ; ক্রম সবসময় 9:16 HD → 9:16 4K → 16:9 HD → 16:9 4K)
+#   ⚠️ প্রথম জব ব্যর্থ হলে (প্রকাশের ফাইল তখনো তৈরি হয়নি) পরের জবের Artifact-এ প্রকাশের ফাইল নাও থাকতে পারে।
+#   (শুধু action = thumbnail_only হলে ভিডিও নেই, তাই থাম্বনেইল আলাদা Artifact: thumbnails)
+#   একটা জব ব্যর্থ হলে আগে শেষ হওয়া জবের Artifact আগেই আপলোড হয়ে গেছে; বাকি জবগুলো তবু চলে, আর শেষে রান ❌ দেখায়।
+#   render_and_release: সব জব সফল হলে তবেই শেষে GitHub Release (ব্যর্থ হলে Release হয় না)।
+#
+# 🎨 থিম (theme) — ৬টা:
+#   emerald        = এমারেল্ড নাইট (স্থির)           │ navy = রয়্যাল নেভি (স্থির)
+#   greenDayNight  = সবুজ Day & Night (সূর্য-চাঁদ, মেঘ, তারা, জোনাকি)
+#   monsoon  (বর্ষা)  = ধূসর-সবুজ ভারী মেঘ + তির্যক বৃষ্টি + রাতে বিদ্যুৎ-ঝলক; জোনাকি সবুজাভ-নীল
+#   winter   (শীত)   = কুয়াশার ভোর + ভেসে চলা কুয়াশা-স্তর + ঝিলমিল হিমকণা; গোধূলি গোলাপি-কমলা; জোনাকি বরফ-নীল
+#   spring   (বসন্ত)  = গোলাপি-পিচ দিন, আগুন-রঙা গোধূলি + ঝরা পলাশ/কৃষ্ণচূড়ার পাপড়ি; রাত বেগুনি-গোলাপি; জোনাকি কমলা-সোনালি
+#
+# 🕒 সময়ের মোড (time_mode) — নতুন ইনপুট; প্রতিটা দিন-রাতের থিমে (greenDayNight, monsoon, winter, spring) কাজ করে:
+#   dayToNight = দিন → গোধূলি → রাত; জোনাকি ধীরে ধীরে ফোটে 🌿✨ (ডিফল্ট — আগের মতোই)
+#   day        = পুরো ভিডিও জুড়ে উজ্জ্বল দিন (জোনাকি প্রায় নেই)
+#   night      = পুরো ভিডিও জুড়ে রাত — তারা + পূর্ণ জোনাকি
+#   nightToDay = রাত → ভোর/গোধূলি → দিন; চাঁদ ডুবে সূর্য ওঠে (বাঁ দিক থেকে), তারা ও জোনাকি মিলিয়ে যায়
+#   ⚠️ emerald / navy স্থির থিম — time_mode তাদের উপর কিছু বদলায় না। থাম্বনেইলেও মোড মানা হয় (ওপরে thumbnail_night দেখো)।
 #
 # নতুন zip আপলোড করেছো? zip_file ঘরে zip-এর নাম লেখো (যেমন HadisVideokit-part3.zip);
 # workflow আগে zip খুলে ফাইল কমিট করবে, তারপর কাজ করবে। zip_file ফাঁকা = zip খোলা হবে না।
@@ -120,17 +147,30 @@ name: Render Hadis Video
 # 🖼️ থাম্বনেইল (নতুন ইনপুট):
 #   thumbnail    = টিক থাকলে (ডিফল্ট) ভিডিওর পাশে 4K থাম্বনেইল: Hook + Teaser + Intro এক ছবিতে।
 #                  ওরিয়েন্টেশন অনুযায়ী (9:16 → ২১৬০×৩৮৪০, 16:9 → ৩৮৪০×২১৬০), PNG + JPG; কোয়ালিটি ইনপুট যাই হোক সবসময় 4K।
-#                  Artifacts: thumbnails; render_and_release হলে Release-এও যায়।
+#                  Artifacts: প্রতিটা ভিডিও Artifact-এর ভেতরে (thumbnail_only হলে আলাদা thumbnails); render_and_release হলে Release-এও যায়।
 #   series       = সিরিজ নম্বর (যেমন 12 বা ১২) → থাম্বনেইলের ডান-উপরে "পর্ব ১২" ব্যাজ। ফাঁকা = ব্যাজ নেই। ভিডিওতে কিছু বদলায় না।
 #   thumbnail_night = থাম্বনেইলের ব্যাকগ্রাউন্ডের দিন-রাত, ০ (দিন) থেকে ১ (রাত); ফাঁকা = থিমের ডিফল্ট।
-#                  ⚠️ শুধু greenDayNight থিমে প্রভাব ফেলে (emerald/navy স্থির থিম)। যেমন 0 = উজ্জ্বল দিন, 0.5 = সোনালি গোধূলি, 0.9 = রাত + জোনাকি।
+#                  ⚠️ শুধু দিন-রাতের থিমে প্রভাব ফেলে (greenDayNight, monsoon, winter, spring; emerald/navy স্থির থিম)। যেমন 0 = উজ্জ্বল দিন, 0.5 = সোনালি গোধূলি, 0.9 = রাত + জোনাকি।
+#                  ফাঁকা থাকলে time_mode অনুযায়ী ডিফল্ট: day → 0 (দিন), nightToDay → 0.4 (সোনালি ভোর), night / dayToNight → থিমের রাতের লুক (০.৮–০.৯)।
 #
 # 📝 প্রকাশের ফাইল (নতুন ইনপুট):
 #   publish_files = টিক থাকলে (ডিফল্ট) ভিডিওর পাশে দুটো ফাইল:
 #                   out/hadis<id>_publish.txt → ইউটিউব শিরোনাম (৩ বিকল্প) + বিবরণ + ট্যাগ + ফেসবুক ক্যাপশন + হ্যাশট্যাগ
 #                   out/hadis<id>.srt         → সাবটাইটেল (ইউটিউব স্টুডিও → Subtitles → Upload file, With timing)
-#                   Artifacts: publish-files; render_and_release হলে Release-এও যায়। হাদিসের লেখা JSON থেকে হুবহু — প্রকাশের আগে নিজে যাচাই করো।
+#                   Artifacts: প্রতিটা ভিডিও Artifact-এর ভেতরে; render_and_release হলে Release-এও যায়। হাদিসের লেখা JSON থেকে হুবহু — প্রকাশের আগে নিজে যাচাই করো।
 #   app_link      = অ্যাপের লিংক (https://...); দিলে বিবরণ ও ক্যাপশনে বসে। ফাঁকা = লিংক ছাড়া লাইন।
+#
+# 🎵 ব্যাকগ্রাউন্ড মিউজিক + অডিও (নতুন ইনপুট):
+#   background_music = ঐচ্ছিক। এই দুটোর যেকোনো একটা দেওয়া যায়:
+#                   ১) সরাসরি ডাউনলোড লিংক (https://.../song.mp3) → ডাউনলোড + ffprobe যাচাই করে public/background1.<ext> নামে সেভ
+#                      (আগের background1.* মুছে ওভাররাইট হয়, আর রিপোতেও কমিট হয় — পরের বার শুধু ফাইলের নাম দিলেই চলে)
+#                   ২) public/ ফোল্ডারে থাকা ফাইলের নাম (যেমন background1.mp3) → ওই ফাইলই সরাসরি ব্যবহার; না থাকলে স্পষ্ট এরর
+#                   ফাঁকা = ব্যাকগ্রাউন্ড মিউজিক ছাড়া, আগের মতোই। লিংক/ফাইল নষ্ট বা পড়া না গেলে ⚠️ দিয়ে মিউজিক ছাড়াই রেন্ডার চলে।
+#   অডিও নিয়ম (সব রেন্ডার জবের ভিডিওতে; কোড scripts/lib/audioMix.mjs, FFmpeg):
+#                   • ভয়েস সবসময় ≈ -14 LUFS (two-pass loudnorm; মিউজিক থাকুক বা না থাকুক)
+#                   • মিউজিক খুব নরম (ভলিউম 0.08 ≈ ভয়েসের চেয়ে -22 dB নিচে; audioMix.mjs-এর `bgVolume`) + ভয়েস বাজলে আরও নেমে যায় (ducking)
+#                   • মিউজিক ভিডিওর চেয়ে বড় হলে ছাঁটা (শেষে ফেড-আউট), ছোট হলে লুপ — ঠিক ভিডিওর দৈর্ঘ্য পর্যন্ত
+#                   • ভিডিও স্ট্রিম কপি হয় (কোয়ালিটি অপরিবর্তিত), অডিও AAC 192k
 
 on:
   workflow_dispatch:
@@ -166,7 +206,7 @@ on:
         default: "১"
         type: string
       theme:
-        description: "থিম"
+        description: "থিম (emerald/navy = স্থির; greenDayNight, monsoon = বর্ষা, winter = শীত, spring = বসন্ত = দিন-রাতের)"
         required: false
         default: "emerald"
         type: choice
@@ -174,6 +214,19 @@ on:
           - emerald
           - navy
           - greenDayNight
+          - monsoon
+          - winter
+          - spring
+      time_mode:
+        description: "সময়ের মোড (দিন-রাতের থিমে): dayToNight = দিন→রাত + জোনাকি | day = শুধু দিন | night = শুধু রাত | nightToDay = রাত→দিন। emerald/navy-তে প্রভাব নেই"
+        required: false
+        default: "dayToNight"
+        type: choice
+        options:
+          - dayToNight
+          - day
+          - night
+          - nightToDay
       orientation:
         description: "ওরিয়েন্টেশন"
         required: false
@@ -228,7 +281,7 @@ on:
         default: ""
         type: string
       thumbnail_night:
-        description: "থাম্বনেইলের ব্যাকগ্রাউন্ড ০ (দিন) থেকে ১ (রাত), শুধু greenDayNight থিমে। ফাঁকা = থিমের ডিফল্ট"
+        description: "থাম্বনেইলের ব্যাকগ্রাউন্ড ০ (দিন) থেকে ১ (রাত), শুধু দিন-রাতের থিমে (greenDayNight/monsoon/winter/spring)। ফাঁকা = time_mode/থিমের ডিফল্ট"
         required: false
         default: ""
         type: string
@@ -240,7 +293,12 @@ on:
       app_link:
         description: "অ্যাপের লিংক (https://...) — বিবরণ/ক্যাপশনে বসবে। ফাঁকা = লিংক ছাড়া"
         required: false
-        default: ""
+        default: "https://play.google.com/store/apps/details?id=com.srizwan.islamipedia"
+        type: string
+      background_music:
+        description: "ব্যাকগ্রাউন্ড মিউজিক (ঐচ্ছিক): সরাসরি ডাউনলোড লিংক (https://...) অথবা public/ ফোল্ডারের ফাইলের নাম (যেমন background1.mp3)। ফাঁকা = মিউজিক ছাড়া"
+        required: false
+        default: "background1.mp3"
         type: string
 
 permissions:
@@ -254,6 +312,22 @@ jobs:
   run:
     runs-on: ubuntu-24.04
     timeout-minutes: 350
+    env:
+      HADIS_ID: ${{ inputs.hadis_id }}
+      HADIS_BOOKNAME: ${{ inputs.hadis_bookname }}
+      HADIS_NUMBER: ${{ inputs.hadis_number }}
+      THEME: ${{ inputs.theme }}
+      TIME_MODE: ${{ inputs.time_mode }}
+      ORIENTATION: ${{ inputs.orientation }}
+      QUALITY: ${{ inputs.quality }}
+      INTRO_SECONDS: ${{ inputs.intro_seconds }}
+      OUTRO_SECONDS: ${{ inputs.outro_seconds }}
+      HOOK_TEXT: ${{ inputs.hook_text }}
+      HOOK_SECONDS: ${{ inputs.hook_seconds }}
+      TEASER: ${{ inputs.teaser }}
+      SERIES: ${{ inputs.series }}
+      THUMB_NIGHT: ${{ inputs.thumbnail_night }}
+      APP_LINK: ${{ inputs.app_link }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -339,51 +413,185 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-      # ---------- action = render / render_and_release ----------
-      - name: Render videos
-        if: ${{ startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only' }}
-        env:
-          ACTION: ${{ inputs.action }}
-          HADIS_ID: ${{ inputs.hadis_id }}
-          HADIS_BOOKNAME: ${{ inputs.hadis_bookname }}
-          HADIS_NUMBER: ${{ inputs.hadis_number }}
-          THEME: ${{ inputs.theme }}
-          ORIENTATION: ${{ inputs.orientation }}
-          QUALITY: ${{ inputs.quality }}
-          INTRO_SECONDS: ${{ inputs.intro_seconds }}
-          OUTRO_SECONDS: ${{ inputs.outro_seconds }}
-          HOOK_TEXT: ${{ inputs.hook_text }}
-          HOOK_SECONDS: ${{ inputs.hook_seconds }}
-          TEASER: ${{ inputs.teaser }}
-          THUMBNAIL: ${{ inputs.thumbnail }}
-          SERIES: ${{ inputs.series }}
-          THUMB_NIGHT: ${{ inputs.thumbnail_night }}
-          PUBLISH_FILES: ${{ inputs.publish_files }}
-          APP_LINK: ${{ inputs.app_link }}
+      # ---------- 🎵 অডিও: FFmpeg + ব্যাকগ্রাউন্ড মিউজিক (শুধু render / render_and_release) ----------
+      # FFmpeg: ভয়েস -14 LUFS (loudnorm), মিউজিক ducking (sidechaincompress), লুপ/ট্রিম — scripts/lib/audioMix.mjs
+      - name: Install FFmpeg (audio mixing)
+        if: ${{ startsWith(inputs.action, 'render') }}
         run: |
-          THUMB_ONLY=false
-          if [ "$ACTION" = "thumbnail_only" ]; then THUMB_ONLY=true; fi
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          ffmpeg -version | head -n 1
+
+      # background_music ফাঁকা হলে কিছুই করে না (মিউজিক ছাড়া রেন্ডার)। লিংক হলে ডাউনলোড → public/background1.<ext>; ফাইলের নাম হলে public/ থেকে।
+      # সফল হলে BG_MUSIC_FILE (ও BG_MUSIC_DOWNLOADED) পরের স্টেপগুলোর জন্য সেট হয়। ডাউনলোড/যাচাই ব্যর্থ = ⚠️, মিউজিক ছাড়াই চলবে।
+      - name: Prepare background music
+        id: bgmusic
+        if: ${{ startsWith(inputs.action, 'render') }}
+        env:
+          BACKGROUND_MUSIC: ${{ inputs.background_music }}
+        run: node scripts/prepare-bgmusic.mjs
+
+      # ডাউনলোড করা হলে ফাইলটা রিপোতেও রাখি, যাতে পরের বার শুধু নাম (background1.mp3) দিলেই চলে। ব্যর্থ হলে রেন্ডার থামে না।
+      - name: Save background music to repo (public/background1.*)
+        if: ${{ startsWith(inputs.action, 'render') && env.BG_MUSIC_DOWNLOADED == 'true' }}
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- 'public/background1.*'
+          if git diff --cached --quiet; then
+            echo "background1 অপরিবর্তিত — কমিট লাগবে না।"
+          else
+            git commit -q -m "chore: save background music (public/background1)"
+            git push || { git pull --rebase && git push; }
+          fi
+
+      # ---------- action = render / render_and_release / thumbnail_only ----------
+      # একটাই সহায়ক স্ক্রিপ্ট সব `node scripts/render.mjs` কল বানায় (আর্গুমেন্ট এক জায়গায়): bash render-helper.sh <orientation> <quality> <thumbnail> <publish_files> <thumbnail_only>
+      - name: Prepare render helper
+        if: ${{ startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only' }}
+        run: |
+          cat > "$RUNNER_TEMP/render-helper.sh" <<'HELPER_EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          ORI="$1"
+          QUAL="$2"
+          THUMB="$3"
+          PUB="$4"
+          THUMB_ONLY="$5"
           node scripts/render.mjs \
             --id "$HADIS_ID" \
             --book "$HADIS_BOOKNAME" \
             --number "$HADIS_NUMBER" \
             --theme "$THEME" \
-            --orientation "$ORIENTATION" \
-            --quality "$QUALITY" \
+            --time-mode "$TIME_MODE" \
+            --orientation "$ORI" \
+            --quality "$QUAL" \
             --intro "$INTRO_SECONDS" \
             --outro "$OUTRO_SECONDS" \
             --hook-text "$HOOK_TEXT" \
             --hook-seconds "$HOOK_SECONDS" \
             --teaser "$TEASER" \
-            --thumbnail "$THUMBNAIL" \
+            --thumbnail "$THUMB" \
             --thumbnail-only "$THUMB_ONLY" \
             --series "$SERIES" \
             --thumb-night "$THUMB_NIGHT" \
-            --publish-files "$PUBLISH_FILES" \
+            --publish-files "$PUB" \
             --app-link "$APP_LINK"
+          HELPER_EOF
+          chmod +x "$RUNNER_TEMP/render-helper.sh"
+
+      # ---------- থাম্বনেইল (আগে, দ্রুত; ভিডিও জবের আগেই আপলোড) ----------
+      - name: Render thumbnails
+        id: thumbs
+        continue-on-error: true
+        if: ${{ (startsWith(inputs.action, 'render') && inputs.thumbnail) || inputs.action == 'thumbnail_only' }}
+        run: bash "$RUNNER_TEMP/render-helper.sh" "$ORIENTATION" "$QUALITY" true false true
+
+      # শুধু thumbnail_only-তে আলাদা Artifact। render / render_and_release-এ থাম্বনেইল প্রতিটা ভিডিও Artifact-এর ভেতরে যায়।
+      - name: Upload thumbnails
+        if: ${{ !cancelled() && inputs.action == 'thumbnail_only' && steps.thumbs.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: thumbnails
+          path: |
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+          if-no-files-found: warn
+          retention-days: 7
+
+      # ---------- ভিডিও জব: প্রতিটা শেষ হলেই আপলোড (ক্রম = render.mjs-এর ক্রম) ----------
+      # প্রকাশের ফাইল (txt + srt) শুধু প্রথম জবে বানানো হয় (বাকিগুলোতে `false`), কিন্তু out/-এ থেকে যায় — তাই প্রতিটা ভিডিও Artifact-এ
+# ভিডিওর সাথে থাম্বনেইল + প্রকাশের ফাইলও একসাথে আপলোড হয় (আলাদা Artifact নেই)।
+      # জব 1: 9x16 HD
+      - name: Render 9x16 HD
+        id: job_p_hd
+        continue-on-error: true
+        if: ${{ !cancelled() && startsWith(inputs.action, 'render') && (inputs.orientation != 'landscape' && inputs.quality != '4k') }}
+        run: bash "$RUNNER_TEMP/render-helper.sh" portrait hd false "${{ inputs.publish_files }}" false
+
+      - name: Upload 9x16 HD video
+        if: ${{ !cancelled() && steps.job_p_hd.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-9x16-HD
+          path: |
+            out/*_9x16_HD.mp4
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+            out/hadis*_publish.txt
+            out/hadis*.srt
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      # জব 2: 9x16 4K
+      - name: Render 9x16 4K
+        id: job_p_4k
+        continue-on-error: true
+        if: ${{ !cancelled() && startsWith(inputs.action, 'render') && (inputs.orientation != 'landscape' && inputs.quality != 'hd') }}
+        run: bash "$RUNNER_TEMP/render-helper.sh" portrait 4k false "${{ inputs.publish_files && inputs.quality == '4k' }}" false
+
+      - name: Upload 9x16 4K video
+        if: ${{ !cancelled() && steps.job_p_4k.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-9x16-4K
+          path: |
+            out/*_9x16_4K.mp4
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+            out/hadis*_publish.txt
+            out/hadis*.srt
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      # জব 3: 16x9 HD
+      - name: Render 16x9 HD
+        id: job_l_hd
+        continue-on-error: true
+        if: ${{ !cancelled() && startsWith(inputs.action, 'render') && (inputs.orientation != 'portrait' && inputs.quality != '4k') }}
+        run: bash "$RUNNER_TEMP/render-helper.sh" landscape hd false "${{ inputs.publish_files && inputs.orientation == 'landscape' }}" false
+
+      - name: Upload 16x9 HD video
+        if: ${{ !cancelled() && steps.job_l_hd.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-16x9-HD
+          path: |
+            out/*_16x9_HD.mp4
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+            out/hadis*_publish.txt
+            out/hadis*.srt
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      # জব 4: 16x9 4K
+      - name: Render 16x9 4K
+        id: job_l_4k
+        continue-on-error: true
+        if: ${{ !cancelled() && startsWith(inputs.action, 'render') && (inputs.orientation != 'portrait' && inputs.quality != 'hd') }}
+        run: bash "$RUNNER_TEMP/render-helper.sh" landscape 4k false "${{ inputs.publish_files && inputs.orientation == 'landscape' && inputs.quality == '4k' }}" false
+
+      - name: Upload 16x9 4K video
+        if: ${{ !cancelled() && steps.job_l_4k.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-16x9-4K
+          path: |
+            out/*_16x9_4K.mp4
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+            out/hadis*_publish.txt
+            out/hadis*.srt
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
 
       - name: List rendered files
-        if: ${{ startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only' }}
+        if: ${{ !cancelled() && (startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only') }}
         run: |
           {
             if ls out/*.mp4 > /dev/null 2>&1; then
@@ -402,37 +610,38 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload videos
-        if: ${{ startsWith(inputs.action, 'render') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: videos
-          path: out/*.mp4
-          if-no-files-found: error
-          retention-days: 7
-          compression-level: 0
+      # কোনো জব ব্যর্থ হলে রান ❌ (জবগুলো `continue-on-error`-এ চলে যাতে আগের শেষ হওয়া জবের Artifact আগেই আপলোড হয়); Release-ও তখন হয় না
+      - name: Check render results
+        if: ${{ !cancelled() && (startsWith(inputs.action, 'render') || inputs.action == 'thumbnail_only') }}
+        env:
+          R_THUMBS: ${{ steps.thumbs.outcome }}
+          R_P_HD: ${{ steps.job_p_hd.outcome }}
+          R_P_4K: ${{ steps.job_p_4k.outcome }}
+          R_L_HD: ${{ steps.job_l_hd.outcome }}
+          R_L_4K: ${{ steps.job_l_4k.outcome }}
+        run: |
+          failed=0
+          for pair in "থাম্বনেইল=$R_THUMBS" "9:16 HD=$R_P_HD" "9:16 4K=$R_P_4K" "16:9 HD=$R_L_HD" "16:9 4K=$R_L_4K"; do
+            name="${pair%%=*}"; outcome="${pair#*=}"
+            if [ "$outcome" = "failure" ]; then
+              echo "::error::জব ব্যর্থ: $name"
+              failed=1
+            fi
+          done
+          if [ "$failed" = "1" ]; then
+            echo "যে জবগুলো শেষ হয়েছিল তাদের Artifact আগেই আপলোড হয়ে গেছে। ব্যর্থ জবের কারণ ওপরের স্টেপের লগে।"
+            exit 1
+          fi
+          echo "✅ সব জব সফল।"
 
-      - name: Upload thumbnails
-        if: ${{ (startsWith(inputs.action, 'render') && inputs.thumbnail) || inputs.action == 'thumbnail_only' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: thumbnails
-          path: |
-            out/*_thumbnail_*.png
-            out/*_thumbnail_*.jpg
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload publish files (caption/tags + subtitles)
-        if: ${{ startsWith(inputs.action, 'render') && inputs.publish_files }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: publish-files
-          path: |
-            out/hadis*_publish.txt
-            out/hadis*.srt
-          if-no-files-found: warn
-          retention-days: 7
+      # background_music-এ দেওয়া ফাইলের নাম public/-এ না পাওয়া গেলে: ভিডিও (মিউজিক ছাড়া) তৈরি হয়ে Artifact-এ উঠে গেছে,
+      # কিন্তু রান ❌ দেখায় ও Release হয় না — নাম ঠিক করে (বা লিংক দিয়ে) আবার চালাও।
+      - name: Fail if background music file was not found
+        if: ${{ !cancelled() && env.BG_MUSIC_ERROR != '' }}
+        run: |
+          echo "::error::$BG_MUSIC_ERROR"
+          echo "ভিডিওগুলো ব্যাকগ্রাউন্ড মিউজিক ছাড়া তৈরি হয়েছে। ফাইলের নাম ঠিক করে আবার চালাও।"
+          exit 1
 
       - name: Create GitHub Release
         if: ${{ inputs.action == 'render_and_release' }}
@@ -464,6 +673,7 @@ jobs:
 | 1 | Project setup and config | ✅ |
 | 2 | Types, constants, Zod schema + mobile verify workflow | ✅ |
 | 3 | 3 themes and fonts + unified `render.yml` | ✅ |
+| **+** | **Add-on (after Part 14): 3 season themes (`monsoon`, `winter`, `spring`) + `time_mode` workflow input (`day` / `night` / `dayToNight` / `nightToDay`)** | ✅ Done — logic cases pass in plain Node (106/106 in `test-render-plan.mjs`); first real browser render = your GitHub run |
 | 4 | Bengali digits and input normalizer | ✅ |
 | 5 | Data loader and calculateMetadata | ✅ |
 | 6 | Layout + background (with fireflies) | ✅ |
@@ -513,12 +723,13 @@ FPS = **30**.
 | `hadis_id` | `0101` | **Only for finding files** → `hadis0101.wav`, `hadis0101_timestamp.json` |
 | `hadis_bookname` | `সহীহ বুখারী` | Book name shown in the video |
 | `hadis_number` | `১২৩` | Hadith number (Bengali digits; English digits are converted by the code) |
-| `theme` | `emerald` / `navy` / `greenDayNight` | Theme |
+| `theme` | `emerald` / `navy` / `greenDayNight` / `monsoon` / `winter` / `spring` | Theme |
+| `time_mode` | `dayToNight` (default) / `day` / `night` / `nightToDay` | Time of day for the day-night themes (`greenDayNight`, `monsoon`, `winter`, `spring`); no effect on `emerald` / `navy` |
 | `orientation` | `portrait` / `landscape` / `both` | 9:16 / 16:9 |
 | `quality` | `hd` / `4k` / `both` | Resolution |
 | `intro_seconds` / `outro_seconds` | `3` / `4` | Intro and Outro duration |
 
-10 inputs in total (GitHub's limit). The video shows **"সহীহ বুখারী নং : ১২৩"**. **One hadith per run** (run separately for several).
+The table lists the core inputs only; the real `render.yml` now has **20 inputs** (GitHub allows up to 25). The video shows **"সহীহ বুখারী নং : ১২৩"**. **One hadith per run** (run separately for several).
 
 ### File naming rule
 
@@ -621,8 +832,24 @@ Remotion renders frame by frame, so ordinary CSS/SMIL animation may not play cor
 | `emerald` | Emerald Night | Dark green gradient | Golden accent, faint geometric pattern |
 | `navy` | Royal Navy | Dark blue-violet gradient | Sky-blue/white accent, slow star particles |
 | `greenDayNight` | Green Day & Night | Green sky, day → evening → night | **Firefly animation** 🌿✨ |
+| `monsoon` | Monsoon · বর্ষা — বৃষ্টির মেঘ | Heavy grey-green clouds, wet green hills | Slanted **rain** + **lightning** (soft, at most once per ~3.7 s, stronger at night), teal-green fireflies |
+| `winter` | Winter · শীত — কুয়াশার ভোর | Pale icy morning → rose-orange dusk → deep indigo night | Drifting **fog layers** + sparkling **frost dust**, many crisp stars, ice-blue fireflies |
+| `spring` | Spring · বসন্ত — ফুলের পাপড়ি | Peach-pink day → fiery palash dusk → plum night | Falling **palash / krishnachura petals** (sway, spin, flip), orange-gold fireflies |
 
 `greenDayNight`: Intro = morning (soft sun, rays, clouds, very few fireflies) → Main slowly afternoon → dusk → night (`progress = frame / mainFrames`; sun sinks, moon + stars appear, fireflies increase) → Outro = deep night, full moon, twinkling stars, most/brightest fireflies. ~32 fireflies with fixed `random(seed)` positions (same every render), almost invisible by day. Text always sits on a semi-transparent dark panel, so reading is never hard.
+
+**Season themes (add-on, version 2.58)** — three more day-night themes, each unique like the six seasons of Bangladesh (Monsoon · Winter · Spring; Summer, Late-autumn and Autumn are free slots for later). They are built on the same sky as `greenDayNight` (`src/components/DayNightSky.tsx`: sun, moon, stars, clouds, hills) and add a season effect on top (`src/components/SeasonEffects.tsx`: rain + lightning / fog + frost dust / falling petals) and their own fireflies. All values come from `scenery` in `src/themes.ts` (`hills`, `starCount`, `cloudCount`, `cloudDayOpacity`, `cloudNightOpacity`, `sunStrength`, `moonStrength`, `effect`); `greenDayNight` has no `effect` and its values equal the old hard-coded ones. Every palette keeps text on a dark panel (worst text/panel contrast ratio 9.15 : 1, checked for all four day-night themes over `nightFactor` 0…1).
+
+**Time mode (`time_mode` → prop `timeMode` → `timing.timeMode`)** — works for every day-night theme; `emerald` / `navy` are static and ignore it:
+
+| `time_mode` | `nightFactor` over the video | What you see |
+|---|---|---|
+| `dayToNight` (default) | 0 in Hook/Teaser/Intro → 0.95 at end of Main → 1 in Outro (exactly the old behaviour; prop omitted) | Bright day → dusk → night; fireflies appear one by one 🌿✨ |
+| `day` | always 0 | Bright day, (almost) no fireflies |
+| `night` | always 1 | Stars + all fireflies the whole video |
+| `nightToDay` | `1 − dayToNight` → 1 in Intro … 0.05 at end of Main → 0 in Outro | Night → dawn → day; the moon sets on the right, the sun rises from the left (sun/moon x mirrored via `DayNightSky mirror`), stars and fireflies fade out |
+
+Where it flows: `computeNightFactor({..., timeMode})` in `src/lib/dayNight.ts`; `Timing.timeMode` (optional, added only when given — timings without it are unchanged) is set by `HadisVideo` through `timingFromConfig`, so `Background`, `Caption`, `Header`, `SvgStage`, `Intro`/`Outro`/`Hook`/`Teaser` and `ProgressBar` all see the same `nightFactor`. Thumbnail: `ThumbnailScene` default `nightFactor` = `thumbnail_night` if given, else `day` → 0, `nightToDay` → 0.4 (golden dawn), else the theme default `THUMBNAIL_NIGHT_BY_THEME` (monsoon 0.9, winter 0.9, spring 0.8). Script side: `--time-mode` in `scripts/lib/renderPlan.mjs` (`TIME_MODES`, `DEFAULT_TIME_MODE`; `dayToNight` is not put into `inputProps`, so existing props stay byte-for-byte the same).
 
 ---
 
@@ -918,6 +1145,14 @@ node scripts/render.mjs --id 0101 --book "সহীহ বুখারী" --num
 ---
 
 ## 📝 Change log
+
+**Version 2.57 → 2.58**
+- 🎨 **3 new season themes:** `monsoon` (বর্ষা — rain + lightning, heavy clouds), `winter` (শীত — fog layers + frost dust), `spring` (বসন্ত — falling palash/krishnachura petals). All are day-night themes with their own palettes (day / dusk / night), hills, stars, clouds and fireflies. `THEME_IDS` now has 6 entries (in `src/constants.ts` **and** the copy in `scripts/lib/renderPlan.mjs`).
+- 🕒 **New workflow input `time_mode`** (`dayToNight` default · `day` · `night` · `nightToDay`) for every day-night theme (`greenDayNight`, `monsoon`, `winter`, `spring`); `emerald`/`navy` ignore it. Default = the old behaviour, so nothing changes unless you pick another mode. `nightToDay` mirrors the sun/moon path (sun rises from the left, moon sets on the right).
+- 🧩 **New files:** `src/components/SeasonEffects.tsx`, `src/dev/SeasonThemesPreview.tsx` (composition `SeasonThemesPreview`: 4 themes × 4 modes → `check-images/check-SeasonThemesPreview.png`). **Changed:** `src/constants.ts` (`THEME_IDS`, `TIME_MODES`, `DEFAULT_TIME_MODE`, type `TimeMode`), `src/types.ts` (optional `timeMode`), `src/themes.ts` (3 themes, `SeasonEffect`, extended `Scenery`), `src/lib/sky.ts` (`cloudOpacityFor`, `hillColorsFor`; old `cloudOpacity`/`hillColors` kept), `src/lib/dayNight.ts` (`timeMode`), `src/lib/timing.ts` (`Timing.timeMode`), `src/lib/useNightFactor.ts`, `src/components/Caption.tsx`, `src/components/SvgStage.tsx` (pass `timeMode`), `src/components/DayNightSky.tsx` (`themeId`, `mirror`), `src/components/Background.tsx` (all day-night themes + effects + `timeMode`), `src/HadisVideo.tsx`, `src/Root.tsx`, `src/scenes/ThumbnailScene.tsx`, `scripts/lib/renderPlan.mjs` (`--time-mode`), `scripts/render.mjs` (usage comment), `scripts/test-render-plan.mjs` (+7 cases → 106), `.github/workflows/render.yml`, `README.md`, this md.
+- ⚠️ **`render.yml` must be pasted by hand** (the zip step never changes `.github/workflows/*`): the copy-paste block above is now the real current file (it replaced an older copy). New input `time_mode` (after `theme`), new `theme` options, env `TIME_MODE`, `--time-mode "$TIME_MODE"` in the render helper. 20 inputs in total (GitHub's limit is 25).
+- ✅ **Checked here (no browser, no `npm ci` — offline):** `test-render-plan.mjs` 106/106 pass; the new/changed TypeScript files compile with no errors against minimal React/Remotion/Zod type stubs; day-night maths run in Node: default = `dayToNight` for every frame, `nightToDay` = `1 − dayToNight`, `day` = 0, `night` = 1; `greenDayNight` hills/clouds equal the old values; all 6 themes × 41 `nightFactor` steps mix without errors; worst text/panel contrast 9.15 : 1. Not rendered here — **first real look = run `action = check` and open `check-SeasonThemesPreview.png`**; `npm run typecheck` runs in the workflow.
+- 🔒 Nothing else changed: audio, Hook/Teaser/Intro/Main/Outro layouts, Caption, SVG stage, `emerald`, `navy`, timings, JSON schema, `package.json`, `check.mjs`, `AI_PROMPTS.md`. Existing dev previews still list only the first 3 themes on purpose.
 
 **Version 2.56 → 2.57**
 - 🔧 **Caption fix: word-by-word highlight, maximum 2 lines, inside the safe margins.** Before, a long segment shrank the font and wrapped to 3–4 lines (and was cut with "…" when it still did not fit). Now every caption page has **at most 2 lines at a fixed font size**; long text continues on the next page when its first word starts. The highlight is still per word (active = coloured + pop + underline, read = plain, upcoming = dim).

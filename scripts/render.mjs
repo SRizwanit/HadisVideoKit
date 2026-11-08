@@ -2,6 +2,8 @@
 //
 //   node scripts/render.mjs --id 0101 --book "সহীহ বুখারী" --number ১ \
 //     --theme greenDayNight --orientation both --quality hd
+//   থিম: emerald | navy | greenDayNight | monsoon (বর্ষা) | winter (শীত) | spring (বসন্ত)
+//   --time-mode day | night | dayToNight (ডিফল্ট) | nightToDay   (দিন-রাতের থিমে; emerald/navy-তে প্রভাব নেই)
 //
 // ধাপ: আর্গুমেন্ট যাচাই + ইনপুট ফাইল পরীক্ষা (14A, কয়েক সেকেন্ডে) → (--dry-run হলে টেবিল ছেপে শেষ)
 //      → বান্ডল একবার → প্রতিটা জব একটার পর একটা: selectComposition → renderMedia → ফাইল যাচাই।

@@ -87,7 +87,7 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
     () => ({ ...timing, introFrames: introOnlyFrames(timing), hookFrames: undefined, teaserFrames: undefined }),
     // timing প্রতি রেন্ডারে নতুন অবজেক্ট হতে পারে — সংখ্যাগুলো ধরেই মেলানো
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [timing.fps, timing.introFrames, timing.hookFrames, timing.teaserFrames, timing.mainFrames, timing.outroFrames, timing.totalFrames],
+    [timing.fps, timing.introFrames, timing.hookFrames, timing.teaserFrames, timing.mainFrames, timing.outroFrames, timing.totalFrames, timing.timeMode],
   );
 
   // Part 14C-audio: Intro/Outro-তে শুধু ভয়েস (ক্যাপশন নেই)। ফাইল থাকলে ওই দৃশ্যের নিজস্ব SFX বন্ধ (ভয়েসের উপর চাপে না);
@@ -177,11 +177,12 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
 
 export const HadisVideo: React.FC<HadisVideoProps> = (props) => {
   const { durationInFrames } = useVideoConfig();
-  const { introSeconds, outroSeconds, hookSeconds, teaserSeconds } = props;
+  const { introSeconds, outroSeconds, hookSeconds, teaserSeconds, timeMode } = props;
 
+  // `timeMode` (workflow-এর `time_mode`) timing-এ বসে — তাই Background/Caption/Header/SVG সবাই একই nightFactor পায়
   const timing = useMemo(
-    () => timingFromConfig(durationInFrames, { introSeconds, outroSeconds, hookSeconds, teaserSeconds }),
-    [durationInFrames, introSeconds, outroSeconds, hookSeconds, teaserSeconds],
+    () => timingFromConfig(durationInFrames, { introSeconds, outroSeconds, hookSeconds, teaserSeconds, timeMode }),
+    [durationInFrames, introSeconds, outroSeconds, hookSeconds, teaserSeconds, timeMode],
   );
 
   return <HadisVideoView {...props} timing={timing} />;

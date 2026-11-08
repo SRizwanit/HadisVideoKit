@@ -6,7 +6,10 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 // ---------- src/constants.ts থেকে কপি (টেস্টে মিলিয়ে দেখা হয়) ----------
-export const THEME_IDS = ["emerald", "navy", "greenDayNight"];
+export const THEME_IDS = ["emerald", "navy", "greenDayNight", "monsoon", "winter", "spring"];
+/** সময়ের মোড (workflow-এর `time_mode`): day / night / dayToNight (ডিফল্ট, আগের আচরণ) / nightToDay — emerald/navy স্থির থিমে প্রভাব নেই */
+export const TIME_MODES = ["day", "night", "dayToNight", "nightToDay"];
+export const DEFAULT_TIME_MODE = "dayToNight";
 export const ORIENTATIONS = ["portrait", "landscape"];
 export const QUALITIES = ["hd", "4k"];
 export const ORIENTATION_LABEL = { portrait: "9x16", landscape: "16x9" };
@@ -65,6 +68,7 @@ const VALUE_ARGS = {
   book: "book",
   number: "number",
   theme: "theme",
+  "time-mode": "timeMode",
   orientation: "orientation",
   quality: "quality",
   intro: "intro",
@@ -370,7 +374,8 @@ export function buildPlan(argv) {
     "portrait",
   );
   const quality = pickFromList(raw.quality, "quality", [...QUALITIES, "both"], "hd");
-  for (const r of [theme, orientation, quality]) if (r.error) errors.push(r.error);
+  const timeMode = pickFromList(raw.timeMode, "time-mode", TIME_MODES, DEFAULT_TIME_MODE);
+  for (const r of [theme, orientation, quality, timeMode]) if (r.error) errors.push(r.error);
 
   // --- intro / outro ---
   const intro = parseSeconds(raw.intro, "intro", DEFAULT_INTRO_SECONDS);
@@ -446,6 +451,8 @@ export function buildPlan(argv) {
           ...(hookText !== "" ? { hookText } : {}),
           ...(hookSeconds.value !== undefined ? { hookSeconds: hookSeconds.value } : {}),
           ...(teaser.value === false ? { teaserEnabled: false } : {}),
+          // dayToNight = ডিফল্ট (আগের আচরণ) → props-এ যায় না; বাকি তিন মোড (day / night / nightToDay) গেলে তবেই
+          ...(timeMode.value !== DEFAULT_TIME_MODE ? { timeMode: timeMode.value } : {}),
         },
         outputFile: join(outDir, `hadis${id}_${ORIENTATION_LABEL[o]}_${QUALITY_LABEL[q]}.mp4`),
         concurrency: concurrencyOverride.value ?? DEFAULT_CONCURRENCY[q],
@@ -639,7 +646,7 @@ export function formatDryRun(plan) {
   if (p) {
     lines.push("");
     lines.push(
-      `ইনপুট: কিতাব="${p.hadisBookname}" নম্বর="${p.hadisNumber}" থিম=${p.theme} ইন্ট্রো=${p.introSeconds}s আউট্রো=${p.outroSeconds}s`,
+      `ইনপুট: কিতাব="${p.hadisBookname}" নম্বর="${p.hadisNumber}" থিম=${p.theme} সময়=${p.timeMode ?? DEFAULT_TIME_MODE} ইন্ট্রো=${p.introSeconds}s আউট্রো=${p.outroSeconds}s`,
     );
     const hookInfo = [
       `হুক লেখা=${p.hookText ? `"${p.hookText}"` : "ডিফল্ট (HOOK_TEXT)"}`,

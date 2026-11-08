@@ -14,5 +14,6 @@ export function useNightFactor(timing: Timing, frameOffset = 0): number {
     introFrames: timing.introFrames,
     mainFrames: timing.mainFrames,
     outroFrames: timing.outroFrames,
+    timeMode: timing.timeMode,
   });
 }

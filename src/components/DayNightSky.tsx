@@ -1,8 +1,9 @@
 import React from "react";
 import { random, useCurrentFrame } from "remotion";
 import {
-  cloudOpacity,
+  cloudOpacityFor,
   hillColors,
+  hillColorsFor,
   moonOpacity,
   moonPosition,
   starFactor,
@@ -10,40 +11,55 @@ import {
   sunPosition,
 } from "../lib/sky";
 import { getThemeColors, skyGradient, THEMES } from "../themes";
+import type { ThemeId } from "../types";
 
 /**
- * Part 6: দিন-রাতের আকাশ (greenDayNight)
+ * Part 6: দিন-রাতের আকাশ (greenDayNight + ঋতু-থিম monsoon / winter / spring)
  * আকাশের রঙ মিশ্রণ (দিন → গোধূলি → রাত), সূর্য-চাঁদ চাপ বরাবর গতি, মেঘ, মিটমিট তারা, দূরের টিলা।
+ * থিমের নিজস্ব মান (`scenery`): টিলার রঙ, তারা/মেঘের সংখ্যা ও স্বচ্ছতা, সূর্য-চাঁদের জোর — না দিলে greenDayNight-এর আগের মান।
+ * `mirror` (nightToDay): সূর্য-চাঁদের পথ আয়নার মতো উল্টানো — চাঁদ ডানে ডোবে, সূর্য বাঁয়ে (পূর্বে) ওঠে।
  * সব অ্যানিমেশন useCurrentFrame() ভিত্তিক — CSS animation নয়।
  */
 
-type Props = { width: number; height: number; nightFactor: number };
+type Props = {
+  width: number;
+  height: number;
+  nightFactor: number;
+  /** কোন থিমের আকাশ (ডিফল্ট greenDayNight — আগের মতো) */
+  themeId?: ThemeId;
+  /** true = সূর্য-চাঁদের x উল্টানো (nightToDay মোডে সূর্য বাঁ দিগন্ত থেকে ওঠে) */
+  mirror?: boolean;
+};
 
 const STAR_COUNT = 70;
 const CLOUDS = 5;
 
-export const DayNightSky: React.FC<Props> = ({ width, height, nightFactor: nf }) => {
+export const DayNightSky: React.FC<Props> = ({ width, height, nightFactor: nf, themeId = "greenDayNight", mirror = false }) => {
   const frame = useCurrentFrame();
   const unit = Math.min(width, height) / 1080;
-  const scenery = THEMES.greenDayNight.scenery!;
-  const palette = getThemeColors("greenDayNight", nf);
+  const scenery = (THEMES[themeId].scenery ?? THEMES.greenDayNight.scenery)!;
+  const palette = getThemeColors(themeId, nf);
 
-  const sun = sunPosition(nf, width, height);
-  const sunOp = sunOpacity(nf);
-  const moon = moonPosition(nf, width, height);
-  const moonOp = moonOpacity(nf);
+  const sun0 = sunPosition(nf, width, height);
+  const sun = mirror ? { x: width - sun0.x, y: sun0.y } : sun0;
+  const sunOp = sunOpacity(nf) * (scenery.sunStrength ?? 1);
+  const moon0 = moonPosition(nf, width, height);
+  const moon = mirror ? { x: width - moon0.x, y: moon0.y } : moon0;
+  const moonOp = moonOpacity(nf) * (scenery.moonStrength ?? 1);
   const stars = starFactor(nf);
-  const cloudOp = cloudOpacity(nf);
+  const cloudOp = cloudOpacityFor(nf, scenery.cloudDayOpacity ?? 0.6, scenery.cloudNightOpacity ?? 0.05);
+  const starCount = scenery.starCount ?? STAR_COUNT;
+  const cloudCount = scenery.cloudCount ?? CLOUDS;
 
   const sunR = 110 * unit;
   const moonR = 90 * unit;
-  const [hillBack, hillFront] = hillColors(nf);
+  const [hillBack, hillFront] = scenery.hills ? hillColorsFor(scenery.hills, nf) : hillColors(nf);
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: skyGradient(palette) }}>
       {/* তারা */}
       {stars > 0.001 &&
-        Array.from({ length: STAR_COUNT }, (_, i) => {
+        Array.from({ length: starCount }, (_, i) => {
           const x = random(`st-x-${i}`) * width;
           const y = random(`st-y-${i}`) * height * 0.68;
           const size = (2 + 3.5 * random(`st-s-${i}`)) * unit;
@@ -159,7 +175,7 @@ export const DayNightSky: React.FC<Props> = ({ width, height, nightFactor: nf })
 
       {/* ধীর মেঘ */}
       {cloudOp > 0.01 &&
-        Array.from({ length: CLOUDS }, (_, i) => {
+        Array.from({ length: cloudCount }, (_, i) => {
           const cw = (260 + 160 * random(`cl-w-${i}`)) * unit;
           const speed = (0.25 + 0.35 * random(`cl-sp-${i}`)) * unit;
           const span = width + cw * 2;

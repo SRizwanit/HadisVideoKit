@@ -1,4 +1,4 @@
-import { FPS } from "../constants";
+import { FPS, type TimeMode } from "../constants";
 import type { HadisVideoProps, SfxCue, TimestampFile } from "../types";
 
 /**
@@ -22,6 +22,8 @@ export type Timing = {
   mainFrames: number;
   outroFrames: number;
   totalFrames: number;
+  /** দিন-রাতের মোড (day / night / dayToNight / nightToDay); নেই = dayToNight (আগের আচরণ)। শুধু `computeNightFactor`-এর জন্য */
+  timeMode?: TimeMode;
 };
 
 export type FrameWord = {
@@ -101,7 +103,7 @@ export function computeTiming(args: {
  */
 export function timingFromConfig(
   durationInFrames: number,
-  props: Pick<HadisVideoProps, "introSeconds" | "outroSeconds"> & { hookSeconds?: number; teaserSeconds?: number },
+  props: Pick<HadisVideoProps, "introSeconds" | "outroSeconds"> & { hookSeconds?: number; teaserSeconds?: number; timeMode?: TimeMode },
   fps: number = FPS,
 ): Timing {
   const hookFrames = Math.max(0, secondsToFrames(props.hookSeconds ?? 0, fps));
@@ -117,6 +119,7 @@ export function timingFromConfig(
     mainFrames,
     outroFrames,
     totalFrames: durationInFrames,
+    ...(props.timeMode !== undefined ? { timeMode: props.timeMode } : {}),
   };
 }
 

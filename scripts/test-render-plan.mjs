@@ -152,7 +152,7 @@ check("id: `0101`, `a_b-C9` চলে", () => buildPlan(["--id", "a_b-C9"]).ok &
 check("খারাপ theme/orientation/quality → ভুল, চলার তালিকা সহ", () => {
   const e = errsOf(base("--theme", "zz", "--orientation", "wide", "--quality", "8k"));
   return (
-    e.includes("emerald, navy, greenDayNight") &&
+    e.includes("emerald, navy, greenDayNight, monsoon, winter, spring") &&
     e.includes("portrait, landscape, both") &&
     e.includes("hd, 4k, both")
   );
@@ -824,6 +824,51 @@ check("publish: কিতাব/নম্বর ফাঁকা বা খাল
   const a = PT.buildPublishText({ file: { segments: [] }, book: "", number: "" });
   const b = PT.buildPublishText({ file: undefined });
   return typeof a === "string" && a.length > 0 && typeof b === "string";
+});
+
+// ---------- নতুন ঋতু-থিম (monsoon / winter / spring) + সময়ের মোড (--time-mode) ----------
+check("ঋতু-থিম monsoon / winter / spring চলে; theme তালিকায় ৬টা", () => {
+  return (
+    RP.THEME_IDS.length === 6 &&
+    ["monsoon", "winter", "spring"].every((t) => {
+      const r = buildPlan(base("--theme", t));
+      return r.ok && r.plan.jobs[0].inputProps.theme === t;
+    })
+  );
+});
+
+check("কপি করা TIME_MODES constants.ts-এর সাথে এক (day, night, dayToNight, nightToDay)", () => {
+  return same(strList("TIME_MODES"), RP.TIME_MODES) && same(RP.TIME_MODES, ["day", "night", "dayToNight", "nightToDay"]);
+});
+
+check("--time-mode: ফাঁকা বা dayToNight → inputProps-এ timeMode কী নেই (আগের আচরণ অপরিবর্তিত)", () => {
+  const a = buildPlan(base()).plan.jobs[0].inputProps;
+  const b = buildPlan(base("--time-mode", "")).plan.jobs[0].inputProps;
+  const c = buildPlan(base("--time-mode", "dayToNight")).plan.jobs[0].inputProps;
+  return !("timeMode" in a) && !("timeMode" in b) && !("timeMode" in c);
+});
+
+check("--time-mode day / night / nightToDay → inputProps.timeMode বসে; সব জবে এক", () => {
+  return ["day", "night", "nightToDay"].every((m) => {
+    const r = buildPlan(base("--time-mode", m, "--orientation", "both", "--quality", "both"));
+    return r.ok && r.plan.jobs.length === 4 && r.plan.jobs.every((j) => j.inputProps.timeMode === m);
+  });
+});
+
+check("--time-mode ভুল মান → ভুল, চলার তালিকাসহ", () => {
+  const e = errsOf(base("--time-mode", "dusk"));
+  return e.includes("--time-mode") && e.includes("day, night, dayToNight, nightToDay");
+});
+
+check("থাম্বনেইলের inputProps-এও timeMode যায় (ভিডিওর জবের মতোই)", () => {
+  const r = buildPlan(base("--time-mode", "nightToDay", "--theme", "spring"));
+  return r.ok && r.plan.thumbnails.length === 1 && r.plan.thumbnails[0].inputProps.timeMode === "nightToDay" && r.plan.thumbnails[0].inputProps.theme === "spring";
+});
+
+check("--dry-run টেবিলে সময়ের মোড দেখায় (না দিলে dayToNight)", () => {
+  const a = formatDryRun(buildPlan(base("--time-mode", "night")).plan);
+  const b = formatDryRun(buildPlan(base()).plan);
+  return a.includes("সময়=night") && b.includes("সময়=dayToNight");
 });
 
 // ---------- ফলাফল ----------

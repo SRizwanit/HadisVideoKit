@@ -12,6 +12,7 @@ import { ensureVideoPreviewData, HADIS_VIDEO_PREVIEW_HEIGHT, HadisVideoPreview }
 import { INTRO_PREVIEW_HEIGHT, IntroPreview } from "./dev/IntroPreview";
 import { ensureMainSceneCheckData, MAIN_SCENE_CHECK_HEIGHT, MainSceneCheck } from "./dev/MainSceneCheck";
 import { OUTRO_PREVIEW_HEIGHT, OutroPreview } from "./dev/OutroPreview";
+import { SeasonThemesPreview } from "./dev/SeasonThemesPreview";
 import { SVG_INVENTORY_CHECK_HEIGHT, SvgInventoryCheck } from "./dev/SvgInventoryCheck";
 import { SVG_PICKER_CHECK_HEIGHT, SvgPickerCheck } from "./dev/SvgPickerCheck";
 import { SVG_SANITIZE_CHECK_HEIGHT, SvgSanitizeCheck } from "./dev/SvgSanitizeCheck";
@@ -66,6 +67,7 @@ export const HadisThumbnail: React.FC<HadisVideoProps> = (props) => (
     teaserEnabled={props.teaserEnabled}
     seriesNumber={props.seriesNumber}
     thumbnailNight={props.thumbnailNight}
+    timeMode={props.timeMode}
   />
 );
 
@@ -144,6 +146,15 @@ export const RemotionRoot: React.FC = () => {
     <Composition
       id="BackgroundPreview"
       component={BackgroundPreview}
+      durationInFrames={120}
+      fps={FPS}
+      width={BASE_SIZES.portrait.width}
+      height={BASE_SIZES.portrait.height}
+    />
+    {/* ঋতু-থিম (বর্ষা / শীত / বসন্ত) × সময়ের মোড (Day / DayToNight / Night / NightToDay) যাচাইয়ের ছবি (dev টুল) */}
+    <Composition
+      id="SeasonThemesPreview"
+      component={SeasonThemesPreview}
       durationInFrames={120}
       fps={FPS}
       width={BASE_SIZES.portrait.width}

@@ -4,7 +4,7 @@ import { Background } from "../components/Background";
 import { FitText } from "../components/FitText";
 import { Logo } from "../components/Logo";
 import { RIBBON_INK, Ribbon } from "../components/Ribbon";
-import { APP_NAME, HOOK_TEXT, TAGLINE } from "../constants";
+import { APP_NAME, HOOK_TEXT, TAGLINE, type TimeMode } from "../constants";
 import { FONT_BODY, FONT_DISPLAY } from "../fonts";
 import { buildHadisLabel, buildSeriesLabel } from "../lib/displayText";
 import { useHadisTimestamp } from "../lib/loadHadis";
@@ -44,8 +44,10 @@ type Props = {
   size?: { width: number; height: number };
   /** সিরিজ নম্বর ("১২" বা "12") → ডান-উপরে "পর্ব ১২" ব্যাজ। ফাঁকা/না দিলে ব্যাজ নেই */
   seriesNumber?: string;
-  /** workflow-এর `thumbnail_night`: ব্যাকগ্রাউন্ডের দিন-রাত (০–১)। না দিলে থিমের ডিফল্ট */
+  /** workflow-এর `thumbnail_night`: ব্যাকগ্রাউন্ডের দিন-রাত (০–১)। না দিলে `timeMode`-এর বা থিমের ডিফল্ট */
   thumbnailNight?: number;
+  /** workflow-এর `time_mode`: day → উজ্জ্বল দিন; nightToDay → সোনালি ভোর (সূর্য বাঁ দিক থেকে ওঠে); night/dayToNight/না দিলে → থিমের ডিফল্ট */
+  timeMode?: TimeMode;
   /** dev প্রিভিউয়ের জন্য সরাসরি nightFactor (`thumbnailNight`-কে ছাপিয়ে যায়) */
   nightFactor?: number;
 };
@@ -53,13 +55,24 @@ type Props = {
 /**
  * থিম অনুযায়ী থাম্বনেইলের ডিফল্ট nightFactor (০ = দিন, ০.৫ = গোধূলি, ১ = রাত)।
  * ⚠️ emerald ও navy "static" থিম — nightFactor তাদের রঙ/ব্যাকগ্রাউন্ডে কোনো প্রভাব ফেলে না (`getThemeColors` সবসময় একই প্যালেট দেয়)।
- *    তাই আসলে শুধু greenDayNight-এর মান গুরুত্বপূর্ণ: ০ = উজ্জ্বল দিন, ০.৫ = সোনালি গোধূলি, ০.৯ = রাত + জোনাকি।
- *    greenDayNight-এ ভিন্ন লুক চাইলে workflow-এর `thumbnail_night` (০–১) দিয়ে বদলানো যায়; কোড বদলাতে হয় না।
+ *    তাই গুরুত্বপূর্ণ শুধু দিন-রাতের থিমগুলোর (greenDayNight, monsoon, winter, spring) মান: ০ = উজ্জ্বল দিন, ০.৫ = সোনালি গোধূলি, ০.৯ = রাত + জোনাকি।
+ *    ভিন্ন লুক চাইলে workflow-এর `thumbnail_night` (০–১) দিয়ে বদলানো যায়; কোড বদলাতে হয় না।
  */
 export const THUMBNAIL_NIGHT_BY_THEME: Record<ThemeId, number> = {
   emerald: 0.85,
   navy: 0.85,
   greenDayNight: 0.9,
+  monsoon: 0.9, // বৃষ্টি + বিদ্যুতের রাত + জোনাকি
+  winter: 0.9, // কুয়াশা + তারা + হিম-জোনাকি
+  spring: 0.8, // বেগুনি-গোলাপি রাত, ঝরা পাপড়ি + জোনাকি
+};
+/**
+ * `time_mode` অনুযায়ী থাম্বনেইলের ডিফল্ট (শুধু যে মোডের জন্য আলাদা লুক দরকার): day = উজ্জ্বল দিন, nightToDay = সোনালি ভোর।
+ * night / dayToNight-এর জন্য নেই → `THUMBNAIL_NIGHT_BY_THEME` (থিমের রাতের লুক, আগের মতোই)।
+ */
+export const THUMBNAIL_NIGHT_BY_TIME_MODE: Partial<Record<TimeMode, number>> = {
+  day: 0,
+  nightToDay: 0.4,
 };
 /** ব্যাকগ্রাউন্ডের কণা/জোনাকি কোন ফ্রেমে থাকবে (render.mjs এই ফ্রেমই তোলে) */
 export const THUMBNAIL_FRAME = 45;
@@ -94,6 +107,7 @@ export const ThumbnailScene: React.FC<Props> = ({
   size,
   seriesNumber,
   thumbnailNight,
+  timeMode,
   nightFactor: nightFactorOverride,
 }) => {
   const video = useVideoConfig();
@@ -102,7 +116,11 @@ export const ThumbnailScene: React.FC<Props> = ({
   const isPortrait = height >= width;
   const u = Math.min(width, height) / 1080;
 
-  const nightFactor = nightFactorOverride ?? thumbnailNight ?? THUMBNAIL_NIGHT_BY_THEME[theme];
+  const nightFactor =
+    nightFactorOverride ??
+    thumbnailNight ??
+    (timeMode !== undefined ? THUMBNAIL_NIGHT_BY_TIME_MODE[timeMode] : undefined) ??
+    THUMBNAIL_NIGHT_BY_THEME[theme];
   const file = useHadisTimestamp(hadisId);
   const p = getThemeColors(theme, nightFactor);
 
@@ -178,7 +196,7 @@ export const ThumbnailScene: React.FC<Props> = ({
 
   return (
     <AbsoluteFill data-thumbnail="" data-thumbnail-teaser={showTeaser ? "1" : "0"}>
-      <Background theme={theme} nightFactor={nightFactor} size={{ width, height }} />
+      <Background theme={theme} nightFactor={nightFactor} timeMode={timeMode} size={{ width, height }} />
 
       <div
         style={{

@@ -327,6 +327,7 @@ export const CaptionView: React.FC<CaptionViewProps> = ({ segments, theme, timin
     introFrames: timing.introFrames,
     mainFrames: timing.mainFrames,
     outroFrames: timing.outroFrames,
+    timeMode: timing.timeMode,
   });
   const palette = getThemeColors(theme, nightFactor);
 

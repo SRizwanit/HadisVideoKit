@@ -27,7 +27,28 @@
 - `hadis<ID>_publish.txt` — ইউটিউব শিরোনাম (৩ বিকল্প), বিবরণ, ট্যাগ, ফেসবুক ক্যাপশন, হ্যাশট্যাগ। ⚠️ হাদিসের লেখা JSON থেকে হুবহু — প্রকাশের আগে নিজে যাচাই করো।
 - `hadis<ID>.srt` — সাবটাইটেল (ইউটিউব স্টুডিও → Subtitles → Upload file)। Artifacts → `publish-files`।
 
-নতুন workflow ইনপুট: `thumbnail`, `series` (যেমন 12 → থাম্বনেইলে "পর্ব ১২"), `thumbnail_night` (০–১, **শুধু greenDayNight থিমে** কাজ করে), `publish_files`, `app_link`। **`render.yml` zip দিয়ে আপডেট হয় না — হাতে বসাতে হবে।**
+নতুন workflow ইনপুট: `thumbnail`, `series` (যেমন 12 → থাম্বনেইলে "পর্ব ১২"), `thumbnail_night` (০–১, **শুধু দিন-রাতের থিমে** — greenDayNight, monsoon, winter, spring — কাজ করে), `publish_files`, `app_link`। **`render.yml` zip দিয়ে আপডেট হয় না — হাতে বসাতে হবে।**
+
+### 🎨 ঋতু-থিম ও 🕒 সময়ের মোড (`time_mode`)
+
+`theme` এখন ৬টা: `emerald`, `navy` (স্থির) আর দিন-রাতের থিম `greenDayNight` + তিনটা নতুন ঋতু-থিম:
+
+| থিম | ঋতু | কী দেখা যায় |
+|---|---|---|
+| `monsoon` | বর্ষা | ধূসর-সবুজ ভারী মেঘ, তির্যক বৃষ্টি, রাতে বিদ্যুৎ-ঝলক (আস্তে, ~৩.৭ সেকেন্ডে সর্বোচ্চ একবার), সবুজাভ-নীল জোনাকি |
+| `winter` | শীত | কুয়াশার ভোর, ভেসে চলা কুয়াশা-স্তর, ঝিলমিল হিমকণা, গোলাপি-কমলা গোধূলি, বরফ-নীল জোনাকি |
+| `spring` | বসন্ত | গোলাপি-পিচ দিন, আগুন-রঙা গোধূলি, ঝরা পলাশ/কৃষ্ণচূড়ার পাপড়ি, বেগুনি-গোলাপি রাত, কমলা-সোনালি জোনাকি |
+
+নতুন workflow ইনপুট **`time_mode`** (প্রতিটা দিন-রাতের থিমে কাজ করে; `emerald`/`navy` স্থির — প্রভাব নেই):
+
+| `time_mode` | কী হয় |
+|---|---|
+| `dayToNight` (ডিফল্ট) | দিন → গোধূলি → রাত; জোনাকি ধীরে ফোটে 🌿✨ — আগের আচরণ হুবহু |
+| `day` | পুরো ভিডিও জুড়ে উজ্জ্বল দিন |
+| `night` | পুরো ভিডিও জুড়ে রাত — তারা + পূর্ণ জোনাকি |
+| `nightToDay` | রাত → ভোর → দিন; চাঁদ ডোবে, সূর্য বাঁ দিক থেকে ওঠে, তারা ও জোনাকি মিলিয়ে যায় |
+
+থাম্বনেইলেও মোড মানা হয় (`day` = উজ্জ্বল দিন, `nightToDay` = সোনালি ভোর; `thumbnail_night` দিলে সেটাই জেতে)। নতুন থিম ও মোড একসাথে দেখতে `action = check` চালিয়ে `check-images` → `check-SeasonThemesPreview.png` খোলো। `render.yml` হাতে বসাতে হবে (zip দিয়ে workflow আপডেট হয় না)।
 
 > আগে `setup.yml` বসিয়ে থাকলে মুছে দাও।
 
@@ -70,10 +91,10 @@ npm run check      # বান্ডল + ছবি রেন্ডার (out/c
 - `src/logo.jpg` — লোগো (কোডে গোল করে দেখানো হবে)
 - `src/google-play-badge.png` — Google Play badge
 - `src/constants.ts`, `src/types.ts` — কিটের স্থির মান ও Zod স্কিমা
-- `src/themes.ts`, `src/fonts.ts`, `src/lib/dayNight.ts` — ৩টা থিম, বাংলা ফন্ট, দিন-রাতের হিসাব
+- `src/themes.ts`, `src/fonts.ts`, `src/lib/dayNight.ts` — ৬টা থিম (৩ + ঋতু-থিম monsoon/winter/spring), বাংলা ফন্ট, দিন-রাতের হিসাব (`timeMode` সহ)
 - `src/lib/bnDigits.ts`, `src/lib/displayText.ts` — বাংলা সংখ্যা ও "কিতাব নং : নম্বর" লেবেল
 - `src/lib/loadHadis.ts`, `src/lib/timing.ts` — WAV/JSON লোড, ভিডিওর দৈর্ঘ্য ও ফ্রেম হিসাব
-- `src/lib/useLayout.ts`, `src/lib/sky.ts`, `src/components/Background.tsx` (+ `DayNightSky`, `Fireflies`) — লেআউট ও ৩ থিমের ব্যাকগ্রাউন্ড
+- `src/lib/useLayout.ts`, `src/lib/sky.ts`, `src/components/Background.tsx` (+ `DayNightSky`, `Fireflies`, `SeasonEffects`) — লেআউট ও ৬ থিমের ব্যাকগ্রাউন্ড
 - `src/components/Logo.tsx`, `Header.tsx`, `Ribbon.tsx`, `FitText.tsx`, `src/lib/fitText.ts` — গোল লোগো, অ্যানিমেটেড হেডার, রিবন, বক্সে-আঁটা টেক্সট
 - `src/scenes/IntroScene.tsx`, `src/lib/useSfxSrc.ts` — Intro সিন; SFX ফাইল থাকলে বাজায়, না থাকলে চুপচাপ বাদ
 - `src/lib/outroPlan.ts`, `src/components/PlayBadge.tsx`, `src/scenes/OutroScene.tsx` — Outro সিন: লোগো + অ্যাপের নাম + টাইপ-হওয়া CTA লেখা + Google Play badge (bounce-in, pulse, shine, ট্যাপ-ইঙ্গিত)

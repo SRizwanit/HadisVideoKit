@@ -42,8 +42,13 @@ export const moonOpacity = (nf: number) => smoothstep((nf - 0.4) / 0.3);
 /** তারা ফোটা: ০.৪৫ থেকে শুরু, ০.৮৫ এ পূর্ণ */
 export const starFactor = (nf: number) => smoothstep((nf - 0.45) / 0.4);
 
-/** মেঘ: দিনে স্পষ্ট, রাতে প্রায় অদৃশ্য */
-export const cloudOpacity = (nf: number) => 0.6 * (1 - smoothstep((nf - 0.1) / 0.5)) + 0.05 * nf;
+/**
+ * মেঘ: দিনে স্পষ্ট, রাতে প্রায় অদৃশ্য।
+ * `day`/`night` = nf ০ ও ১-এ স্বচ্ছতা (ডিফল্ট ০.৬ ও ০.০৫ — greenDayNight-এর আগের মান); বর্ষায় দুটোই বেশি (ভারী মেঘ)।
+ */
+export const cloudOpacityFor = (nf: number, day = 0.6, night = 0.05) =>
+  day * (1 - smoothstep((nf - 0.1) / 0.5)) + night * nf;
+export const cloudOpacity = (nf: number) => cloudOpacityFor(nf);
 
 /** জোনাকির সামগ্রিক উজ্জ্বলতা: Intro ≈ ০.০৬ (ক্ষীণ) → Main-এ ক্রমে → Outro ১ */
 export const fireflyVisibility = (nf: number) => 0.06 + 0.94 * smoothstep((nf - 0.25) / 0.7);
@@ -60,10 +65,21 @@ export function mix3(day: string, dusk: string, night: string, nf: number): stri
   return nf < 0.5 ? mixColors(day, dusk, nf * 2) : mixColors(dusk, night, (nf - 0.5) * 2);
 }
 
-/** টিলা (hills) এর রঙ: [পেছনের, সামনের] */
+/** টিলা (hills) এর রঙ: [পেছনের, সামনের] — greenDayNight-এর সবুজ টিলা (ডিফল্ট) */
 export function hillColors(nf: number): [string, string] {
+  return hillColorsFor(
+    { back: ["#7cc47a", "#6f7f45", "#0a3a28"], front: ["#5fae62", "#4c6a3a", "#062a1c"] },
+    nf,
+  );
+}
+
+/** যেকোনো থিমের টিলার রঙ ([দিন, গোধূলি, রাত] তিন রঙ থেকে মিশিয়ে): [পেছনের, সামনের] */
+export function hillColorsFor(
+  hills: { back: [string, string, string]; front: [string, string, string] },
+  nf: number,
+): [string, string] {
   return [
-    mix3("#7cc47a", "#6f7f45", "#0a3a28", nf),
-    mix3("#5fae62", "#4c6a3a", "#062a1c", nf),
+    mix3(hills.back[0], hills.back[1], hills.back[2], nf),
+    mix3(hills.front[0], hills.front[1], hills.front[2], nf),
   ];
 }
