@@ -1,6 +1,6 @@
 import React from "react";
 import { Audio, Sequence, staticFile } from "remotion";
-import { hadisAudioPath } from "../constants";
+import { hadisAudioPath, TEASER_TAIL_SECONDS } from "../constants";
 import { teaserGain } from "../lib/teaser";
 import { teaserFramesOf, hookFramesOf, type Timing } from "../lib/timing";
 
@@ -36,7 +36,9 @@ export const TeaserAudio: React.FC<TeaserAudioProps> = ({ hadisId, timing, start
   const fps = timing.fps;
   const from = hookFramesOf(timing);
   const trimBefore = Math.max(0, Math.round(startSeconds * fps));
-  const audioFrames = Math.max(1, Math.min(frames, Math.ceil((endSeconds - startSeconds) * fps)));
+  // অংশের শেষ শব্দের পরের ছোট বাড়তি (TEASER_TAIL_SECONDS) পর্যন্তও বাজে — ফেড-আউট পড়ে ওই বাড়তি অংশে, শেষ শব্দের ওপর নয়
+  // (আগে অংশ ঠিক `end`-এ কাটত ও ফেড শেষ শব্দেই পড়ত → কথা মাঝপথে কাটা শোনাত)।
+  const audioFrames = Math.max(1, Math.min(frames, Math.ceil((endSeconds - startSeconds + TEASER_TAIL_SECONDS) * fps)));
   const url = src ?? staticFile(hadisAudioPath(hadisId));
   return (
     <Sequence from={from} durationInFrames={frames} layout="none" name="teaser-voice">
