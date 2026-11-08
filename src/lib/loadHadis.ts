@@ -150,13 +150,16 @@ export const calculateHadisMetadata: CalculateMetadataFunction<HadisVideoProps> 
   const introSeconds = fitSecondsToAudio(props.introSeconds, introAudio);
   const outroSeconds = fitSecondsToAudio(props.outroSeconds, outroAudio);
 
-  // Hook: public/audio/hook.wav থাকলে Intro-র আগে Hook দৃশ্য — দৈর্ঘ্য = hook.wav (+ ছোট বাড়তি); না থাকলে ০ (আগের মতো)
+  // Hook: public/audio/hook.wav থাকলে Intro-র আগে Hook দৃশ্য — দৈর্ঘ্য = hook.wav (+ ছোট বাড়তি); না থাকলে ০ (আগের মতো)।
+  // workflow-এর `hook_seconds` দিলে (props.hookSeconds): অন্তত ততটা সেকেন্ড; ০ = Hook বন্ধ; ফাঁকা = অটো (wav-এর দৈর্ঘ্য)।
   const hookAudio = HOOK_ENABLED ? await loadVoiceSeconds(HOOK_AUDIO_PATH) : null;
-  const hookSeconds = fitHookSeconds(hookAudio);
+  const hookSeconds = fitHookSeconds(hookAudio, undefined, props.hookSeconds);
 
   // অডিও টিজার (cold open): JSON-এ `teaser` থাকলে হাদিসের ওই অংশ Hook-এর পরে আগে বাজে; না থাকলে/অবৈধ হলে নেই (সতর্কতাসহ)
-  const teaser = buildTeaser(timestamp, audioSeconds);
-  if (timestamp.teaser && !teaser) {
+  // workflow-এর `teaser` টিক বন্ধ (props.teaserEnabled === false) হলে JSON-এ `teaser` থাকলেও টিজার নেই।
+  const teaserOn = props.teaserEnabled !== false;
+  const teaser = teaserOn ? buildTeaser(timestamp, audioSeconds) : null;
+  if (teaserOn && timestamp.teaser && !teaser) {
     console.warn(
       `⚠️ hadis${props.hadisId}: teaser বাদ — অংশটা ছাঁটার পর খুব ছোট (<${TEASER_MIN_SECONDS}s) বা .wav-এর বাইরে, বা TEASER_ENABLED বন্ধ।`,
     );

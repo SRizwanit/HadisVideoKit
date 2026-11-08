@@ -38,10 +38,16 @@ export const hadisVideoSchema = z.object({
   introSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS),
   outroSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS),
   /**
-   * Hook দৃশ্যের সেকেন্ড — ব্যবহারকারী দেয় না; `calculateMetadata` hook.wav-এর দৈর্ঘ্য থেকে বসায়
-   * (না থাকলে/০ = Hook নেই)। যাতে কম্পোনেন্টের `timingFromConfig` ঠিক একই সংখ্যা পায়।
+   * Hook দৃশ্যের সেকেন্ড। workflow-এর `hook_seconds` ফাঁকা (বা Studio-তে না দিলে) = অটো: `calculateMetadata`
+   * hook.wav-এর দৈর্ঘ্য থেকে বসায় (wav না থাকলে Hook নেই)। সংখ্যা দিলে = অন্তত ততটা সেকেন্ড (hook.wav লম্বা হলে wav-ই জেতে —
+   * অডিও কাটে না; wav না থাকলে শব্দহীন Hook ততটা সেকেন্ড)। ০ = Hook বন্ধ। ফল `props`-এ ফেরত যায়, যাতে কম্পোনেন্টের
+   * `timingFromConfig` ঠিক একই সংখ্যা পায়।
    */
   hookSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS).optional(),
+  /** Hook-এর বড় লেখা। workflow-এর `hook_text` ফাঁকা (বা না দিলে) = `constants.ts`-এর `HOOK_TEXT` */
+  hookText: z.string().optional(),
+  /** false = অডিও টিজার (cold open) বন্ধ। না দিলে/true = JSON-এ `teaser` থাকলে চলবে (workflow-এর `teaser` টিক) */
+  teaserEnabled: z.boolean().optional(),
   /**
    * অডিও টিজার (cold open): দৃশ্যের সেকেন্ড + হাদিস-.wav-এর কোন অংশ বাজবে (সেকেন্ড) — ব্যবহারকারী দেয় না;
    * `calculateMetadata` timestamp JSON-এর `teaser` থেকে বসায় (না থাকলে/০ = টিজার নেই)।

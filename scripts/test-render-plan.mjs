@@ -554,6 +554,43 @@ check("প্রতিটা ভুলের বার্তা খালি ন
   return e.length >= 8 && e.every((m) => m.length > 10 && /[\u0980-\u09FF]/.test(m));
 });
 
+// ---------- হুক টেক্সট / হুক সেকেন্ড / টিজার ----------
+check("hook/teaser না দিলে inputProps-এ নতুন কী নেই (৭টাই)", () => {
+  const p = buildPlan(base()).plan.jobs[0].inputProps;
+  return !("hookText" in p) && !("hookSeconds" in p) && !("teaserEnabled" in p);
+});
+
+check("--hook-text পরিষ্কার হয়ে hookText-এ যায়", () => {
+  const p = buildPlan(base("--hook-text", "  আপনি\u200B   জানেন কি?  ")).plan.jobs[0].inputProps;
+  return p.hookText === "আপনি জানেন কি?";
+});
+
+check("--hook-seconds: বাংলা/দশমিক সংখ্যা, ০ ও খালি", () => {
+  const g = (v) => buildPlan(base("--hook-seconds", v)).plan.jobs[0].inputProps.hookSeconds;
+  return g("৪") === 4 && g("3,5") === 3.5 && g("0") === 0 && g("") === undefined;
+});
+
+check("--hook-seconds ভুল/সীমার বাইরে হলে ভুলের বার্তা", () => {
+  const a = buildPlan(base("--hook-seconds", "abc"));
+  const b = buildPlan(base("--hook-seconds", "99"));
+  return !a.ok && !b.ok && a.errors[0].includes("--hook-seconds") && b.errors[0].includes("--hook-seconds");
+});
+
+check("--teaser false/off বন্ধ করে; true/খালি চালু (কী যায় না)", () => {
+  const g = (v) => buildPlan(base("--teaser", v)).plan.jobs[0].inputProps;
+  return g("false").teaserEnabled === false && g("off").teaserEnabled === false && !("teaserEnabled" in g("true")) && !("teaserEnabled" in g(""));
+});
+
+check("--teaser ভুল মান → ভুলের বার্তা", () => {
+  const r = buildPlan(base("--teaser", "maybe"));
+  return !r.ok && r.errors[0].includes("--teaser");
+});
+
+check("--dry-run টেবিলে হুক/টিজারের লাইন আছে", () => {
+  const out = formatDryRun(buildPlan(base("--hook-seconds", "4", "--teaser", "false")).plan);
+  return out.includes("হুক সময়=4s") && out.includes("টিজার=বন্ধ");
+});
+
 // ---------- ফলাফল ----------
 console.log("");
 console.log(`মোট ${passed + failed}টি কেস: ${passed}টি পাশ, ${failed}টি ফেল`);

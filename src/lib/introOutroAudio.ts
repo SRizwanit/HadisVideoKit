@@ -36,15 +36,26 @@ export function fitSecondsToAudio(setSeconds: number, audioSeconds: number | nul
 }
 
 /**
- * Hook দৃশ্যের সেকেন্ড = hook.wav-এর দৈর্ঘ্য + ছোট বাড়তি (অডিও কাটে না), `MAX_INTRO_OUTRO_SECONDS`-এ সীমিত।
- * অডিও না থাকলে (null/০/অবৈধ) বা `HOOK_ENABLED = false` হলে ০ (Hook দৃশ্য নেই)।
+ * Hook দৃশ্যের সেকেন্ড, `MAX_INTRO_OUTRO_SECONDS`-এ সীমিত।
+ *  - `setSeconds` না দিলে (undefined/null/অবৈধ) = অটো: hook.wav-এর দৈর্ঘ্য + ছোট বাড়তি (অডিও কাটে না);
+ *    অডিও না থাকলে (null/০/অবৈধ) ০ (Hook দৃশ্য নেই) — আগের মতোই।
+ *  - `setSeconds` > 0 হলে: max(setSeconds, অডিও + বাড়তি) — অডিও কাটে না; অডিও না থাকলে শব্দহীন Hook `setSeconds` সেকেন্ড।
+ *  - `setSeconds` = ০ হলে Hook বন্ধ (০)।
+ * `HOOK_ENABLED = false` হলে সবসময় ০।
  */
-export function fitHookSeconds(audioSeconds: number | null | undefined, fps: number = FPS): number {
+export function fitHookSeconds(
+  audioSeconds: number | null | undefined,
+  fps: number = FPS,
+  setSeconds?: number | null,
+): number {
   if (!HOOK_ENABLED) return 0;
   const a = finite(audioSeconds, 0);
-  if (!(a > 0)) return 0;
   const f = finite(fps, FPS) > 0 ? finite(fps, FPS) : FPS;
-  return Math.min(MAX_INTRO_OUTRO_SECONDS, Math.ceil((a + HOOK_AUDIO_TAIL_SECONDS) * f) / f);
+  const need = a > 0 ? Math.ceil((a + HOOK_AUDIO_TAIL_SECONDS) * f) / f : 0;
+  const s = typeof setSeconds === "number" && Number.isFinite(setSeconds) && setSeconds >= 0 ? setSeconds : null;
+  if (s === null) return Math.min(MAX_INTRO_OUTRO_SECONDS, need);
+  if (s === 0) return 0;
+  return Math.min(MAX_INTRO_OUTRO_SECONDS, Math.max(Math.ceil(s * f) / f, need));
 }
 
 export type VoiceCue = {

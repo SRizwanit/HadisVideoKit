@@ -50,6 +50,9 @@ const VALUE_ARGS = {
   quality: "quality",
   intro: "intro",
   outro: "outro",
+  "hook-text": "hookText",
+  "hook-seconds": "hookSeconds",
+  teaser: "teaser",
   concurrency: "concurrency",
   crf: "crf",
   "out-dir": "outDir",
@@ -179,6 +182,38 @@ export function parseSeconds(rawValue, argName, defaultValue) {
   return { value };
 }
 
+/**
+ * Hook-এর সেকেন্ড (`--hook-seconds`): খালি → undefined (অটো = hook.wav-এর দৈর্ঘ্য); ০ → Hook বন্ধ;
+ * সংখ্যা → অন্তত ততটা সেকেন্ড (০–MAX)। বাংলা/ইংরেজি সংখ্যা ও দশমিক চলবে।
+ * @returns {{ value?: number, error?: string }}
+ */
+export function parseHookSeconds(rawValue) {
+  const text = cleanText(rawValue);
+  if (text === "") return { value: undefined };
+  const ascii = toAsciiDigits(text).replace(/[,\u066B]/g, ".");
+  if (!/^\d+(\.\d+)?$/.test(ascii)) {
+    return {
+      error: `\`--hook-seconds\` ("${text}") একটি সংখ্যা হতে হবে (০ থেকে ${MAX_INTRO_OUTRO_SECONDS}, যেমন 4 বা 3.5)। খালি রাখলে অটো (hook.wav-এর দৈর্ঘ্য), ০ দিলে Hook বন্ধ।`,
+    };
+  }
+  const value = Number(ascii);
+  if (!Number.isFinite(value) || value < 0 || value > MAX_INTRO_OUTRO_SECONDS) {
+    return {
+      error: `\`--hook-seconds\` (${text}) ০ থেকে ${MAX_INTRO_OUTRO_SECONDS} সেকেন্ডের মধ্যে হতে হবে।`,
+    };
+  }
+  return { value };
+}
+
+/** `--teaser`: খালি → true (ডিফল্ট চালু); true/on/yes/1 → true; false/off/no/0 → false */
+export function parseTeaserFlag(rawValue) {
+  const text = cleanText(rawValue).toLowerCase();
+  if (text === "") return { value: true };
+  if (["true", "on", "yes", "1"].includes(text)) return { value: true };
+  if (["false", "off", "no", "0"].includes(text)) return { value: false };
+  return { error: `\`--teaser\` ("${text}") ঠিক নয় — চলবে: true বা false (on/off)।` };
+}
+
 /** পূর্ণসংখ্যা (concurrency/crf): খালি → undefined (ডিফল্ট), সীমার বাইরে হলে সীমায় এনে সতর্কতা */
 function parseClampedInt(rawValue, argName, range, warnings) {
   const text = cleanText(rawValue);
@@ -267,6 +302,12 @@ export function buildPlan(argv) {
   const outro = parseSeconds(raw.outro, "outro", DEFAULT_OUTRO_SECONDS);
   for (const r of [intro, outro]) if (r.error) errors.push(r.error);
 
+  // --- hook text / hook seconds / teaser ---
+  const hookText = cleanText(raw.hookText);
+  const hookSeconds = parseHookSeconds(raw.hookSeconds);
+  const teaser = parseTeaserFlag(raw.teaser);
+  for (const r of [hookSeconds, teaser]) if (r.error) errors.push(r.error);
+
   // --- book / number (Part 4-এর মতো পরিষ্কার) ---
   const book = cleanText(raw.book);
   const number = toBnDigits(cleanText(raw.number));
@@ -318,6 +359,10 @@ export function buildPlan(argv) {
           orientation: o,
           introSeconds: intro.value,
           outroSeconds: outro.value,
+          // নতুন কী শুধু তখনই যায় যখন ব্যবহারকারী কিছু দিয়েছে (না দিলে props আগের মতোই)
+          ...(hookText !== "" ? { hookText } : {}),
+          ...(hookSeconds.value !== undefined ? { hookSeconds: hookSeconds.value } : {}),
+          ...(teaser.value === false ? { teaserEnabled: false } : {}),
         },
         outputFile: join(outDir, `hadis${id}_${ORIENTATION_LABEL[o]}_${QUALITY_LABEL[q]}.mp4`),
         concurrency: concurrencyOverride.value ?? DEFAULT_CONCURRENCY[q],
@@ -440,6 +485,12 @@ export function formatDryRun(plan) {
     lines.push(
       `ইনপুট: কিতাব="${p.hadisBookname}" নম্বর="${p.hadisNumber}" থিম=${p.theme} ইন্ট্রো=${p.introSeconds}s আউট্রো=${p.outroSeconds}s`,
     );
+    const hookInfo = [
+      `হুক লেখা=${p.hookText ? `"${p.hookText}"` : "ডিফল্ট (HOOK_TEXT)"}`,
+      `হুক সময়=${p.hookSeconds === undefined ? "অটো (hook.wav)" : p.hookSeconds === 0 ? "বন্ধ" : `${p.hookSeconds}s`}`,
+      `টিজার=${p.teaserEnabled === false ? "বন্ধ" : "চালু (JSON-এ teaser থাকলে)"}`,
+    ];
+    lines.push(`হুক/টিজার: ${hookInfo.join(" | ")}`);
   }
   return lines.join("\n");
 }

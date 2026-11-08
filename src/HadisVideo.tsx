@@ -101,7 +101,7 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
       {scenes.hook && (
         <Sequence name="hook" from={scenes.hook.from} durationInFrames={scenes.hook.frames}>
           <AbsoluteFill data-scene="hook">
-            <HookScene theme={props.theme} timing={timing} size={size} />
+            <HookScene theme={props.theme} timing={timing} size={size} text={props.hookText && props.hookText.trim() !== "" ? props.hookText : undefined} />
           </AbsoluteFill>
         </Sequence>
       )}
