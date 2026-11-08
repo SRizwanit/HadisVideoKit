@@ -384,7 +384,11 @@
           "end": 30.893
         }
       ],
-      "svg": "svg5"
+      "svg": "svg5",
+      "sfx": {
+        "name": "soft-hit",
+        "volume": 0.4
+      }
     },
     {
       "id": 6,
