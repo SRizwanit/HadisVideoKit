@@ -3,7 +3,7 @@ import type { Infographic, InfographicType, TimestampFile } from "../types";
 import { secondsToFrames, type Timing } from "./timing";
 
 /**
- * ইনফোগ্রাফিক: timestamp JSON-এর `infographics` → ফ্রেম-ভিত্তিক তালিকা (Intro অফসেটসহ) + অ্যানিমেশনের হিসাব।
+ * ইনফোগ্রাফিক (ছোট ছোট পয়েন্ট/পিল): timestamp JSON-এর `infographics` → ফ্রেম-ভিত্তিক তালিকা (Intro অফসেটসহ) + অ্যানিমেশনের হিসাব + পিল-স্ট্রিপের মাপ।
  * পিওর ফাংশন (ব্রাউজার/React ছাড়া) — `Infographic.tsx` এগুলো ব্যবহার করে।
  * - Main-এর বাইরে গেলে ছেঁটে Main-এর ভেতরে আনা হয় (segment-এর মতোই)
  * - item-এর `at` না থাকলে সময় সমান ভাগ: প্রথম item ৬ ফ্রেম পরে, বাকিরা কার্ডের সময়ের প্রথম ৭৫%-এর মধ্যে
@@ -110,6 +110,67 @@ export function infographicItemProgress(item: FrameInfographicItem, frame: numbe
     extrapolateRight: "clamp",
     easing: Easing.out(Easing.cubic),
   });
+}
+
+/** বাংলা লেখার গড় অক্ষর-প্রস্থ (ফন্ট-সাইজের ভগ্নাংশ) — পিলের প্রস্থ আন্দাজে */
+export const PILL_CHAR_EM = 0.55;
+
+export type PillPart =
+  | { kind: "pill"; item: number; text: string; w: number }
+  | { kind: "arrow"; /** যে item-এর সাথে ফোটে (তীরের পরের পিল) */ item: number; w: number }
+  | { kind: "divider"; w: number };
+
+export type PillPlan = {
+  /** পিলের উচ্চতা */
+  pillH: number;
+  fontSize: number;
+  gap: number;
+  padX: number;
+  border: number;
+  parts: PillPart[];
+  /** সব অংশ মিলিয়ে মোট প্রস্থ (gap সহ) */
+  totalW: number;
+};
+
+/**
+ * পিল-স্ট্রিপের মাপ (পিওর): `W×H` বক্সে ২–৩টা ছোট পয়েন্ট এক সারিতে।
+ *  - steps → পিল, তীর, পিল …;  list → পিল, ফোঁটা, পিল …;  compare → বাঁ-পিলগুলো, বিভাজক, ডান-পিলগুলো
+ *  - ফন্ট `pillH × 0.46` থেকে শুরু; সারি বক্সের প্রস্থের চেয়ে লম্বা হলে ফন্ট কমে (সর্বনিম্ন `pillH × 0.26`)
+ */
+export function planInfographicPills(g: Pick<FrameInfographic, "type" | "items">, W: number, H: number): PillPlan {
+  const pillH = Math.max(1, Math.min(H * 0.8, W * 0.1));
+  const gap = pillH * 0.16;
+  const padX = pillH * 0.3;
+  const border = Math.max(2, pillH * 0.035);
+  const joinW = pillH * 0.62; // তীর/ফোঁটা/বিভাজকের প্রস্থ
+
+  // দেখানোর ক্রম: compare-এ আগে বাঁ, পরে ডান
+  let order = g.items.map((_, i) => i);
+  if (g.type === "compare") {
+    const left = order.filter((i) => compareSideOf(g.items[i], i) === "left");
+    const right = order.filter((i) => compareSideOf(g.items[i], i) === "right");
+    order = [...left, ...right];
+  }
+
+  const chars = order.map((i) => Math.max(2, Array.from(g.items[i].text.trim()).length));
+  const joins = Math.max(0, order.length - 1);
+  const fixed = order.length * padX * 2 + joins * joinW + (order.length - 1 + joins) * gap;
+  const sumChars = chars.reduce((a, b) => a + b, 0);
+  const maxFont = pillH * 0.46;
+  const minFont = pillH * 0.26;
+  const fit = (W - fixed) / (sumChars * PILL_CHAR_EM);
+  const fontSize = Math.max(minFont, Math.min(maxFont, fit));
+
+  const parts: PillPart[] = [];
+  order.forEach((i, k) => {
+    if (k > 0) {
+      // steps → তীর; list/compare → ছোট বিভাজক (compare-এ বাঁ/ডান দুই দলের মাঝে একই বিভাজক)
+      parts.push(g.type === "steps" ? { kind: "arrow", item: i, w: joinW } : { kind: "divider", w: joinW });
+    }
+    parts.push({ kind: "pill", item: i, text: g.items[i].text, w: chars[k] * fontSize * PILL_CHAR_EM + padX * 2 });
+  });
+  const totalW = parts.reduce((a, p) => a + p.w, 0) + Math.max(0, parts.length - 1) * gap;
+  return { pillH, fontSize, gap, padX, border, parts, totalW };
 }
 
 /** `compare`: item কোন পাশে যাবে (side না থাকলে একটা বাঁয়ে, একটা ডানে) */

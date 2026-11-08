@@ -140,10 +140,11 @@ export const teaserSchema = z
 export type Teaser = z.infer<typeof teaserSchema>;
 
 /**
- * ইনফোগ্রাফিক (ঐচ্ছিক): হাদিসের মূল পাঠ থেকে নেওয়া তথ্য-কার্ড, SVG-র জায়গায় (`svgBox`) নির্দিষ্ট সময়ে ফোটে।
- *  - steps   → ধাপে ধাপে ক্রম (নিয়ত → আমল → প্রতিদান), মাঝে তীর
- *  - list    → সংখ্যা-দেওয়া পয়েন্টের তালিকা
- *  - compare → দুই পাশ (বাঁ/ডান) তুলনা; প্রতিটা item-এ `side`, না দিলে একটা বাঁয়ে একটা ডানে
+ * ইনফোগ্রাফিক (ঐচ্ছিক): হাদিসের মূল পাঠ থেকে নেওয়া **ছোট ছোট পয়েন্ট** (পিল/চিপ), SVG-র ঠিক নিচের স্ট্রিপে (`infoBox`) নির্দিষ্ট সময়ে ফোটে।
+ *  - steps   → পিল → পিল (মাঝে তীর), যেমন "নিয়ত → ফল"
+ *  - list    → পাশাপাশি পিল (মাঝে ছোট ফোঁটা), যেমন "দুনিয়া · নারী"
+ *  - compare → দুই পাশ: বাঁ-পিল | ডান-পিল (মাঝে ছোট বিভাজক); `side` না দিলে একটা বাঁয়ে একটা ডানে
+ * প্রতিটা পয়েন্ট ১–৩ শব্দের ছোট লেখা; ২–৩টা পয়েন্ট (এক সারিতে বসে, তাই বড় বাক্য নয়)।
  * `start`/`end` সেকেন্ড, .wav-এর শুরু থেকে (segment-এর সময়ের মতোই)।
  */
 export const INFOGRAPHIC_TYPES = ["steps", "list", "compare"] as const;
@@ -151,8 +152,8 @@ export const infographicTypeSchema = z.enum(INFOGRAPHIC_TYPES);
 export type InfographicType = z.infer<typeof infographicTypeSchema>;
 
 export const infographicItemSchema = z.object({
-  /** ছোট লেখা (হাদিসের মূল পাঠ থেকে; ৬০ অক্ষরের মধ্যে রাখা ভালো) */
-  text: z.string().min(1).max(120),
+  /** ছোট পয়েন্ট (হাদিসের মূল পাঠ থেকে; ১–৩ শব্দ, ১২ অক্ষরের মধ্যে রাখা ভালো; সর্বোচ্চ ২৪) */
+  text: z.string().min(1).max(24),
   /** শুধু `compare`-এর জন্য: "left" বা "right" */
   side: z.enum(["left", "right"]).optional(),
   /** ঐচ্ছিক: এই item ঠিক কোন সেকেন্ডে ফুটবে (.wav-এর শুরু থেকে)। না দিলে সময় সমান ভাগে */
@@ -165,11 +166,12 @@ export const infographicSchema = z
     start: z.number().min(0),
     end: z.number().min(0),
     type: infographicTypeSchema,
+    /** ঐচ্ছিক, এখন ভিডিওতে আঁকা হয় না (পুরনো JSON চলার জন্য রাখা; পিল-স্ট্রিপে শিরোনামের জায়গা নেই) */
     title: z.string().min(1).max(80).optional(),
-    /** শুধু `compare`: বাঁ/ডান কলামের শিরোনাম */
+    /** ঐচ্ছিক, আঁকা হয় না (`compare`-এর পুরনো ক্ষেত্র) */
     leftTitle: z.string().min(1).max(40).optional(),
     rightTitle: z.string().min(1).max(40).optional(),
-    items: z.array(infographicItemSchema).min(2, "ইনফোগ্রাফিকে কমপক্ষে ২টা item দরকার").max(6, "ইনফোগ্রাফিকে সর্বোচ্চ ৬টা item"),
+    items: z.array(infographicItemSchema).min(2, "ইনফোগ্রাফিকে কমপক্ষে ২টা পয়েন্ট দরকার").max(3, "ইনফোগ্রাফিকে সর্বোচ্চ ৩টা ছোট পয়েন্ট (এক সারিতে বসে)"),
   })
   .refine((g) => g.end > g.start, { message: "infographic-এর end অবশ্যই start-এর চেয়ে বড় হতে হবে" });
 export type Infographic = z.infer<typeof infographicSchema>;

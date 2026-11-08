@@ -12,8 +12,8 @@ import type { ThemeId } from "../types";
  *   উপরে  `Header`   (Part 7: লোগো + অ্যাপের নাম + "আজকের হাদিস" + "(কিতাব) নং : (সংখ্যা)")
  *   মাঝে  `SvgStage` (Part 9K–9L: সেগমেন্টের SVG, glow + ভাসা + cross-fade; ভেতরে `AnimatedSvg` ও `svgPicker`)
  *   নিচে  `Caption`  (Part 10: রঙিন অ্যানিমেটেড ক্যাপশন)
- *   ঐচ্ছিক: JSON-এ `infographics` থাকলে ওই সময়ে `Infographic` কার্ড নিজের বক্সে (`layout.infoBox`) ফোটে (stage স্লটের ভেতরেই — স্লটের তালিকা অপরিবর্তিত):
- *     Portrait → SVG ছোট হয়ে উপরে, কার্ড তার নিচে, ক্যাপশন একই; Landscape → SVG একই, ডান কলামে উপরে কার্ড + নিচে ছোট ক্যাপশন-বক্স।
+ *   ঐচ্ছিক: JSON-এ `infographics` থাকলে ওই সময়ে `Infographic` ছোট ছোট পয়েন্ট (পিল, যেমন "নিয়ত → ফল") নিজের বক্সে (`layout.infoBox`) ফোটে (stage স্লটের ভেতরেই — স্লটের তালিকা অপরিবর্তিত):
+ *     Portrait → SVG একটু ছোট হয়ে উপরে, পিল-স্ট্রিপ তার নিচে, ক্যাপশন একই; Landscape → SVG একই, ডান কলামে উপরে পাতলা পিল-স্ট্রিপ + নিচে ছোট ক্যাপশন-বক্স।
  *     লেআউট বদল `useInfographicMix` (SvgStage ও Caption একই সংখ্যা পায়)। না থাকলে বা সময় না হলে কিছুই বদলায় না — ভিডিও আগের মতোই।
  *
  * ⚠️ এটা Main `<Sequence from={timing.introFrames}>`-এর ভেতরে বসে, তাই `useCurrentFrame()` ০ থেকে শুরু হয়।

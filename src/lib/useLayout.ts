@@ -23,8 +23,8 @@ export type Layout = {
   svgBox: SquareBox;
   captionBox: Box;
   /**
-   * ইনফোগ্রাফিক-কার্ডের বক্স (সবসময় চূড়ান্ত জায়গায়; কার্ড না থাকলে আঁকাই হয় না)।
-   * Portrait: ছোট হওয়া SVG-র ঠিক নিচে (পুরনো SVG-বক্সের নিচ পর্যন্ত); Landscape: ডান কলামের উপরের অংশ।
+   * ইনফোগ্রাফিক ছোট-পয়েন্ট (পিল) স্ট্রিপের বক্স (সবসময় চূড়ান্ত জায়গায়; ইনফোগ্রাফিক না থাকলে আঁকাই হয় না)।
+   * Portrait: একটু ছোট হওয়া SVG-র ঠিক নিচে (পুরনো SVG-বক্সের নিচ পর্যন্ত); Landscape: ডান কলামের উপরের পাতলা অংশ।
    */
   infoBox: Box;
   fontSizes: {
@@ -40,16 +40,16 @@ export type Layout = {
 
 const BASE = 1080;
 
-/** ইনফোগ্রাফিক চলার সময় Portrait-এ SVG-র আকার (স্বাভাবিক আকারের ভগ্নাংশ) */
-export const INFOGRAPHIC_SVG_SHRINK = 0.34;
-/** Landscape-এ ইনফোগ্রাফিক-কার্ড ডান কলামের উচ্চতার কত অংশ নেয় (বাকিটা ক্যাপশন) */
-export const INFOGRAPHIC_LANDSCAPE_SHARE = 0.56;
+/** ইনফোগ্রাফিক চলার সময় Portrait-এ SVG-র আকার (স্বাভাবিক আকারের ভগ্নাংশ) — একটু ছোট হয়ে নিচে পিল-স্ট্রিপের জায়গা ছাড়ে */
+export const INFOGRAPHIC_SVG_SHRINK = 0.8;
+/** Landscape-এ পিল-স্ট্রিপ ডান কলামের উচ্চতার কত অংশ নেয় (বাকিটা ক্যাপশন) */
+export const INFOGRAPHIC_LANDSCAPE_SHARE = 0.26;
 
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
 /**
  * @param infoMix ইনফোগ্রাফিক-লেআউটের অগ্রগতি ০–১ (`infographicLayoutMix`; ডিফল্ট ০ = আগের লেআউট হুবহু)।
- *   Portrait: SVG ছোট হয়ে উপরে থাকে (বর্গ, মাঝখানে), ক্যাপশন একই। Landscape: SVG একই, ক্যাপশন-বক্স ছোট হয়ে নিচে নামে।
+ *   Portrait: SVG একটু ছোট হয়ে উপরে থাকে (বর্গ, মাঝখানে), নিচে পিল-স্ট্রিপ, ক্যাপশন একই। Landscape: SVG একই, ক্যাপশন-বক্স ছোট হয়ে নিচে নামে।
  */
 export function computeLayout(width: number, height: number, infoMix = 0): Layout {
   const mix = Math.min(1, Math.max(0, Number.isFinite(infoMix) ? infoMix : 0));
@@ -80,7 +80,7 @@ export function computeLayout(width: number, height: number, infoMix = 0): Layou
       width: width - padding * 2,
       height: captionHeight,
     };
-    // ইনফোগ্রাফিক-কার্ড: ছোট SVG-র নিচে, পুরনো SVG-বক্সের নিচ পর্যন্ত
+    // ইনফোগ্রাফিক পিল-স্ট্রিপ: ছোট SVG-র নিচে, পুরনো SVG-বক্সের নিচ পর্যন্ত
     const infoGap = height * 0.012;
     const infoY = svgY + fullSvgSize * INFOGRAPHIC_SVG_SHRINK + infoGap;
     const infoBox: Box = {
@@ -126,7 +126,7 @@ export function computeLayout(width: number, height: number, infoMix = 0): Layou
   const svgBox: SquareBox = { x: padding, y: bodyY + (bodyHeight - svgSize) / 2, size: svgSize };
   const captionX = svgBox.x + svgSize + width * 0.03;
   const captionW = width - padding - captionX;
-  // ইনফোগ্রাফিক: ডান কলামের উপরে কার্ড, ক্যাপশন-বক্স ছোট হয়ে নিচে নামে (SVG বাঁয়ে একই)
+  // ইনফোগ্রাফিক: ডান কলামের উপরে পাতলা পিল-স্ট্রিপ, ক্যাপশন-বক্স ছোট হয়ে নিচে নামে (SVG বাঁয়ে একই)
   const infoH = bodyHeight * INFOGRAPHIC_LANDSCAPE_SHARE;
   const infoGap = height * 0.025;
   const infoBox: Box = { x: captionX, y: bodyY, width: captionW, height: infoH };
