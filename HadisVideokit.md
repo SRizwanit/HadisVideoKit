@@ -54,6 +54,26 @@ Files: `src/scenes/ThumbnailScene.tsx` (design; compositions `ThumbnailPortrait`
 
 > ⚠️ `render.yml` is **not** updated by the zip (GitHub forbids it) — paste the new `.github/workflows/render.yml` by hand once.
 
+### 🎵 Background music + audio (added after Part 14C)
+
+New optional workflow input **`background_music`** — either a **direct download link** (`https://…/song.mp3`) or the **file name of an audio file already in `public/`**; **empty = no music** (the pipeline behaves exactly as before, the voice is still normalized to -14 LUFS).
+
+- **Link:** downloaded (redirects followed, 3 attempts, 150 MB cap), validated with `ffprobe`, saved as `public/background1.<ext>` (extension from the real file type, then the URL, then `Content-Type`; any older `background1.*` is removed) and committed to the repo so you can reuse it later just by typing the name. Dropbox / Google Drive / GitHub share links are converted to direct links automatically.
+- **File name:** `public/<name>` is used directly (case-insensitive, `public/` prefix and a missing extension are accepted). If it does not exist: a clear `::error::` listing the audio files in `public/`; the videos are still rendered (without music) but the run ends ❌ and no Release is created.
+- **Download/validation problems** (HTML page instead of audio, 404, corrupt file, no audio stream) → `::warning::` and the render continues without music.
+
+What happens to every rendered video (new step after each `renderMedia`; code `scripts/lib/audioMix.mjs`, FFmpeg installed by a new workflow step):
+
+| Setting | Value |
+|---|---|
+| Voice loudness | two-pass `loudnorm`, **I = -14 LUFS**, TP = -1.5, LRA = 11 (the whole Remotion mix: narration + Intro/Outro/Hook voices + SFX) |
+| Music level | levelled to -14 LUFS first, then `AUDIO_SETTINGS.bgVolume = 0.08` (≈ -22 dB below the voice; 0.06–0.10 recommended; env override `BG_MUSIC_VOLUME`) |
+| Ducking | `sidechaincompress` with the voice as sidechain: threshold 0.02, ratio 8, attack 20 ms, release 600 ms |
+| Length | music longer than the video → trimmed to the exact length; shorter → seamless loop (`-stream_loop -1` on a PCM WAV) then trimmed; 1 s fade-in, 2 s fade-out |
+| Output | `amix normalize=0` + peak limiter at -1.5 dBTP, AAC 192k / 48 kHz stereo; **video stream copied** (`-c:v copy`) |
+
+Safety: any ffmpeg problem keeps the original Remotion audio (the render never fails because of the audio step); a video with no audio stream gets music only (or is skipped when there is no music). `scripts/prepare-bgmusic.mjs` resolves the input and exports `BG_MUSIC_FILE` via `$GITHUB_ENV`; `render.mjs` reads it. Tests: `node scripts/test-audio-mix.mjs`. **`render.yml` changed (new input + 4 steps) — paste the new file by hand; the copy embedded further below in this document is an older snapshot and was not updated.**
+
 ### One-time setup
 
 1. Create a new GitHub repo (e.g. `hadis-videokit`). "Desktop site" in the phone browser helps.

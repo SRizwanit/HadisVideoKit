@@ -20,6 +20,7 @@ import {
 } from "./lib/renderPlan.mjs";
 import { buildPublishText } from "./lib/publishText.mjs";
 import { buildSrtCues, formatSrt } from "./lib/srt.mjs";
+import { createAudioMixer } from "./lib/audioMix.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -105,7 +106,7 @@ function knownError(message) {
 }
 
 // ---------- একটা জব ----------
-async function runJob({ job, total, serveUrl }) {
+async function runJob({ job, total, serveUrl, mixer }) {
   const startedAt = Date.now();
   const outputLocation = outputPathFor(job);
   mkdirSync(dirname(outputLocation), { recursive: true });
@@ -187,11 +188,15 @@ async function runJob({ job, total, serveUrl }) {
   if (!existsSync(outputLocation)) {
     throw knownError(`রেন্ডার শেষ হলেও আউটপুট ফাইল তৈরি হয়নি: ${outputLocation}`);
   }
-  const size = statSync(outputLocation).size;
-  if (size === 0) {
+  if (statSync(outputLocation).size === 0) {
     throw knownError(`আউটপুট ফাইল খালি (০ বাইট): ${outputLocation}`);
   }
 
+  // ৩খ. অডিও পোস্ট-প্রসেস (FFmpeg): ভয়েস ≈ -14 LUFS + (ঐচ্ছিক) নরম ব্যাকগ্রাউন্ড মিউজিক + ducking।
+  // কখনো throw করে না — ব্যর্থ হলে Remotion-এর আসল অডিওসহ ভিডিও যেমন আছে তেমনই থাকে।
+  const audio = await mixer.process(outputLocation);
+
+  const size = statSync(outputLocation).size;
   const renderMs = Date.now() - startedAt;
   say(`✅ জব ${job.index}/${total} শেষ: ${fmtSize(size)} | ${fmtDuration(renderMs)}`);
   return {
@@ -200,6 +205,7 @@ async function runJob({ job, total, serveUrl }) {
     size,
     videoSeconds,
     renderMs,
+    audio,
   };
 }
 
@@ -369,6 +375,14 @@ async function main() {
     publicDir: join(projectRoot, "public"),
   });
 
+  // ৪খ. অডিও মিক্সার (ffmpeg) — BG_MUSIC_FILE ফাঁকা = ব্যাকগ্রাউন্ড মিউজিক ছাড়া, শুধু ভয়েস -14 LUFS
+  const bgEnv = String(process.env.BG_MUSIC_FILE ?? "").trim();
+  const mixer = await createAudioMixer({
+    bgMusicFile: bgEnv ? resolve(projectRoot, bgEnv) : "",
+    env: process.env,
+    log: say,
+  });
+
   // ৫. জবগুলো একে একে
   const done = [];
   const failed = [];
@@ -388,7 +402,7 @@ async function main() {
     }
     for (const job of videoJobs) {
       try {
-        done.push(await runJob({ job, total, serveUrl }));
+        done.push(await runJob({ job, total, serveUrl, mixer }));
       } catch (err) {
         const info = explainFailure(err);
         say(`\n❌ জব ${job.index}/${total} (${job.label}) ব্যর্থ:\n   ${info.text}`);
@@ -412,6 +426,7 @@ async function main() {
       }
     }
   } finally {
+    mixer.cleanup();
     try {
       rmSync(serveUrl, { recursive: true, force: true });
     } catch {
@@ -433,6 +448,10 @@ async function main() {
         `| \`${d.file}\` (${d.label}) | ${fmtSize(d.size)} | ${d.videoSeconds.toFixed(1)}সে | ${fmtDuration(d.renderMs)} |`,
       );
     }
+  }
+  if (done.length > 0) {
+    sayMd("\n### 🔊 অডিও (ভয়েস -14 LUFS · ব্যাকগ্রাউন্ড মিউজিক · ducking)\n");
+    for (const d of done) sayMd(`- \`${d.file}\`: ${d.audio?.status ?? "—"} — ${d.audio?.detail ?? ""}`);
   }
   if (thumbs.length > 0) {
     sayMd("\n### 🖼️ থাম্বনেইল (Hook + Teaser + Intro)\n");
