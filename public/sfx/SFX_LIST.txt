@@ -1,0 +1,32 @@
+HadisVideokit — SFX bundle (20 files, all original, synthesized; no third-party licence, free for any use)
+
+Kit default names (used by the code automatically):
+  whoosh   — intro start & main→outro move
+  chime    — hadith label appears in intro
+Use in the JSON only ("sfx": { "name": "...", "volume": 0.4 }):
+  pop, ding, swoosh, tap, click, tick, sparkle, shimmer, rise, drop, bubble,
+  soft-hit, reveal, glow, success, notify, slide, page-turn
+
+Suggested use / length:
+  whoosh 0.9s   strong topic change
+  swoosh 0.6s   smooth/light change
+  pop 0.25s     emphasise one key word
+  ding 0.9s     a point completed
+  chime 1.6s    closing / praise phrase
+  tap 0.15s     small soft emphasis
+  click 0.08s   tiny UI-style beat
+  tick 0.07s    time / counting beat
+  sparkle 1.0s  something beautiful / bright
+  shimmer 1.6s  calm, spiritual feeling
+  rise 1.2s     building up to a key sentence
+  drop 0.8s     warning / falling
+  bubble 0.35s  light, gentle emphasis
+  soft-hit 0.5s serious / heavy point
+  reveal 1.8s   big reveal of the main message
+  glow 1.5s     warm, peaceful moment
+  success 1.1s  good news / reward
+  notify 0.9s   gentle "pay attention"
+  slide 0.45s   quick scene slide
+  page-turn 0.7s moving to the next part
+
+Volume: 0.3–0.6 for most; never above 0.8 (the voice must stay clear).
