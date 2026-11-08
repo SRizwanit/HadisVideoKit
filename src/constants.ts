@@ -35,6 +35,8 @@ export const TAGLINE = "আজকের হাদিস";
 export const OUTRO_TEXT = "আজই প্লে স্টোর থেকে ইনস্টল করুন:";
 /** "সহীহ বুখারী হাদিস নং : ১২৩" এর "হাদিস নং :" অংশ ("নং" = নম্বর-এর সংক্ষেপ; হাদিসের ক্রম বোঝাতে এটাই মানানসই) */
 export const NUMBER_LABEL = "হাদিস নং :";
+/** সিরিজ ব্যাজ: "পর্ব ১২" (থাম্বনেইলে; workflow-এর `series` ইনপুট) */
+export const SERIES_LABEL = "পর্ব";
 
 // ---------- public/ ফোল্ডারের পাথ (staticFile() এর সাথে ব্যবহার) ----------
 export const HADIS_DIR = "hadis";

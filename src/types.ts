@@ -55,6 +55,10 @@ export const hadisVideoSchema = z.object({
   teaserSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS).optional(),
   teaserStartSeconds: z.number().min(0).optional(),
   teaserEndSeconds: z.number().min(0).optional(),
+  /** থাম্বনেইলের সিরিজ ব্যাজ: "১২" → "পর্ব ১২" (ফাঁকা/না দিলে ব্যাজ নেই)। ভিডিওতে কিছু বদলায় না — শুধু থাম্বনেইল (`ThumbnailScene`) */
+  seriesNumber: z.string().optional(),
+  /** থাম্বনেইলের ব্যাকগ্রাউন্ডের দিন-রাত (০ = দিন, ১ = রাত)। ফাঁকা/না দিলে থিমের ডিফল্ট (`THUMBNAIL_NIGHT_BY_THEME`)। শুধু greenDayNight-এ প্রভাব ফেলে */
+  thumbnailNight: z.number().min(0).max(1).optional(),
 });
 
 export type HadisVideoProps = z.infer<typeof hadisVideoSchema>;

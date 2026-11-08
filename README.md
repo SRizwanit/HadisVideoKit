@@ -17,6 +17,17 @@
 | `check` | বান্ডল + সব কম্পোজিশনের ছবি (যাচাই) |
 | `render` | ভিডিও রেন্ডার (Part 14-এর পর চালু) |
 | `render_and_release` | রেন্ডার + GitHub Release |
+| `thumbnail_only` | শুধু 4K থাম্বনেইল (ভিডিও নয়) — সিরিজ নম্বর/ব্যাকগ্রাউন্ড ঠিক করতে |
+
+### 🖼️ থাম্বনেইল ও 📝 প্রকাশের ফাইল
+
+প্রতিটা `render` রানে `out/`-এ (টিক তুলে বন্ধ করা যায়):
+
+- `hadis<ID>_thumbnail_9x16_4K.png/.jpg` ও `..._16x9_4K.png/.jpg` — Hook + Teaser + Intro এক ছবিতে, **সবসময় 4K** (২১৬০×৩৮৪০ / ৩৮৪০×২১৬০)। Artifacts → `thumbnails`। ইউটিউবের সীমা ২ MB, তাই বড় হলে `.jpg` দাও।
+- `hadis<ID>_publish.txt` — ইউটিউব শিরোনাম (৩ বিকল্প), বিবরণ, ট্যাগ, ফেসবুক ক্যাপশন, হ্যাশট্যাগ। ⚠️ হাদিসের লেখা JSON থেকে হুবহু — প্রকাশের আগে নিজে যাচাই করো।
+- `hadis<ID>.srt` — সাবটাইটেল (ইউটিউব স্টুডিও → Subtitles → Upload file)। Artifacts → `publish-files`।
+
+নতুন workflow ইনপুট: `thumbnail`, `series` (যেমন 12 → থাম্বনেইলে "পর্ব ১২"), `thumbnail_night` (০–১, **শুধু greenDayNight থিমে** কাজ করে), `publish_files`, `app_link`। **`render.yml` zip দিয়ে আপডেট হয় না — হাতে বসাতে হবে।**
 
 > আগে `setup.yml` বসিয়ে থাকলে মুছে দাও।
 

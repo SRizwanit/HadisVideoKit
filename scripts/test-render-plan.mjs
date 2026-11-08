@@ -6,6 +6,8 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as RP from "./lib/renderPlan.mjs";
+import * as PT from "./lib/publishText.mjs";
+import * as SRT from "./lib/srt.mjs";
 
 const {
   buildPlan,
@@ -652,6 +654,176 @@ check("থাম্বনেইল: কম্পোজিশন ID ও ফ্র
     root.includes(`id="${RP.THUMBNAIL_COMPOSITION_IDS.landscape}"`) &&
     frame !== null && Number(frame[1]) === RP.THUMBNAIL_FRAME
   );
+});
+
+// ---------- সিরিজ ব্যাজ / thumb-night / থাম্বনেইল-only / প্রকাশের ফাইল (আর্গুমেন্ট) ----------
+check("--series: বাংলা/ইংরেজি সংখ্যা → বাংলা সংখ্যায় seriesNumber (শুধু থাম্বনেইলে, ভিডিওর inputProps-এ নয়)", () => {
+  const a = buildPlan(base("--series", "12")).plan;
+  const b = buildPlan(base("--series", "১২")).plan;
+  return (
+    a.thumbnails[0].inputProps.seriesNumber === "১২" &&
+    b.thumbnails[0].inputProps.seriesNumber === "১২" &&
+    !("seriesNumber" in a.jobs[0].inputProps) &&
+    !("seriesNumber" in buildPlan(base()).plan.thumbnails[0].inputProps)
+  );
+});
+
+check("--series: অসংখ্যা/৭+ অঙ্ক → ভুলের বার্তা; খালি = ব্যাজ নেই", () => {
+  return (
+    buildPlan(base("--series", "ক")).errors.join().includes("--series") &&
+    buildPlan(base("--series", "1234567")).errors.join().includes("--series") &&
+    buildPlan(base("--series", "")).ok
+  );
+});
+
+check("--thumb-night: ০–১ (দশমিক, বাংলা সংখ্যা চলে); ১-এর বেশি/অসংখ্যা → ভুল; খালি = থিমের ডিফল্ট", () => {
+  const t = (v) => buildPlan(base("--thumb-night", v));
+  return (
+    t("0.5").plan.thumbnails[0].inputProps.thumbnailNight === 0.5 &&
+    t("০").plan.thumbnails[0].inputProps.thumbnailNight === 0 &&
+    t("1").plan.thumbnails[0].inputProps.thumbnailNight === 1 &&
+    !t("1.5").ok && !t("রাত").ok &&
+    !("thumbnailNight" in t("").plan.thumbnails[0].inputProps)
+  );
+});
+
+check("--thumbnail-only: থাম্বনেইল থাকে (--thumbnail false ও --frames উপেক্ষা), প্রকাশের ফাইল বন্ধ", () => {
+  const p = buildPlan(base("--thumbnail-only", "true", "--thumbnail", "false", "--frames", "0-9")).plan;
+  return p.thumbnailOnly === true && p.thumbnails.length === 1 && p.publish.enabled === false;
+});
+
+check("--thumbnail-only ভুল মান → ভুল; ডিফল্ট false", () => {
+  return !buildPlan(base("--thumbnail-only", "hmm")).ok && buildPlan(base()).plan.thumbnailOnly === false;
+});
+
+check("--publish-files: ডিফল্ট চালু; false বা --frames হলে বন্ধ; নামগুলো", () => {
+  const on = buildPlan(base()).plan.publish;
+  return (
+    on.enabled === true &&
+    on.textFile.endsWith("hadis0101_publish.txt") &&
+    on.srtFile.endsWith("hadis0101.srt") &&
+    buildPlan(base("--publish-files", "false")).plan.publish.enabled === false &&
+    buildPlan(base("--frames", "0-9")).plan.publish.enabled === false
+  );
+});
+
+check("--app-link: শুধু http(s) লিংক", () => {
+  const ok = buildPlan(base("--app-link", "https://play.google.com/store/apps/details?id=x"));
+  return ok.ok && ok.plan.publish.appLink.startsWith("https://") && !buildPlan(base("--app-link", "play store")).ok;
+});
+
+check("--dry-run টেবিলে সিরিজ, nightFactor ও প্রকাশের ফাইলের লাইন", () => {
+  const out = formatDryRun(buildPlan(base("--series", "12", "--thumb-night", "0.5")).plan);
+  return out.includes("পর্ব ১২") && out.includes("nightFactor: 0.5") && out.includes("hadis0101_publish.txt") && out.includes("hadis0101.srt");
+});
+
+check("কপি করা টেক্সট (APP_NAME, TAGLINE, ...) constants.ts-এর সাথে এক", () => {
+  const val = (name) => new RegExp(`export const ${name} = "([^"]*)";`).exec(constantsText)?.[1];
+  return (
+    val("APP_NAME") === RP.APP_NAME &&
+    val("TAGLINE") === RP.TAGLINE &&
+    val("OUTRO_TEXT") === RP.OUTRO_TEXT &&
+    val("NUMBER_LABEL") === RP.NUMBER_LABEL &&
+    val("SERIES_LABEL") === RP.SERIES_LABEL &&
+    val("HOOK_TEXT") === RP.HOOK_TEXT &&
+    /export const FPS = 30;/.test(constantsText) && RP.FPS === 30
+  );
+});
+
+// ---------- সাবটাইটেল (.srt) ----------
+const sampleFile = {
+  teaser: { start: 2, end: 4 },
+  segments: [
+    { start: 0, end: 2, text: "প্রথম লাইন", words: [{ word: "প্রথম", start: 0, end: 1 }, { word: "লাইন", start: 1, end: 2 }] },
+    { start: 2, end: 4, text: "দ্বিতীয় লাইন এখানে", words: [{ word: "দ্বিতীয়", start: 2, end: 2.7 }, { word: "লাইন", start: 2.7, end: 3.3 }, { word: "এখানে", start: 3.3, end: 4 }] },
+  ],
+};
+
+check("srt: সময়ের বিন্যাস HH:MM:SS,mmm", () => {
+  return SRT.formatSrtTime(0) === "00:00:00,000" && SRT.formatSrtTime(3661.5) === "01:01:01,500" && SRT.formatSrtTime(-3) === "00:00:00,000";
+});
+
+check("srt: Hook + Teaser + Intro-র অফসেট timing.ts-এর মতো (hook ২s, teaser ১s, intro ৩s → Main ৬s-এ)", () => {
+  const cues = SRT.buildSrtCues({
+    file: sampleFile, fps: 30, totalFrames: 30 * (2 + 1 + 3 + 4 + 5),
+    hookSeconds: 2, teaserSeconds: 1, introSeconds: 3, outroSeconds: 5,
+    teaserStartSeconds: 2, teaserEndSeconds: 4,
+  });
+  // ক্যু: hook, teaser, seg1 (৬–৮), seg2 (৮–১০)
+  return (
+    cues.length === 4 &&
+    cues[0].start === 0 && cues[0].end === 2 && cues[0].text.includes("জানা আছে") &&
+    cues[1].start === 2 && cues[1].end === 3 && cues[1].text === "দ্বিতীয় লাইন এখানে" &&
+    cues[2].start === 6 && cues[2].end === 8 && cues[2].text === "প্রথম লাইন" &&
+    cues[3].start === 8 && cues[3].end === 10
+  );
+});
+
+check("srt: Hook/Teaser না থাকলে শুধু segment (Intro-র পরে)", () => {
+  const cues = SRT.buildSrtCues({ file: sampleFile, fps: 30, totalFrames: 30 * 10, introSeconds: 3, outroSeconds: 3 });
+  return cues.length === 2 && cues[0].start === 3 && cues[1].end === 7;
+});
+
+check("srt: Main-এর বাইরের segment ছাঁটা, ক্যু ওভারল্যাপ করে না, end > start", () => {
+  const over = { segments: [{ start: 0, end: 3, text: "ক" }, { start: 2, end: 99, text: "খ" }] };
+  const cues = SRT.buildSrtCues({ file: over, fps: 30, totalFrames: 30 * 8, introSeconds: 2, outroSeconds: 2 });
+  const sorted = cues.every((c, i) => c.end > c.start && (i === 0 || cues[i - 1].end <= c.start));
+  return sorted && cues[cues.length - 1].end <= 6;
+});
+
+check("srt: টিজার-শব্দ ও fallback (words ছাড়া segment, teaser.text)", () => {
+  const f = { teaser: { start: 0, end: 2 }, segments: [{ start: 0, end: 2, text: "এক দুই" }] };
+  const f2 = { teaser: { start: 50, end: 52, text: "শুধু লেখা" }, segments: [{ start: 0, end: 2, text: "এক দুই" }] };
+  return SRT.teaserWordList(f).join(" ") === "এক দুই" && SRT.teaserWordList(f2).join(" ") === "শুধু লেখা" && SRT.teaserRangeOf({ teaser: { start: 5, end: 3 } }) === null;
+});
+
+check("srt: .srt টেক্সট — নম্বর, সময়-লাইন, ফাঁকা লাইন; লাইন ≤ ~৪২ অক্ষর", () => {
+  const text = SRT.formatSrt([{ start: 0, end: 1.5, text: "আমি রাসূলুল্লাহ সাল্লাল্লাহু আলাইহি ওয়া সাল্লামকে ইরশাদ করতে শুনেছি" }, { start: 2, end: 3, text: "দুই" }]);
+  const lines = text.split("\n");
+  return (
+    lines[0] === "1" && lines[1] === "00:00:00,000 --> 00:00:01,500" &&
+    text.includes("\n2\n00:00:02,000 --> 00:00:03,000\nদুই") &&
+    lines.slice(2).every((l) => [...l].length <= 48)
+  );
+});
+
+// ---------- প্রকাশের টেক্সট ----------
+const pubArgs = { file: sampleFile, book: "সহীহ বুখারী", number: "১২৩", series: "১২", orientations: ["portrait", "landscape"] };
+
+check("publish: লেবেল, হ্যাশট্যাগ (বইয়ের নাম _ দিয়ে), Shorts ট্যাগ (portrait থাকলে), সিরিজ", () => {
+  const t = PT.buildPublishText(pubArgs);
+  const noShorts = PT.buildPublishText({ ...pubArgs, orientations: ["landscape"] });
+  return (
+    PT.hadisLabel("সহীহ বুখারী", "১২৩") === "সহীহ বুখারী হাদিস নং : ১২৩" &&
+    PT.toHashtag("সহীহ বুখারী") === "#সহীহ_বুখারী" &&
+    t.includes("#সহীহ_বুখারী") && t.includes("#Shorts") && t.includes("#পর্ব_১২") &&
+    !noShorts.includes("#Shorts")
+  );
+});
+
+check("publish: শিরোনামের ৩টা বিকল্প সবই ≤ ১০০ অক্ষর, লেবেল অক্ষত; ট্যাগ ≤ ৫০০", () => {
+  const long = { ...pubArgs, file: { segments: [{ start: 0, end: 5, text: "অনেক ".repeat(80) + "লম্বা" }] } };
+  const t = PT.buildPublishText(long);
+  const titles = t.split("\n").filter((l) => /^ {2}[123]\) /.test(l)).map((l) => l.replace(/^ {2}\d\) /, "").replace(/ {3}\[\d+\/\d+\]$/, ""));
+  const tags = PT.buildYoutubeTags({ book: "ক".repeat(300), label: "খ".repeat(300), series: "১" });
+  return titles.length === 3 && titles.every((x) => [...x].length <= 100) && titles[2].includes("সহীহ বুখারী হাদিস নং : ১২৩") && [...tags.join(", ")].length <= 500;
+});
+
+check("publish: হাদিসের লেখা JSON থেকে হুবহু; app-link থাকলে লিংকসহ, না থাকলে লিংক ছাড়া; যাচাইয়ের সতর্কতা", () => {
+  const t = PT.buildPublishText({ ...pubArgs, appLink: "https://example.com/app" });
+  const t0 = PT.buildPublishText(pubArgs);
+  return (
+    PT.fullHadisText(sampleFile) === "প্রথম লাইন দ্বিতীয় লাইন এখানে" &&
+    t.includes("“প্রথম লাইন দ্বিতীয় লাইন এখানে”") &&
+    t.includes(`${RP.OUTRO_TEXT} https://example.com/app`) &&
+    !t0.includes("http") && t0.includes("যাচাই করে নিন")
+  );
+});
+
+check("publish: কিতাব/নম্বর ফাঁকা বা খালি JSON হলেও throw করে না", () => {
+  const a = PT.buildPublishText({ file: { segments: [] }, book: "", number: "" });
+  const b = PT.buildPublishText({ file: undefined });
+  return typeof a === "string" && a.length > 0 && typeof b === "string";
 });
 
 // ---------- ফলাফল ----------

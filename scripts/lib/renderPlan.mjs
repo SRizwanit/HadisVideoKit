@@ -45,6 +45,15 @@ export const CRF_RANGE = { min: 1, max: 51 };
 export const DEFAULT_CONCURRENCY = { hd: 4, "4k": 2 };
 export const CONCURRENCY_RANGE = { min: 1, max: 8 };
 
+// ---------- src/constants.ts-এর টেক্সট (publishText.mjs ও থাম্বনেইল ব্যবহার করে; টেস্টে মিলিয়ে দেখা হয়) ----------
+export const APP_NAME = "ইসলামী বিশ্বকোষ ও আল হাদিস S2";
+export const TAGLINE = "আজকের হাদিস";
+export const OUTRO_TEXT = "আজই প্লে স্টোর থেকে ইনস্টল করুন:";
+export const NUMBER_LABEL = "হাদিস নং :";
+export const SERIES_LABEL = "পর্ব";
+export const HOOK_TEXT = "এই হাদিসের ব্যাপারে কি আপনার জানা আছে?";
+export const FPS = 30;
+
 /** ইনপুট ফাইল (প্রজেক্টের রুট থেকে) */
 export const LOGO_FILE = "src/logo.jpg";
 export const BADGE_FILE = "src/google-play-badge.png";
@@ -64,6 +73,11 @@ const VALUE_ARGS = {
   "hook-seconds": "hookSeconds",
   teaser: "teaser",
   thumbnail: "thumbnail",
+  "thumbnail-only": "thumbnailOnly",
+  series: "series",
+  "thumb-night": "thumbNight",
+  "publish-files": "publishFiles",
+  "app-link": "appLink",
   concurrency: "concurrency",
   crf: "crf",
   "out-dir": "outDir",
@@ -234,6 +248,47 @@ export function parseThumbnailFlag(rawValue) {
   return { error: `\`--thumbnail\` ("${text}") ঠিক নয় — চলবে: true বা false (on/off)।` };
 }
 
+/** সাধারণ true/false আর্গুমেন্ট: খালি → ডিফল্ট; true/on/yes/1 → true; false/off/no/0 → false */
+function parseBoolArg(rawValue, argName, defaultValue) {
+  const text = cleanText(rawValue).toLowerCase();
+  if (text === "") return { value: defaultValue };
+  if (["true", "on", "yes", "1"].includes(text)) return { value: true };
+  if (["false", "off", "no", "0"].includes(text)) return { value: false };
+  return { error: `\`--${argName}\` ("${text}") ঠিক নয় — চলবে: true বা false (on/off)।` };
+}
+
+/** `--series`: খালি → undefined (ব্যাজ নেই); শুধু সংখ্যা (বাংলা/ইংরেজি), সর্বোচ্চ ৬ অঙ্ক → বাংলা সংখ্যায় */
+export function parseSeries(rawValue) {
+  const text = cleanText(rawValue);
+  if (text === "") return { value: undefined };
+  const bn = toBnDigits(text);
+  if (!/^[০-৯]{1,6}$/.test(bn)) {
+    return { error: `\`--series\` ("${text}") শুধু সংখ্যা হতে হবে (যেমন 12 বা ১২, সর্বোচ্চ ৬ অঙ্ক)। ফাঁকা রাখলে থাম্বনেইলে "পর্ব" ব্যাজ থাকবে না।` };
+  }
+  return { value: bn };
+}
+
+/** `--thumb-night`: খালি → undefined (থিমের ডিফল্ট); ০ থেকে ১ (দশমিক চলবে, বাংলা সংখ্যাও) */
+export function parseUnitInterval(rawValue, argName) {
+  const text = cleanText(rawValue);
+  if (text === "") return { value: undefined };
+  const ascii = toAsciiDigits(text).replace(/[,\u066B]/g, ".");
+  if (!/^\d+(\.\d+)?$/.test(ascii) || Number(ascii) > 1) {
+    return { error: `\`--${argName}\` ("${text}") ০ থেকে ১-এর মধ্যে একটি সংখ্যা হতে হবে (যেমন 0, 0.5, 0.9)। খালি রাখলে থিমের ডিফল্ট।` };
+  }
+  return { value: Number(ascii) };
+}
+
+/** `--app-link`: খালি → undefined; নইলে http(s) লিংক */
+export function parseAppLink(rawValue) {
+  const text = cleanText(rawValue);
+  if (text === "") return { value: undefined };
+  if (!/^https?:\/\/\S+$/i.test(text)) {
+    return { error: `\`--app-link\` ("${text}") একটি পূর্ণ লিংক হতে হবে (https://... দিয়ে শুরু, স্পেস ছাড়া)।` };
+  }
+  return { value: text };
+}
+
 /** পূর্ণসংখ্যা (concurrency/crf): খালি → undefined (ডিফল্ট), সীমার বাইরে হলে সীমায় এনে সতর্কতা */
 function parseClampedInt(rawValue, argName, range, warnings) {
   const text = cleanText(rawValue);
@@ -327,7 +382,14 @@ export function buildPlan(argv) {
   const hookSeconds = parseHookSeconds(raw.hookSeconds);
   const teaser = parseTeaserFlag(raw.teaser);
   const thumbnail = parseThumbnailFlag(raw.thumbnail);
-  for (const r of [hookSeconds, teaser, thumbnail]) if (r.error) errors.push(r.error);
+  const thumbnailOnly = parseBoolArg(raw.thumbnailOnly, "thumbnail-only", false);
+  const series = parseSeries(raw.series);
+  const thumbNight = parseUnitInterval(raw.thumbNight, "thumb-night");
+  const publishFiles = parseBoolArg(raw.publishFiles, "publish-files", true);
+  const appLink = parseAppLink(raw.appLink);
+  for (const r of [hookSeconds, teaser, thumbnail, thumbnailOnly, series, thumbNight, publishFiles, appLink]) {
+    if (r.error) errors.push(r.error);
+  }
 
   // --- book / number (Part 4-এর মতো পরিষ্কার) ---
   const book = cleanText(raw.book);
@@ -395,7 +457,8 @@ export function buildPlan(argv) {
 
   // --- থাম্বনেইল: প্রতি ওরিয়েন্টেশনে একটা (4K PNG + 4K JPG)। --frames (টেস্ট রেন্ডার) হলে বা --thumbnail false হলে নেই ---
   const thumbnails = [];
-  if (thumbnail.value && frames.value === undefined) {
+  // --thumbnail-only true হলে শুধু থাম্বনেইল (ভিডিও নয়) — --thumbnail ও --frames উপেক্ষা
+  if ((thumbnail.value && frames.value === undefined) || thumbnailOnly.value) {
     for (const o of orientations) {
       const base = BASE_SIZES[o];
       const baseName = join(outDir, `hadis${id}_thumbnail_${ORIENTATION_LABEL[o]}_${QUALITY_LABEL["4k"]}`);
@@ -407,8 +470,12 @@ export function buildPlan(argv) {
         width: base.width * THUMBNAIL_SCALE,
         height: base.height * THUMBNAIL_SCALE,
         label: `থাম্বনেইল ${ORIENTATION_LABEL[o]} ${QUALITY_LABEL["4k"]}`,
-        // ভিডিওর ওই ওরিয়েন্টেশনের জবের inputProps-ই (hadisId/কিতাব/নম্বর/থিম/hookText/teaserEnabled)
-        inputProps: jobs.find((j) => j.orientation === o).inputProps,
+        // ভিডিওর ওই ওরিয়েন্টেশনের জবের inputProps-ই (hadisId/কিতাব/নম্বর/থিম/hookText/teaserEnabled) + শুধু-থাম্বনেইলের সিরিজ/nightFactor
+        inputProps: {
+          ...jobs.find((j) => j.orientation === o).inputProps,
+          ...(series.value !== undefined ? { seriesNumber: series.value } : {}),
+          ...(thumbNight.value !== undefined ? { thumbnailNight: thumbNight.value } : {}),
+        },
         frame: THUMBNAIL_FRAME,
         pngFile: `${baseName}.png`,
         jpgFile: `${baseName}.jpg`,
@@ -416,11 +483,32 @@ export function buildPlan(argv) {
     }
   }
 
+  // --- প্রকাশের ফাইল: ক্যাপশন/ট্যাগ (.txt) + সাবটাইটেল (.srt)। --frames (টেস্ট), --thumbnail-only বা --publish-files false হলে নেই ---
+  const publish = {
+    enabled: publishFiles.value && !thumbnailOnly.value && frames.value === undefined,
+    textFile: join(outDir, `hadis${id}_publish.txt`),
+    srtFile: join(outDir, `hadis${id}.srt`),
+    book,
+    number,
+    series: series.value,
+    hookText: hookText !== "" ? hookText : undefined,
+    appLink: appLink.value,
+    orientations,
+  };
+
   return {
     ok: true,
     errors: [],
     warnings,
-    plan: { id, outDir, dryRun: raw.dryRun === true, jobs, thumbnails },
+    plan: {
+      id,
+      outDir,
+      dryRun: raw.dryRun === true,
+      thumbnailOnly: thumbnailOnly.value,
+      jobs,
+      thumbnails,
+      publish,
+    },
   };
 }
 
@@ -530,9 +618,22 @@ export function formatDryRun(plan) {
       lines.push(`${t.index}. ${t.label} — ${t.compositionId} — ${t.width}x${t.height} (scale ${t.scale})`);
       lines.push(`   আউটপুট    : ${t.pngFile} + ${t.jpgFile}`);
     });
+    const tp = plan.thumbnails[0].inputProps;
+    lines.push(
+      `   সিরিজ ব্যাজ: ${tp.seriesNumber ? `পর্ব ${tp.seriesNumber}` : "নেই"} | ব্যাকগ্রাউন্ড nightFactor: ${tp.thumbnailNight === undefined ? "থিমের ডিফল্ট" : tp.thumbnailNight}`,
+    );
   } else {
     lines.push("");
     lines.push("থাম্বনেইল: নেই (--thumbnail false বা --frames টেস্ট রেন্ডার)");
+  }
+  if (plan.thumbnailOnly) lines.push("মোড: শুধু থাম্বনেইল (--thumbnail-only) — ভিডিও রেন্ডার হবে না");
+  if (plan.publish) {
+    lines.push("");
+    lines.push(
+      plan.publish.enabled
+        ? `প্রকাশের ফাইল: ${plan.publish.textFile} (শিরোনাম/বিবরণ/ট্যাগ) + ${plan.publish.srtFile} (সাবটাইটেল)`
+        : "প্রকাশের ফাইল: নেই (--publish-files false, --thumbnail-only বা --frames টেস্ট)",
+    );
   }
   const p = plan.jobs[0]?.inputProps;
   if (p) {

@@ -3,10 +3,10 @@ import { AbsoluteFill, useVideoConfig } from "remotion";
 import { Background } from "../components/Background";
 import { FitText } from "../components/FitText";
 import { Logo } from "../components/Logo";
-import { Ribbon } from "../components/Ribbon";
+import { RIBBON_INK, Ribbon } from "../components/Ribbon";
 import { HOOK_TEXT, TAGLINE } from "../constants";
 import { FONT_BODY, FONT_DISPLAY } from "../fonts";
-import { buildHadisLabel } from "../lib/displayText";
+import { buildHadisLabel, buildSeriesLabel } from "../lib/displayText";
 import { useHadisTimestamp } from "../lib/loadHadis";
 import { teaserWords, type TeaserWord } from "../lib/teaser";
 import { getThemeColors, parseColor } from "../themes";
@@ -17,7 +17,7 @@ import type { ThemeId } from "../types";
  * `ThumbnailPortrait` (9:16) ও `ThumbnailLandscape` (16:9) কম্পোজিশন এটাই আঁকে; `render.mjs` `renderStill --scale 2` দিয়ে 4K ছবি বের করে।
  *
  * উপর → নিচ (তিনটা প্যানেল-কার্ড, Hook/Teaser/Intro-র কার্ডের মতোই):
- *   ১. Hook   — বড় প্রশ্ন (শেষ দুই শব্দ accent রঙে), কৌতূহল জাগানোর জন্য
+ *   ১. Hook   — বড় প্রশ্ন (শেষ দুই শব্দ accent রঙে), কৌতূহল জাগানোর জন্য; কার্ডের ডান-উপরের কোণে সিরিজ ব্যাজ "পর্ব ১২" (`seriesNumber` দিলে)
  *   ২. Teaser — হাদিসের শক্তিশালী বাক্যাংশ, উদ্ধৃতি-চিহ্নসহ; সব শব্দ পুরো উজ্জ্বল (ছবিতে "বলা হচ্ছে" ধারণা নেই)
  *   ৩. Intro  — লোগো + "আজকের হাদিস" রিবন + "কিতাব হাদিস নং : নম্বর"
  * JSON-এ `teaser` না থাকলে (বা `teaserEnabled === false`) মাঝের কার্ড বাদ; Hook ও Intro-র অংশ থাকে।
@@ -41,12 +41,25 @@ type Props = {
   words?: TeaserWord[];
   /** dev প্রিভিউয়ের জন্য: ভিডিওর সাইজ ছাড়া অন্য সাইজে লেআউট */
   size?: { width: number; height: number };
-  /** ব্যাকগ্রাউন্ড/প্যালেটের দিন-রাত (০ = দিন, ১ = রাত)। greenDayNight-এ রাতের জোনাকি-আকাশ থাম্বনেইলে বেশি আকর্ষণীয় */
+  /** সিরিজ নম্বর ("১২" বা "12") → ডান-উপরে "পর্ব ১২" ব্যাজ। ফাঁকা/না দিলে ব্যাজ নেই */
+  seriesNumber?: string;
+  /** workflow-এর `thumbnail_night`: ব্যাকগ্রাউন্ডের দিন-রাত (০–১)। না দিলে থিমের ডিফল্ট */
+  thumbnailNight?: number;
+  /** dev প্রিভিউয়ের জন্য সরাসরি nightFactor (`thumbnailNight`-কে ছাপিয়ে যায়) */
   nightFactor?: number;
 };
 
-/** থাম্বনেইলে ব্যাকগ্রাউন্ডের ডিফল্ট nightFactor (Main-এর শেষের কাছাকাছি = রাত, glow স্পষ্ট) */
-export const THUMBNAIL_NIGHT_FACTOR = 0.85;
+/**
+ * থিম অনুযায়ী থাম্বনেইলের ডিফল্ট nightFactor (০ = দিন, ০.৫ = গোধূলি, ১ = রাত)।
+ * ⚠️ emerald ও navy "static" থিম — nightFactor তাদের রঙ/ব্যাকগ্রাউন্ডে কোনো প্রভাব ফেলে না (`getThemeColors` সবসময় একই প্যালেট দেয়)।
+ *    তাই আসলে শুধু greenDayNight-এর মান গুরুত্বপূর্ণ: ০ = উজ্জ্বল দিন, ০.৫ = সোনালি গোধূলি, ০.৯ = রাত + জোনাকি।
+ *    greenDayNight-এ ভিন্ন লুক চাইলে workflow-এর `thumbnail_night` (০–১) দিয়ে বদলানো যায়; কোড বদলাতে হয় না।
+ */
+export const THUMBNAIL_NIGHT_BY_THEME: Record<ThemeId, number> = {
+  emerald: 0.85,
+  navy: 0.85,
+  greenDayNight: 0.9,
+};
 /** ব্যাকগ্রাউন্ডের কণা/জোনাকি কোন ফ্রেমে থাকবে (render.mjs এই ফ্রেমই তোলে) */
 export const THUMBNAIL_FRAME = 45;
 /** থাম্বনেইল কম্পোজিশনের মোট ফ্রেম (শুধু `THUMBNAIL_FRAME` বৈধ থাকার জন্য; আসলে একটাই ছবি) */
@@ -78,7 +91,9 @@ export const ThumbnailScene: React.FC<Props> = ({
   teaserEnabled = true,
   words: wordsOverride,
   size,
-  nightFactor = THUMBNAIL_NIGHT_FACTOR,
+  seriesNumber,
+  thumbnailNight,
+  nightFactor: nightFactorOverride,
 }) => {
   const video = useVideoConfig();
   const width = size?.width ?? video.width;
@@ -86,6 +101,7 @@ export const ThumbnailScene: React.FC<Props> = ({
   const isPortrait = height >= width;
   const u = Math.min(width, height) / 1080;
 
+  const nightFactor = nightFactorOverride ?? thumbnailNight ?? THUMBNAIL_NIGHT_BY_THEME[theme];
   const file = useHadisTimestamp(hadisId);
   const p = getThemeColors(theme, nightFactor);
 
@@ -108,6 +124,7 @@ export const ThumbnailScene: React.FC<Props> = ({
     .filter((w) => w.length > 0);
 
   const label = buildHadisLabel(bookname, number);
+  const seriesLabel = buildSeriesLabel(seriesNumber);
 
   // ---------- মাপ ----------
   const outerPad = (isPortrait ? 60 : 56) * u;
@@ -130,6 +147,10 @@ export const ThumbnailScene: React.FC<Props> = ({
   const hookPadY = (isPortrait ? 44 : 26) * u;
   const hookFont = (isPortrait ? 84 : 58) * u;
   const hookInnerW = cardW - hookPadX * 2;
+
+  // সিরিজ ব্যাজ
+  const badgeFont = (isPortrait ? 50 : 38) * u;
+  const badgeH = badgeFont * 1.9;
 
   // Teaser
   const teaserPadX = (isPortrait ? 64 : 96) * u;
@@ -171,6 +192,33 @@ export const ThumbnailScene: React.FC<Props> = ({
       >
         {/* ১. Hook — বড় প্রশ্ন */}
         <div style={{ ...cardStyle, padding: `${hookPadY}px ${hookPadX}px` }}>
+          {seriesLabel && (
+            <div
+              style={{
+                position: "absolute",
+                right: 44 * u,
+                top: -badgeH * 0.55,
+                height: badgeH,
+                boxSizing: "border-box",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: `0 ${badgeFont * 0.7}px`,
+                borderRadius: 999,
+                background: `linear-gradient(90deg, ${p.accent}, ${p.accent2})`,
+                border: `${3 * u}px solid ${p.accent2}`,
+                boxShadow: `0 ${8 * u}px ${28 * u}px rgba(0,0,0,0.45), 0 0 ${30 * u}px ${withAlpha(p.glow, 0.5)}`,
+                fontFamily: FONT_DISPLAY,
+                fontWeight: 800,
+                fontSize: badgeFont,
+                lineHeight: 1.2,
+                color: RIBBON_INK,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {seriesLabel}
+            </div>
+          )}
           <div
             style={{
               width: hookInnerW,

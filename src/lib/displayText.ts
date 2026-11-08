@@ -1,4 +1,4 @@
-import { NUMBER_LABEL } from "../constants";
+import { NUMBER_LABEL, SERIES_LABEL } from "../constants";
 import { cleanText, toBnDigits } from "./bnDigits";
 
 /**
@@ -30,4 +30,12 @@ export function buildHadisLabel(
   if (book && num) return `${book} ${NUMBER_LABEL} ${num}`;
   if (num) return `${NUMBER_LABEL} ${num}`;
   return book;
+}
+
+/**
+ * থাম্বনেইলের সিরিজ ব্যাজ: "12" / "১২" → "পর্ব ১২"; ফাঁকা/না দিলে "" (ব্যাজ বসে না)।
+ */
+export function buildSeriesLabel(series: string | number | null | undefined): string {
+  const num = normalizeHadisNumber(series);
+  return num ? `${SERIES_LABEL} ${num}` : "";
 }

@@ -64,6 +64,8 @@ export const HadisThumbnail: React.FC<HadisVideoProps> = (props) => (
     teaserStartSeconds={props.teaserStartSeconds}
     teaserEndSeconds={props.teaserEndSeconds}
     teaserEnabled={props.teaserEnabled}
+    seriesNumber={props.seriesNumber}
+    thumbnailNight={props.thumbnailNight}
   />
 );
 

@@ -8,7 +8,7 @@
 // কোনো জব ব্যর্থ হলে exit code 1 (আগে শেষ হওয়া mp4 out/ এ থেকে যায়)।
 import { bundle } from "@remotion/bundler";
 import { ensureBrowser, renderMedia, renderStill, selectComposition } from "@remotion/renderer";
-import { appendFileSync, existsSync, mkdirSync, rmSync, statSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -18,6 +18,8 @@ import {
   formatDryRun,
   formatReport,
 } from "./lib/renderPlan.mjs";
+import { buildPublishText } from "./lib/publishText.mjs";
+import { buildSrtCues, formatSrt } from "./lib/srt.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -247,6 +249,61 @@ async function runThumbnail({ thumb, total, serveUrl }) {
   return { label: thumb.label, width: composition.width * thumb.scale, height: composition.height * thumb.scale, outputs };
 }
 
+// ---------- প্রকাশের ফাইল: ক্যাপশন/ট্যাগ (.txt) + সাবটাইটেল (.srt) ----------
+/** timestamp JSON পড়া (checkInputs আগেই দেখেছে যে ফাইল আছে ও JSON পার্স হয়) */
+function readTimestampJson(plan) {
+  return JSON.parse(readFileSync(join(projectRoot, "public", "hadis", `hadis${plan.id}_timestamp.json`), "utf8"));
+}
+
+/** শিরোনাম/বিবরণ/ট্যাগের .txt — ব্রাউজার লাগে না, তাই বান্ডলের আগেই (রেন্ডার ব্যর্থ হলেও ফাইলটা পাওয়া যায়) */
+function writePublishText(plan) {
+  const pub = plan.publish;
+  const text = buildPublishText({
+    file: readTimestampJson(plan),
+    book: pub.book,
+    number: pub.number,
+    series: pub.series,
+    hookText: pub.hookText,
+    appLink: pub.appLink,
+    orientations: pub.orientations,
+  });
+  const out = resolve(pub.textFile);
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, text, "utf8");
+  return { file: pub.textFile, size: statSync(out).size };
+}
+
+/**
+ * সাবটাইটেল .srt — সময় আসে `selectComposition`-এর ফল (calculateMetadata-র হিসাব: hook/teaser/intro/outro সেকেন্ড, মোট ফ্রেম),
+ * তাই ভিডিওর সাথে ঠিক মেলে। সব ওরিয়েন্টেশন/কোয়ালিটিতে সময় এক, তাই প্রথম জবের কম্পোজিশনেই যথেষ্ট।
+ */
+async function writeSrtFile({ plan, serveUrl }) {
+  const job = plan.jobs[0];
+  const composition = await selectComposition({
+    serveUrl,
+    id: job.compositionId,
+    inputProps: job.inputProps,
+  });
+  const p = composition.props ?? {};
+  const cues = buildSrtCues({
+    file: readTimestampJson(plan),
+    totalFrames: composition.durationInFrames,
+    fps: composition.fps,
+    hookSeconds: p.hookSeconds,
+    teaserSeconds: p.teaserSeconds,
+    introSeconds: p.introSeconds,
+    outroSeconds: p.outroSeconds,
+    hookText: p.hookText,
+    teaserStartSeconds: p.teaserStartSeconds,
+    teaserEndSeconds: p.teaserEndSeconds,
+  });
+  if (cues.length === 0) throw knownError("সাবটাইটেলের কোনো লাইন তৈরি হয়নি (JSON-এ segment আছে তো?)");
+  const out = resolve(plan.publish.srtFile);
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, formatSrt(cues), "utf8");
+  return { file: plan.publish.srtFile, size: statSync(out).size, cues: cues.length };
+}
+
 // ---------- মূল ফ্লো ----------
 async function main() {
   // ১. আর্গুমেন্ট যাচাই (ব্রাউজার ছাড়া)
@@ -276,9 +333,27 @@ async function main() {
     return 0;
   }
 
-  const total = plan.jobs.length;
-  say(`\nমোট ${total}টা জব রেন্ডার হবে (একটার পর একটা)।`);
-  if (plan.thumbnails.length > 0) say(`এরপর ${plan.thumbnails.length}টা 4K থাম্বনেইল (PNG + JPG)।`);
+  // থাম্বনেইল-only মোড: ভিডিওর জব চলে না
+  const videoJobs = plan.thumbnailOnly ? [] : plan.jobs;
+  const total = videoJobs.length;
+  if (plan.thumbnailOnly) {
+    say(`\nশুধু থাম্বনেইল মোড — ${plan.thumbnails.length}টা 4K থাম্বনেইল (PNG + JPG), ভিডিও রেন্ডার হবে না।`);
+  } else {
+    say(`\nমোট ${total}টা জব রেন্ডার হবে (একটার পর একটা)।`);
+    if (plan.thumbnails.length > 0) say(`এরপর ${plan.thumbnails.length}টা 4K থাম্বনেইল (PNG + JPG)।`);
+  }
+
+  // ৩খ. প্রকাশের টেক্সট (.txt) — ব্রাউজার ছাড়াই, তাই আগেভাগে; ব্যর্থ হলে ⚠️, রান থামে না
+  const publishInfo = { text: null, srt: null, failed: [] };
+  if (plan.publish.enabled) {
+    try {
+      publishInfo.text = writePublishText(plan);
+      say(`✅ প্রকাশের টেক্সট তৈরি: ${publishInfo.text.file}`);
+    } catch (err) {
+      say(`⚠️ প্রকাশের টেক্সট বানানো যায়নি: ${String(err?.message ?? err).split("\n")[0]}`);
+      publishInfo.failed.push(`প্রকাশের টেক্সট: ${String(err?.message ?? err).split("\n")[0]}`);
+    }
+  }
 
   // ৪. ব্রাউজার + বান্ডল (একবারই)
   say("▶ ব্রাউজার যাচাই...");
@@ -296,7 +371,18 @@ async function main() {
   const thumbs = [];
   const thumbFailed = [];
   try {
-    for (const job of plan.jobs) {
+    // সাবটাইটেল .srt (সময় composition থেকে) — ব্যর্থ হলে ⚠️, ভিডিও থামে না
+    if (plan.publish.enabled) {
+      try {
+        publishInfo.srt = await writeSrtFile({ plan, serveUrl });
+        say(`✅ সাবটাইটেল তৈরি: ${publishInfo.srt.file} (${publishInfo.srt.cues}টা লাইন)`);
+      } catch (err) {
+        const info = explainFailure(err);
+        say(`⚠️ সাবটাইটেল বানানো যায়নি: ${info.text.split("\n")[0]}`);
+        publishInfo.failed.push(`সাবটাইটেল: ${info.text.split("\n")[0]}`);
+      }
+    }
+    for (const job of videoJobs) {
       try {
         done.push(await runJob({ job, total, serveUrl }));
       } catch (err) {
@@ -330,7 +416,11 @@ async function main() {
   }
 
   // ৬. শেষের টেবিল
-  sayMd(`\n## ${failed.length === 0 ? "✅" : "⚠️"} রেন্ডার শেষ — ${done.length}/${total} ভিডিও তৈরি\n`);
+  if (plan.thumbnailOnly) {
+    sayMd(`\n## ${thumbFailed.length === 0 ? "✅" : "⚠️"} থাম্বনেইল শেষ — ${thumbs.length}/${plan.thumbnails.length}টি তৈরি\n`);
+  } else {
+    sayMd(`\n## ${failed.length === 0 ? "✅" : "⚠️"} রেন্ডার শেষ — ${done.length}/${total} ভিডিও তৈরি\n`);
+  }
   if (done.length > 0) {
     sayMd("| ফাইল | সাইজ | ভিডিওর দৈর্ঘ্য | রেন্ডারে সময় |");
     sayMd("|---|---|---|---|");
@@ -350,6 +440,22 @@ async function main() {
       }
     }
     sayMd("\n> ইউটিউবের থাম্বনেইল-সীমা ২ MB — PNG বড় হলে `.jpg` ফাইলটা দাও।");
+  }
+  if (publishInfo.text || publishInfo.srt) {
+    sayMd("\n### 📝 প্রকাশের ফাইল\n");
+    sayMd("| ফাইল | সাইজ | কী |");
+    sayMd("|---|---|---|");
+    if (publishInfo.text) {
+      sayMd(`| \`${publishInfo.text.file}\` | ${fmtSize(publishInfo.text.size)} | ইউটিউব শিরোনাম (৩ বিকল্প) + বিবরণ + ট্যাগ + ফেসবুক ক্যাপশন + হ্যাশট্যাগ |`);
+    }
+    if (publishInfo.srt) {
+      sayMd(`| \`${publishInfo.srt.file}\` | ${fmtSize(publishInfo.srt.size)} | সাবটাইটেল (${publishInfo.srt.cues}টা লাইন) — ইউটিউব স্টুডিওতে Subtitles → Upload file |`);
+    }
+    sayMd("\n> ⚠️ প্রকাশের আগে হাদিসের লেখা, সূত্র ও নম্বর নিজে যাচাই করে নিন।");
+  }
+  if (publishInfo.failed.length > 0) {
+    sayMd("\n### ⚠️ প্রকাশের ফাইল ব্যর্থ (ভিডিও ঠিক আছে)\n");
+    for (const f of publishInfo.failed) sayMd(`- ${f}`);
   }
   if (thumbFailed.length > 0) {
     sayMd("\n### ⚠️ থাম্বনেইল ব্যর্থ (ভিডিও ঠিক আছে)\n");
