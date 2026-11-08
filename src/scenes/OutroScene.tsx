@@ -5,7 +5,15 @@ import { Logo } from "../components/Logo";
 import { PlayBadge } from "../components/PlayBadge";
 import { APP_NAME, DEFAULT_SFX_VOLUME, OUTRO_TEXT } from "../constants";
 import { FONT_BODY, FONT_DISPLAY } from "../fonts";
-import { OUTRO_STEPS, outroLayout, planOutro, typewriterText } from "../lib/outroPlan";
+import {
+  CLICK_SFX_ENABLED,
+  CLICK_SFX_NAME,
+  OUTRO_STEPS,
+  clickFrames,
+  outroLayout,
+  planOutro,
+  typewriterText,
+} from "../lib/outroPlan";
 import type { Timing } from "../lib/timing";
 import { computeLayout } from "../lib/useLayout";
 import { useNightFactor } from "../lib/useNightFactor";
@@ -46,7 +54,15 @@ type Props = {
   size?: { width: number; height: number };
   /** false হলে chime খোঁজাও হয় না (dev প্রিভিউ) */
   sfx?: boolean;
+  /**
+   * ক্লিকের "tap" SFX (`public/sfx/tap.mp3` বা `.wav`) — ডিফল্ট চালু, `sfx` (chime) আলাদা।
+   * Outro-র ভয়েস থাকলেও tap বাজে (ছোট ও নরম বলে ভয়েসের ওপর চাপে না); বন্ধ করতে `false`।
+   */
+  tapSfx?: boolean;
 };
+
+/** tap SFX-এর ভলিউম (০…১) — ক্লিকের শব্দ নরম রাখতে `DEFAULT_SFX_VOLUME`-এর চেয়ে কম */
+export const OUTRO_TAP_VOLUME = 0.3;
 
 /** ব্যাজ আসার সময়ের ঐচ্ছিক chime (ফাইল না থাকলে চুপচাপ বাদ); বন্ধ করতে `OUTRO_CHIME_ENABLED = false` */
 export const OUTRO_CHIME_NAME = "chime";
@@ -65,6 +81,7 @@ export const OutroScene: React.FC<Props> = ({
   frame,
   size,
   sfx = true,
+  tapSfx = true,
 }) => {
   const currentFrame = useCurrentFrame();
   const video = useVideoConfig();
@@ -79,6 +96,8 @@ export const OutroScene: React.FC<Props> = ({
 
   const chimeSrc = useSfxSrc(sfx && OUTRO_CHIME_ENABLED ? OUTRO_CHIME_NAME : null);
 
+  const tapSrc = useSfxSrc(tapSfx && CLICK_SFX_ENABLED ? CLICK_SFX_NAME : null);
+
   const plan = planOutro(localFrame, outroFrames);
   if (!plan) return null; // Outro ০ ফ্রেম/অবৈধ → কিছুই আঁকা হয় না
 
@@ -91,6 +110,8 @@ export const OutroScene: React.FC<Props> = ({
   const logoGlow = L.logo.size * 1.9;
 
   const chimeFrom = Math.round(OUTRO_STEPS.badge * plan.speed);
+  // প্রতিটা ক্লিকের ফ্রেমে একটা নরম tap (ক্লিকের ছবির সাথে হুবহু মেলে — একই `CLICK_FRAME` থেকে হিসাব)
+  const tapFrames = tapSrc && !plan.isStatic ? clickFrames(outroFrames) : [];
 
   return (
     <div
@@ -255,6 +276,14 @@ export const OutroScene: React.FC<Props> = ({
           <Audio src={chimeSrc} volume={DEFAULT_SFX_VOLUME} />
         </Sequence>
       ) : null}
+      {/* tap SFX: প্রতিটা ক্লিকের মুহূর্তে; ফাইল না থাকলে src null → কিছুই বাজে না */}
+      {tapSrc
+        ? tapFrames.map((from) => (
+            <Sequence key={`tap-${from}`} from={from} durationInFrames={Math.max(1, outroFrames - from)} layout="none" name="sfx-tap">
+              <Audio src={tapSrc} volume={OUTRO_TAP_VOLUME} />
+            </Sequence>
+          ))
+        : null}
     </div>
   );
 };

@@ -118,7 +118,7 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
       {scenes.outro && (
         <Sequence name="outro" from={scenes.outro.from} durationInFrames={scenes.outro.frames}>
           <AbsoluteFill data-scene="outro">
-            <OutroScene theme={props.theme} timing={timing} size={size} sfx={outroSfx} />
+            <OutroScene theme={props.theme} timing={timing} size={size} sfx={outroSfx} tapSfx={sfx === false ? false : undefined} />
           </AbsoluteFill>
         </Sequence>
       )}

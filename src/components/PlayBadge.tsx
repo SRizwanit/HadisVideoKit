@@ -1,5 +1,6 @@
 import React from "react";
 import { Img, useCurrentFrame } from "remotion";
+import { FONT_BODY } from "../fonts";
 import badge from "../google-play-badge.png";
 import handCursor from "../hand-cursor.png";
 import {
@@ -10,6 +11,9 @@ import {
   SHINE_ANGLE_DEG,
   SHINE_BAND,
   CLICK_PRESS_SCALE,
+  BADGE_PRESS_SCALE,
+  CLICK_ARC,
+  OUTRO_INSTALL_LABEL,
   badgeIsSharp,
   badgeSize,
   planOutro,
@@ -57,6 +61,8 @@ export type PlayBadgeProps = {
   tapColor?: string;
   /** রাত-ফ্যাক্টর ০…১ — ব্যাজের পেছনের গাঢ় halo কতটা জোরালো (ডিফল্ট ০ = দিন) */
   nightFactor?: number;
+  /** ক্লিকের পরে ব্যাজের ওপর ফোটা লেখা (ডিফল্ট `OUTRO_INSTALL_LABEL` = "ইনস্টল"; খালি স্ট্রিং দিলে লেখা আঁকা হয় না) */
+  installLabel?: string;
   /** প্রিভিউ-ডিবাগ: আসল বাক্স ও clear space-এর রেখা আঁকে (ডিফল্ট false; আসল ভিডিওতে কখনো নয়) */
   debugOutline?: boolean;
   style?: React.CSSProperties;
@@ -107,12 +113,26 @@ export const BADGE_HALO_NIGHT = 0.5;
 export const HAND_TIP = { x: 0.4, y: 0.14 } as const;
 /** হাতের আইকনের মাপ = ব্যাজের উচ্চতা × এই */
 export const HAND_SIZE_RATIO = 0.95;
-/** ব্যাজের কোথায় ক্লিক পড়ে (ব্যাজের প্রস্থ/উচ্চতার ভগ্নাংশ) */
-export const CLICK_TARGET = { x: 0.74, y: 0.52 } as const;
+/**
+ * ব্যাজের কোথায় ক্লিক পড়ে (ব্যাজের প্রস্থ/উচ্চতার ভগ্নাংশ)।
+ * Cursor-আপডেট২: ডান-নিচের কোণে — হাতের শরীর ডগার নিচে-ডানে থাকে, তাই "Play" লেখা ঢাকে না।
+ */
+export const CLICK_TARGET = { x: 0.92, y: 0.84 } as const;
 /** বিশ্রামের জায়গা: লক্ষ্য থেকে ডান-নিচে (হাতের মাপের ভগ্নাংশ) */
 export const HAND_REST_OFFSET = { x: 0.18, y: 0.62 } as const;
 
-const NO_CLICK_LOOK: ClickLook = { active: false, opacity: 0, approach: 0, press: 0, ripple: 0, rippleOpacity: 0 };
+const NO_CLICK_LOOK: ClickLook = {
+  active: false,
+  opacity: 0,
+  approach: 0,
+  press: 0,
+  ripple: 0,
+  rippleOpacity: 0,
+  arc: 0,
+  glow: 0,
+  label: 0,
+  labelRise: 0,
+};
 
 const NO_TAP = { visible: false, opacity: 0, box: { x: 0, y: 0, width: 0, height: 0 }, offsetY: 0 };
 
@@ -136,7 +156,13 @@ export function playBadgeLook(
   const rest: Box = { x, y, width: size.width, height: size.height };
   const pulse = plan ? Math.max(1, finiteNum(plan.pulse, 1)) : 1;
   // pulse শুরুর আগেই bounce থিতিয়ে যায়; তবু কখনো `BADGE_MAX_SCALE`-এর বেশি নয় (outer-এ জায়গা সেটুকুই)
-  const scale = plan ? Math.min(BADGE_MAX_SCALE, finiteNum(plan.badge.scale, 1) * pulse) : 1;
+  // ক্লিক (কার্সর চালু থাকলে) আগে হিসাব — ব্যাজের চাপের সাড়া (`BADGE_PRESS_SCALE`) স্কেলে মেশে
+  const tapValid = !!opts.tapBox && finiteNum(opts.tapBox.width, 0) > 0 && finiteNum(opts.tapBox.height, 0) > 0;
+  const click: ClickLook =
+    plan && !plan.isStatic && tapValid && (opts.showTap ?? OUTRO_TAP_ENABLED) && plan.click ? plan.click : NO_CLICK_LOOK;
+  // চাপের সময় ব্যাজ সামান্য (≈ ০.৯৭) ছোট, ছাড়লে ফেরে; সবসময় `BADGE_MAX_SCALE`-এর মধ্যে
+  const pressFactor = 1 - (1 - BADGE_PRESS_SCALE) * finiteNum(click.press, 0);
+  const scale = plan ? Math.min(BADGE_MAX_SCALE, finiteNum(plan.badge.scale, 1) * pulse) * pressFactor : 1;
   const opacity = plan ? Math.min(1, Math.max(0, finiteNum(plan.badge.opacity, 0))) : 0;
   const visible = !!plan && plan.badge.visible && size.width > 0 && opacity > 0;
   // shine: একবার; ফালির কেন্দ্র ব্যাজের বাইরে থেকে ঢোকে ও বাইরে চলে যায় (`shineCenter`)
@@ -164,10 +190,6 @@ export function playBadgeLook(
       offsetY: tl.offsetUnits * unit,
     };
   }
-
-  const tapValid = !!tb && finiteNum(tb.width, 0) > 0 && finiteNum(tb.height, 0) > 0;
-  const click: ClickLook =
-    plan && !plan.isStatic && tapValid && (opts.showTap ?? OUTRO_TAP_ENABLED) && plan.click ? plan.click : NO_CLICK_LOOK;
 
   const night = Math.min(1, Math.max(0, finiteNum(opts.nightFactor, 0)));
   return {
@@ -199,6 +221,7 @@ export const PlayBadge: React.FC<PlayBadgeProps> = ({
   showTap = OUTRO_TAP_ENABLED,
   tapColor = "#ffffff",
   nightFactor = 0,
+  installLabel = OUTRO_INSTALL_LABEL,
 }) => {
   const currentFrame = useCurrentFrame();
   const plan = planOutro(frame ?? currentFrame, outroFrames);
@@ -210,15 +233,22 @@ export const PlayBadge: React.FC<PlayBadgeProps> = ({
   const { rest, shine, click } = look;
   const radius = rest.height * BADGE_CORNER_RATIO;
 
-  // হাতের কার্সর: আঙুলের ডগা বিশ্রামের জায়গা (ব্যাজের ডান-নিচে) থেকে ব্যাজের লক্ষ্যে যায়; চাপের সময় ডগা ধরে ছোট হয়
+  // হাতের কার্সর: আঙুলের ডগা বিশ্রামের জায়গা (ব্যাজের ডান-নিচে) থেকে হালকা বাঁকা পথে (arc) ব্যাজের ডান-নিচের কোণে যায়;
+  // ব্যাজের সঙ্গে স্কেল (pulse/চাপ) মিলিয়ে লক্ষ্য সরে, তাই ডগা সবসময় ব্যাজের গায়ে থাকে
   const handSize = rest.height * HAND_SIZE_RATIO;
-  const targetX = rest.x + rest.width * CLICK_TARGET.x;
-  const targetY = rest.y + rest.height * CLICK_TARGET.y;
+  const centerX = rest.x + rest.width / 2;
+  const centerY = rest.y + rest.height / 2;
+  const targetX = centerX + rest.width * (CLICK_TARGET.x - 0.5) * look.scale;
+  const targetY = centerY + rest.height * (CLICK_TARGET.y - 0.5) * look.scale;
   const away = 1 - click.approach;
-  const tipX = targetX + away * handSize * HAND_REST_OFFSET.x;
+  const tipX = targetX + away * handSize * HAND_REST_OFFSET.x + click.arc * handSize * CLICK_ARC;
   const tipY = targetY + away * handSize * HAND_REST_OFFSET.y;
   const handScale = 1 - (1 - CLICK_PRESS_SCALE) * click.press;
   const rippleD = rest.height * (0.3 + 1.0 * click.ripple);
+  // ক্লিকের পরের লেখা: ব্যাজের ঠিক ওপরে (clear space-এর ভেতরে), একটু ওপরে উঠতে উঠতে ফোটে ও মিলিয়ে যায়
+  const labelH = rest.height * 0.22;
+  const labelW = labelH * 3.1;
+  const labelBottom = rest.y - rest.height * 0.02 + (1 - click.labelRise) * rest.height * 0.05;
   return (
     <>
       <div
@@ -314,6 +344,35 @@ export const PlayBadge: React.FC<PlayBadgeProps> = ({
             }}
           />
         ) : null}
+        {/* ক্লিকের পরের glow: ব্যাজের চারপাশে নরম আলো + ব্যাজের আকারে হালকা উজ্জ্বলতা, তারপর মিলিয়ে যায় */}
+        {click.glow > 0 ? (
+          <>
+            <div
+              data-badge-glow={click.glow.toFixed(3)}
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: radius,
+                boxShadow: `0 0 ${rest.height * 0.35}px ${rest.height * 0.07}px rgba(255, 255, 255, ${(0.55 * click.glow).toFixed(3)})`,
+                pointerEvents: "none",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: `rgba(255, 255, 255, ${(0.22 * click.glow).toFixed(3)})`,
+                WebkitMaskImage: `url(${badge})`,
+                maskImage: `url(${badge})`,
+                WebkitMaskSize: "100% 100%",
+                maskSize: "100% 100%",
+                WebkitMaskRepeat: "no-repeat",
+                maskRepeat: "no-repeat",
+                pointerEvents: "none",
+              }}
+            />
+          </>
+        ) : null}
         {debugOutline ? (
           <>
             {/* আসল ব্যাজ-বাক্স */}
@@ -340,6 +399,36 @@ export const PlayBadge: React.FC<PlayBadgeProps> = ({
           </>
         ) : null}
       </div>
+      {/* ক্লিকের পরে "ইনস্টল" লেখা: ফুটে ওঠে, তারপর ফেড-আউট */}
+      {click.label > 0 && installLabel ? (
+        <div
+          data-badge-install-label="1"
+          style={{
+            position: "absolute",
+            left: centerX - labelW / 2,
+            top: labelBottom - labelH,
+            width: labelW,
+            height: labelH,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxSizing: "border-box",
+            borderRadius: labelH / 2,
+            background: "rgba(255, 255, 255, 0.96)",
+            color: "#0f5132",
+            fontFamily: FONT_BODY,
+            fontWeight: 700,
+            fontSize: labelH * 0.52,
+            lineHeight: 1.6,
+            whiteSpace: "nowrap",
+            opacity: click.label,
+            boxShadow: `0 ${labelH * 0.12}px ${labelH * 0.4}px rgba(0, 0, 0, 0.35)`,
+            pointerEvents: "none",
+          }}
+        >
+          {installLabel}
+        </div>
+      ) : null}
       {/* ক্লিকের রিং-ঢেউ: আঙুলের ডগা যেখানে ব্যাজ ছোঁয় সেখান থেকে ছড়ায় */}
       {click.rippleOpacity > 0 ? (
         <div

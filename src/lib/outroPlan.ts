@@ -225,14 +225,30 @@ export function tapLook(baseT: number, enabled: boolean = OUTRO_TAP_ENABLED): Ta
 export const CLICK_START = OUTRO_STEPS.tap - 10;
 /** একটা পুরো চক্র (বেস ফ্রেম): নিচ থেকে আসা → ক্লিক → নেমে যাওয়া → বিরতি; Outro লম্বা হলে চক্র চলতে থাকে */
 export const CLICK_PERIOD_FRAMES = 48;
-/** চক্রের ধাপের শেষ-ফ্রেম (চক্রের নিজের ফ্রেমে): আসা · চাপ · ছাড়া · নামা */
-export const CLICK_PHASES = { approach: 12, press: 17, release: 21, retreat: 33 } as const;
+/**
+ * চক্রের ধাপের শেষ-ফ্রেম (চক্রের নিজের ফ্রেমে): আসা · ব্যাজের ওপর থামা (hover) · চাপ · ছাড়া · নামা।
+ * Cursor-আপডেট২: `approach`→`hover` = ৩ ফ্রেম বিরতি (আঙুল ব্যাজের ওপর থেমে থাকে), তারপর `press` ফ্রেমে ক্লিক।
+ */
+export const CLICK_PHASES = { approach: 12, hover: 15, press: 19, release: 23, retreat: 35 } as const;
+/** ক্লিকের ঠিক মুহূর্ত (চক্রের নিজের ফ্রেমে) = চাপ পুরো হওয়ার ফ্রেম — tap SFX, রিং-ঢেউ ও glow এখান থেকে */
+export const CLICK_FRAME = CLICK_PHASES.press;
 /** রিং-ঢেউ শুরু ও দৈর্ঘ্য (চক্রের নিজের ফ্রেমে) */
-export const CLICK_RIPPLE_START = 16;
+export const CLICK_RIPPLE_START = CLICK_FRAME - 1;
 export const CLICK_RIPPLE_FRAMES = 14;
 export const CLICK_RIPPLE_PEAK_OPACITY = 0.7;
 /** ক্লিকের মুহূর্তে হাত যত গুণ ছোট হয় (চাপ) */
 export const CLICK_PRESS_SCALE = 0.88;
+/** ক্লিকের মুহূর্তে ব্যাজ যত গুণ ছোট হয় (চাপের সাড়া; ছাড়লে ১-এ ফেরে) */
+export const BADGE_PRESS_SCALE = 0.97;
+/** আসা/নামার বাঁকা পথের (arc) বাইরের দিকে ফোলা — হাতের মাপের ভগ্নাংশ (০ = সোজা) */
+export const CLICK_ARC = 0.24;
+/** ক্লিকের পরের মুহূর্ত (glow + "ইনস্টল" লেখা ফুটে ওঠা, তারপর ফেড-আউট) কত ফ্রেম */
+export const CLICK_AFTER_FRAMES = 18;
+/** ক্লিকের পর ব্যাজের ওপর ফোটা লেখা */
+export const OUTRO_INSTALL_LABEL = "ইনস্টল";
+/** tap SFX-এর নাম (`public/sfx/tap.mp3` বা `.wav`; না থাকলে চুপচাপ বাদ) ও বন্ধ করার সুইচ */
+export const CLICK_SFX_NAME = "tap";
+export const CLICK_SFX_ENABLED = true;
 
 export type ClickLook = {
   /** এখন হাত দেখা যাচ্ছে কি */
@@ -247,21 +263,44 @@ export type ClickLook = {
   ripple: number;
   /** রিং-ঢেউয়ের স্বচ্ছতা ০…`CLICK_RIPPLE_PEAK_OPACITY` */
   rippleOpacity: number;
+  /** বাঁকা পথের বাইরের দিকে ফোলা ০…১ (`sin(π·approach)`; বিশ্রামে ও ব্যাজের ওপরে ০) */
+  arc: number;
+  /** ক্লিকের পরের glow ০…১ (ক্লিকের মুহূর্তে বাড়ে, তারপর কমে) */
+  glow: number;
+  /** "ইনস্টল" লেখার স্বচ্ছতা ০…১ (ফুটে ওঠে, তারপর ফেড-আউট) */
+  label: number;
+  /** "ইনস্টল" লেখার ওঠা ০…১ (০ = নিচে, ১ = ওপরে) */
+  labelRise: number;
 };
 
-const NO_CLICK: ClickLook = { active: false, opacity: 0, approach: 0, press: 0, ripple: 0, rippleOpacity: 0 };
+const NO_CLICK: ClickLook = {
+  active: false,
+  opacity: 0,
+  approach: 0,
+  press: 0,
+  ripple: 0,
+  rippleOpacity: 0,
+  arc: 0,
+  glow: 0,
+  label: 0,
+  labelRise: 0,
+};
 
 /** হাতের ক্লিক-কার্সরের চলমান মান; `enabled = false` বা শুরুর আগে সবসময় অদৃশ্য। কখনো throw করে না */
 export function clickLook(baseT: number, enabled: boolean = OUTRO_TAP_ENABLED): ClickLook {
   const t = finite(baseT, 0) - CLICK_START;
   if (!enabled || t <= 0) return NO_CLICK;
   const c = t % CLICK_PERIOD_FRAMES;
-  const { approach: A, press: P, release: R, retreat: B } = CLICK_PHASES;
+  const { approach: A, hover: H, press: P, release: R, retreat: B } = CLICK_PHASES;
   const approach = c < A ? easeOutCubic(c / A) : c < R ? 1 : c < B ? 1 - smoothstep((c - R) / (B - R)) : 0;
   const opacity = c < B ? Math.min(clamp01(c / 6), clamp01((B - c) / 6)) : 0;
-  const press = c < A ? 0 : c < P ? smoothstep((c - A) / (P - A)) : c < R ? 1 - smoothstep((c - P) / (R - P)) : 0;
+  // A…H = ব্যাজের ওপর থামা (press ০); H…P চাপ; P…R ছাড়া
+  const press = c < H ? 0 : c < P ? smoothstep((c - H) / (P - H)) : c < R ? 1 - smoothstep((c - P) / (R - P)) : 0;
   const rp = (c - CLICK_RIPPLE_START) / CLICK_RIPPLE_FRAMES;
   const rippling = rp > 0 && rp < 1;
+  // ক্লিকের পরের মুহূর্ত: glow + লেখা
+  const s = (c - CLICK_FRAME) / CLICK_AFTER_FRAMES;
+  const after = s > 0 && s < 1;
   return {
     active: opacity > 0,
     opacity,
@@ -269,7 +308,28 @@ export function clickLook(baseT: number, enabled: boolean = OUTRO_TAP_ENABLED): 
     press,
     ripple: rippling ? rp : 0,
     rippleOpacity: rippling ? CLICK_RIPPLE_PEAK_OPACITY * (1 - rp) : 0,
+    arc: Math.sin(Math.PI * approach),
+    glow: after ? Math.sin(Math.PI * Math.min(1, s * 1.6)) * (1 - smoothstep((s - 0.35) / 0.65)) : 0,
+    label: after ? Math.min(clamp01(s / 0.2), clamp01((1 - s) / 0.45)) : 0,
+    labelRise: after ? easeOutCubic(s / 0.6) : 0,
   };
+}
+
+/**
+ * প্রতিটা ক্লিকের মুহূর্তের আসল ফ্রেম (Outro সিনের নিজের ০-ভিত্তিক ফ্রেম) — tap SFX বসানোর জন্য।
+ * স্থির দৃশ্য (< `OUTRO_MIN_ANIMATED_FRAMES`)/অবৈধ/ক্লিক বন্ধ → খালি তালিকা। সিনের শেষ ফ্রেমের আগেরগুলোই আসে।
+ */
+export function clickFrames(outroFrames: number, enabled: boolean = OUTRO_TAP_ENABLED): number[] {
+  const frames = finite(outroFrames, 0);
+  if (!enabled || frames < OUTRO_MIN_ANIMATED_FRAMES) return [];
+  const speed = outroSpeed(frames);
+  const out: number[] = [];
+  for (let k = 0; k < 1000; k += 1) {
+    const f = Math.round((CLICK_START + k * CLICK_PERIOD_FRAMES + CLICK_FRAME) * speed);
+    if (f >= frames - 1) break;
+    out.push(f);
+  }
+  return out;
 }
 
 /** ব্যাজের bounce-in-এর সর্বোচ্চ স্কেল (স্প্রিংয়ের ছাড়িয়ে যাওয়া সহ) — `BADGE_MAX_SCALE` ঠিক রাখতে */
