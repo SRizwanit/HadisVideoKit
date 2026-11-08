@@ -2,6 +2,8 @@ import { TRANSITION_FRAMES } from "../constants";
 import { fitHookSeconds, planIntroOutroAudio } from "../lib/introOutroAudio";
 import { computeTiming, introOnlyFrames, timingFromConfig } from "../lib/timing";
 import { hookWordStarts } from "../scenes/HookScene";
+import { buildTeaser, clampTeaserRange, fitTeaserSeconds, teaserActiveIndex, teaserGain, teaserWords } from "../lib/teaser";
+import type { TimestampFile } from "../types";
 import {
   MAIN_FADE_FRAMES,
   MAIN_FADE_SCALE_START,
@@ -240,6 +242,75 @@ const DEFS: Def[] = [
         expect(s.every((v, i) => i === 0 || v >= s[i - 1]), "বাড়ন্ত"),
         expect(tiny.length === 7 && tiny.every((v) => v >= 0 && v <= 20), "ছোট Hook"),
         expect(hookWordStarts(0, 126, 30).length === 0 && hookWordStarts(1, 126, 30)[0] === 6, "০/১ শব্দ"),
+      );
+    },
+  },
+  {
+    id: "scenes-teaser",
+    title: "Teaser: Hook 126 · Teaser 60 · Intro 90 · Main 180 · Outro 120 → 0 / 126 / 186 / 276 / 456",
+    rule: "Teaser Hook-এর ঠিক পরে, Intro তার পরে; Hook ছাড়াও চলে; কিছু না থাকলে আগের মতো; Intro-র জায়গার বেশি হলে ছেঁটে যায়",
+    run: () => {
+      const p = planScenes(276, 180, 120, 126, 60);
+      const noHook = planScenes(150, 180, 120, 0, 60);
+      const none = planScenes(90, 180, 120, 0, 0);
+      return first(
+        expect(p.hook?.from === 0 && p.hook.frames === 126, "hook"),
+        expect(p.teaser?.from === 126 && p.teaser.frames === 60, "teaser"),
+        expect(p.intro?.from === 186 && p.intro.frames === 90, "intro"),
+        expect(p.main?.from === 276 && p.outro?.from === 456, "main/outro"),
+        expect(noHook.hook === null && noHook.teaser?.from === 0 && noHook.intro?.from === 60, "Hook ছাড়া"),
+        expect(none.teaser === null && none.intro?.from === 0 && none.intro.frames === 90, "কিছু না থাকলে অপরিবর্তিত"),
+        expect(planScenes(100, 180, 120, 30, 999).teaser?.frames === 70 && planScenes(100, 180, 120, 30, 999).intro === null, "teaser ছেঁটে যায়"),
+      );
+    },
+  },
+  {
+    id: "teaser-range-timing",
+    title: "Teaser অংশ ও সময়: ছাঁটাই, ন্যূনতম/সর্বোচ্চ, দৃশ্যের দৈর্ঘ্য, অডিও-কিউ",
+    rule: "12.4–17.9 (wav 30s) → 5.5s → দৃশ্য 5.6667s (170 ফ্রেম); end>wav ছাঁটা; >12s ছাঁটা; <0.5s/অবৈধ → null; Intro-ভয়েস Hook+Teaser-এর পরে",
+    run: () => {
+      const r = clampTeaserRange(12.4, 17.9, 30);
+      const over = clampTeaserRange(28, 40, 30);
+      const long = clampTeaserRange(2, 30, 60);
+      const t = computeTiming({ introSeconds: 3, outroSeconds: 4, audioSeconds: 30, hookSeconds: 4.2, teaserSeconds: fitTeaserSeconds(5.5) });
+      const t2 = timingFromConfig(t.totalFrames, { introSeconds: 3, outroSeconds: 4, hookSeconds: 4.2, teaserSeconds: fitTeaserSeconds(5.5) });
+      const a = planIntroOutroAudio(t);
+      return first(
+        expect(!!r && near(r.durationSeconds, 5.5, 1e-9), "5.5s"),
+        expect(!!over && near(over.endSeconds, 30) && near(over.durationSeconds, 2), "end > wav ছাঁটা"),
+        expect(!!long && near(long.durationSeconds, 12), ">12s ছাঁটা"),
+        expect(clampTeaserRange(1, 1.3, 30) === null && clampTeaserRange(31, 35, 30) === null && clampTeaserRange(Number.NaN, 3, 30) === null, "ছোট/বাইরে/NaN → null"),
+        expect(clampTeaserRange(-5, 3, 30)?.startSeconds === 0, "ঋণাত্মক start → 0"),
+        expect(near(fitTeaserSeconds(5.5), 170 / 30) && fitTeaserSeconds(null) === 0 && fitTeaserSeconds(0) === 0, "দৃশ্যের দৈর্ঘ্য"),
+        expect(t.hookFrames === 126 && t.teaserFrames === 170 && t.introFrames === 126 + 170 + 90 && introOnlyFrames(t) === 90, "ফ্রেম"),
+        expect(JSON.stringify(t) === JSON.stringify(t2), "computeTiming ≠ timingFromConfig"),
+        expect(a.intro?.from === 296 && a.intro.durationFrames === 90 && a.outro?.from === t.introFrames + t.mainFrames, "অডিও-কিউ"),
+      );
+    },
+  },
+  {
+    id: "teaser-words-gain",
+    title: "Teaser শব্দ ও ভলিউম: মাঝবিন্দু-নিয়ম, সমান-ভাগ fallback, সক্রিয় শব্দ, ফেড",
+    rule: "words থাকলে সেগুলো (সময় অংশের শুরু থেকে); না থাকলে segment-লেখা সমান ভাগে; কিছুই না মিললে teaser.text; গেইন ০–১, অংশের পরে ০",
+    run: () => {
+      const file: TimestampFile = {
+        teaser: { start: 1, end: 3 },
+        segments: [
+          { start: 0, end: 4, text: "ক খ গ ঘ", words: [{ word: "ক", start: 0, end: 0.9 }, { word: "খ", start: 0.9, end: 1.8 }, { word: "গ", start: 1.8, end: 2.6 }, { word: "ঘ", start: 2.6, end: 4 }] },
+        ],
+      };
+      const plan = buildTeaser(file, 4);
+      const even = teaserWords({ segments: [{ start: 0, end: 4, text: "ক খ গ ঘ" }] }, { startSeconds: 1, endSeconds: 3 });
+      const fb = teaserWords({ segments: [{ start: 10, end: 11, text: "ঙ" }], teaser: { text: "চ ছ" } }, { startSeconds: 1, endSeconds: 3 });
+      const g = [0, 1, 2, 50, 99, 100, -1, Number.NaN].map((f) => teaserGain(f, 100));
+      return first(
+        expect(!!plan && plan.words.map((w) => w.word).join("") === "খগ" && plan.text === "খ গ", "মাঝবিন্দু: খ(১.৩৫) গ(২.২) ঢোকে; ক(০.৪৫) ঘ(৩.৩) নয়"),
+        expect(!!plan && near(plan.words[0].start, 0) && near(plan.words[1].end, 1.6, 1e-9), "সময় অংশের শুরু থেকে"),
+        expect(even.map((w) => w.word).join("") === "খগ", "সমান-ভাগ fallback"),
+        expect(fb.length === 2 && fb[0].word === "চ" && near(fb[1].end, 2), "teaser.text fallback"),
+        expect(teaserActiveIndex(plan?.words ?? [], 0, 30) === 0 && teaserActiveIndex(plan?.words ?? [], 40, 30) === 1 && teaserActiveIndex([], 5, 30) === -1, "সক্রিয় শব্দ"),
+        expect(g.every((v) => v >= 0 && v <= 1) && g[0] > 0 && g[0] < 1 && g[3] === 1 && g[5] === 0 && g[6] === 0 && g[7] === 0, "গেইন সীমা ও ফেড"),
+        expect(teaserGain(1, 3) === 1 && teaserGain(0, 0) === 0, "খুব ছোট অংশে ফেড নেই"),
       );
     },
   },

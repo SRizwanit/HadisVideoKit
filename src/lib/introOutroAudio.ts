@@ -10,7 +10,7 @@ import {
   INTRO_OUTRO_AUDIO_VOLUME,
   MAX_INTRO_OUTRO_SECONDS,
 } from "../constants";
-import { hookFramesOf, introOnlyFrames, type Timing } from "./timing";
+import { hookFramesOf, introOnlyFrames, teaserFramesOf, type Timing } from "./timing";
 
 /**
  * Part 14C-audio: Intro/Outro ভয়েসের বিশুদ্ধ (pure) হিসাব — React/Remotion ছাড়া, কখনো throw করে না।
@@ -67,20 +67,21 @@ function cue(from: number, frames: number, maxFade: number = INTRO_OUTRO_AUDIO_F
 
 /**
  * Hook ০ ফ্রেম হলে `hook: null`, Intro ০ ফ্রেম হলে `intro: null`, Outro ০ ফ্রেম হলে `outro: null`।
- * Hook ভিডিওর শুরু (ফ্রেম ০) থেকে; Intro Hook শেষ হওয়ার ফ্রেম থেকে (Hook না থাকলে ফ্রেম ০ — আগের মতো)।
- * `timing.introFrames` = Hook + Intro (Main কোথায় শুরু), তাই Outro-র শুরু আগের সূত্রেই `introFrames + mainFrames`।
+ * Hook ভিডিওর শুরু (ফ্রেম ০) থেকে; Intro Hook ও টিজার শেষ হওয়ার ফ্রেম থেকে (কোনোটা না থাকলে ফ্রেম ০ — আগের মতো)।
+ * `timing.introFrames` = Hook + Teaser + Intro (Main কোথায় শুরু), তাই Outro-র শুরু আগের সূত্রেই `introFrames + mainFrames`।
  */
 export function planIntroOutroAudio(
-  timing: Pick<Timing, "introFrames" | "mainFrames" | "outroFrames"> & { hookFrames?: number },
+  timing: Pick<Timing, "introFrames" | "mainFrames" | "outroFrames"> & { hookFrames?: number; teaserFrames?: number },
 ): IntroOutroAudioPlan {
   const pre = finite(timing?.introFrames, 0);
   const main = finite(timing?.mainFrames, 0);
   const outro = finite(timing?.outroFrames, 0);
   const hook = hookFramesOf({ introFrames: pre, hookFrames: timing?.hookFrames });
-  const introOnly = introOnlyFrames({ introFrames: pre, hookFrames: timing?.hookFrames });
+  const teaser = teaserFramesOf({ introFrames: pre, hookFrames: timing?.hookFrames, teaserFrames: timing?.teaserFrames });
+  const introOnly = introOnlyFrames({ introFrames: pre, hookFrames: timing?.hookFrames, teaserFrames: timing?.teaserFrames });
   return {
     hook: cue(0, hook, HOOK_AUDIO_FADE_OUT_FRAMES),
-    intro: cue(hook, introOnly),
+    intro: cue(hook + teaser, introOnly),
     outro: cue(pre + main, outro),
   };
 }

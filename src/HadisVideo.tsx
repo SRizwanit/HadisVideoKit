@@ -4,13 +4,15 @@ import { Background } from "./components/Background";
 import { HadisAudio } from "./components/HadisAudio";
 import { IntroOutroAudio } from "./components/IntroOutroAudio";
 import { SfxPlayer } from "./components/SfxPlayer";
+import { TeaserAudio } from "./components/TeaserAudio";
 import { mainFadeIn, planScenes } from "./lib/sceneFade";
 import { useIntroOutroAudio } from "./lib/useIntroOutroAudio";
-import { hookFramesOf, introOnlyFrames, timingFromConfig, type Timing } from "./lib/timing";
+import { hookFramesOf, introOnlyFrames, teaserFramesOf, timingFromConfig, type Timing } from "./lib/timing";
 import { HookScene } from "./scenes/HookScene";
 import { IntroScene } from "./scenes/IntroScene";
 import { MainScene } from "./scenes/MainScene";
 import { OutroScene } from "./scenes/OutroScene";
+import { TeaserScene } from "./scenes/TeaserScene";
 import type { HadisVideoProps } from "./types";
 
 /**
@@ -19,7 +21,8 @@ import type { HadisVideoProps } from "./types";
  * স্তরের ক্রম (নিচ → উপর):
  *   `<Background>`  সব দৃশ্যের পেছনে, আসল `timing` সহ (তাই Outro-র আকাশ রাত; `computeNightFactor`)
  *   Hook    `<Sequence from=0 …>` (hook.wav থাকলে)       → `HookScene`    (বড় প্রশ্ন-লেখা; নিজেই শেষে ফেড-আউট)
- *   Intro   `<Sequence from=hook …>`                    → `IntroScene`   (নিজেই শেষে ফেড-আউট; Part 8; Hook না থাকলে from=0)
+ *   Teaser  `<Sequence from=hook …>` (JSON-এ `teaser` থাকলে) → `TeaserScene`  (হাদিসের শক্তিশালী বাক্যাংশ, শব্দ-হাইলাইট; ভয়েস `TeaserAudio`)
+ *   Intro   `<Sequence from=hook+teaser …>`             → `IntroScene`   (নিজেই শেষে ফেড-আউট; Part 8; Hook/Teaser না থাকলে from=0)
  *   Main    `<Sequence from=intro …>` + ফেড-ইন মোড়ক   → `MainScene`    (Header + SvgStage + Caption; Part 13A)
  *   Outro   `<Sequence from=intro+main …>`              → `OutroScene`   (নিজেই ১২ ফ্রেমে ফেড-ইন/আউট; Part 12)
  *   `<IntroOutroAudio>` (Part 14C-audio)  Intro/Outro-র ভয়েস — শুধু অডিও, ক্যাপশন নেই; `public/audio/intro.wav`, `outro.wav`
@@ -74,13 +77,14 @@ export type HadisVideoViewProps = HadisVideoProps & {
 
 export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, idScope, audio = true, sfx, ...props }) => {
   const hookFrames = hookFramesOf(timing);
-  const scenes = planScenes(timing.introFrames, timing.mainFrames, timing.outroFrames, hookFrames);
+  const teaserFrames = teaserFramesOf(timing);
+  const scenes = planScenes(timing.introFrames, timing.mainFrames, timing.outroFrames, hookFrames, teaserFrames);
   // Intro দৃশ্যের নিজের দৈর্ঘ্য (Hook বাদে): `timing.introFrames` = Hook + Intro (Main-এর শুরু), তাই Intro-কে আলাদা timing দিই
   const introTiming = useMemo<Timing>(
-    () => ({ ...timing, introFrames: introOnlyFrames(timing), hookFrames: undefined }),
+    () => ({ ...timing, introFrames: introOnlyFrames(timing), hookFrames: undefined, teaserFrames: undefined }),
     // timing প্রতি রেন্ডারে নতুন অবজেক্ট হতে পারে — সংখ্যাগুলো ধরেই মেলানো
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [timing.fps, timing.introFrames, timing.hookFrames, timing.mainFrames, timing.outroFrames, timing.totalFrames],
+    [timing.fps, timing.introFrames, timing.hookFrames, timing.teaserFrames, timing.mainFrames, timing.outroFrames, timing.totalFrames],
   );
 
   // Part 14C-audio: Intro/Outro-তে শুধু ভয়েস (ক্যাপশন নেই)। ফাইল থাকলে ওই দৃশ্যের নিজস্ব SFX বন্ধ (ভয়েসের উপর চাপে না);
@@ -91,13 +95,28 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
   const sfxOptions = useMemo(() => (voice.outro ? { outroSfx: false } : undefined), [voice.outro]);
 
   return (
-    <AbsoluteFill data-hadis-video="" data-hook-frames={hookFrames} data-intro-frames={timing.introFrames} data-main-frames={timing.mainFrames} data-outro-frames={timing.outroFrames}>
+    <AbsoluteFill data-hadis-video="" data-hook-frames={hookFrames} data-teaser-frames={teaserFrames} data-intro-frames={timing.introFrames} data-main-frames={timing.mainFrames} data-outro-frames={timing.outroFrames}>
       <Background theme={props.theme} timing={timing} size={size} />
 
       {scenes.hook && (
         <Sequence name="hook" from={scenes.hook.from} durationInFrames={scenes.hook.frames}>
           <AbsoluteFill data-scene="hook">
             <HookScene theme={props.theme} timing={timing} size={size} />
+          </AbsoluteFill>
+        </Sequence>
+      )}
+
+      {scenes.teaser && (
+        <Sequence name="teaser" from={scenes.teaser.from} durationInFrames={scenes.teaser.frames}>
+          <AbsoluteFill data-scene="teaser">
+            <TeaserScene
+              theme={props.theme}
+              hadisId={props.hadisId}
+              timing={timing}
+              startSeconds={props.teaserStartSeconds}
+              endSeconds={props.teaserEndSeconds}
+              size={size}
+            />
           </AbsoluteFill>
         </Sequence>
       )}
@@ -144,6 +163,7 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
       {/* ⚠️ মূল স্তরে — কোনো দৃশ্য-Sequence-এর ভেতরে নয় (Part 11) */}
       {audio && <HadisAudio hadisId={props.hadisId} timing={timing} />}
       {audio && <SfxPlayer hadisId={props.hadisId} timing={timing} options={sfxOptions} />}
+      {audio && <TeaserAudio hadisId={props.hadisId} timing={timing} startSeconds={props.teaserStartSeconds} endSeconds={props.teaserEndSeconds} />}
       {audio && voice.ready && <IntroOutroAudio timing={timing} hookSrc={voice.hook} introSrc={voice.intro} outroSrc={voice.outro} />}
     </AbsoluteFill>
   );
@@ -151,11 +171,11 @@ export const HadisVideoView: React.FC<HadisVideoViewProps> = ({ timing, size, id
 
 export const HadisVideo: React.FC<HadisVideoProps> = (props) => {
   const { durationInFrames } = useVideoConfig();
-  const { introSeconds, outroSeconds, hookSeconds } = props;
+  const { introSeconds, outroSeconds, hookSeconds, teaserSeconds } = props;
 
   const timing = useMemo(
-    () => timingFromConfig(durationInFrames, { introSeconds, outroSeconds, hookSeconds }),
-    [durationInFrames, introSeconds, outroSeconds, hookSeconds],
+    () => timingFromConfig(durationInFrames, { introSeconds, outroSeconds, hookSeconds, teaserSeconds }),
+    [durationInFrames, introSeconds, outroSeconds, hookSeconds, teaserSeconds],
   );
 
   return <HadisVideoView {...props} timing={timing} />;

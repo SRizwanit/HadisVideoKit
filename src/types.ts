@@ -42,6 +42,13 @@ export const hadisVideoSchema = z.object({
    * (না থাকলে/০ = Hook নেই)। যাতে কম্পোনেন্টের `timingFromConfig` ঠিক একই সংখ্যা পায়।
    */
   hookSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS).optional(),
+  /**
+   * অডিও টিজার (cold open): দৃশ্যের সেকেন্ড + হাদিস-.wav-এর কোন অংশ বাজবে (সেকেন্ড) — ব্যবহারকারী দেয় না;
+   * `calculateMetadata` timestamp JSON-এর `teaser` থেকে বসায় (না থাকলে/০ = টিজার নেই)।
+   */
+  teaserSeconds: z.number().min(0).max(MAX_INTRO_OUTRO_SECONDS).optional(),
+  teaserStartSeconds: z.number().min(0).optional(),
+  teaserEndSeconds: z.number().min(0).optional(),
 });
 
 export type HadisVideoProps = z.infer<typeof hadisVideoSchema>;
@@ -102,9 +109,22 @@ export const segmentSchema = z
   });
 export type Segment = z.infer<typeof segmentSchema>;
 
+/** অডিও টিজার (ঐচ্ছিক): হাদিসের সবচেয়ে শক্তিশালী বাক্যাংশ — সেকেন্ড, .wav-এর শুরু থেকে (segment-এর সময়ের মতোই) */
+export const teaserSchema = z
+  .object({
+    start: z.number().min(0),
+    end: z.number().min(0),
+    /** ঐচ্ছিক: শুধু fallback — কোনো `words`/segment-এর সাথে না মিললে এই লেখা সমান ভাগে দেখানো হয় */
+    text: z.string().min(1).optional(),
+  })
+  .refine((t) => t.end > t.start, { message: "teaser-এর end অবশ্যই start-এর চেয়ে বড় হতে হবে" });
+export type Teaser = z.infer<typeof teaserSchema>;
+
 export const timestampFileSchema = z
   .object({
     language: z.string().optional(),
+    /** ঐচ্ছিক: থাকলে Hook-এর পরে এই অংশ আগে বাজে (cold open) */
+    teaser: teaserSchema.optional(),
     segments: z.array(segmentSchema).min(1, "কমপক্ষে একটা segment দরকার"),
   })
   .superRefine((file, ctx) => {

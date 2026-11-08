@@ -4,19 +4,21 @@ import type { HadisVideoProps, SfxCue, TimestampFile } from "../types";
 /**
  * Part 5: সময় (সেকেন্ড) ↔ ফ্রেম হিসাব।
  *
- * ভিডিওর গঠন:  [ Hook ][ Intro ][ Main = .wav-এর দৈর্ঘ্য ][ Outro ]   (Hook ঐচ্ছিক — hook.wav থাকলে; `introFrames` = Hook + Intro)
+ * ভিডিওর গঠন:  [ Hook ][ Teaser ][ Intro ][ Main = .wav-এর দৈর্ঘ্য ][ Outro ]   (Hook = hook.wav থাকলে; Teaser = JSON-এ `teaser` থাকলে; দুটোই ঐচ্ছিক; `introFrames` = Hook + Teaser + Intro)
  * Timestamp JSON-এর সময় .wav-এর শুরু থেকে মাপা, তাই ভিডিও-ফ্রেম পেতে Intro-র অফসেট যোগ হয়।
  */
 
 export type Timing = {
   fps: number;
   /**
-   * Main শুরুর আগের সব ফ্রেম = Hook + Intro (Main, Caption, SVG, অডিও, দিন-রাত — সবাই এটাকেই "Main কোথায় শুরু" ধরে;
-   * তাই Hook যোগ হলেও ওই কোড বদলাতে হয়নি)। শুধু Intro-র নিজের দৈর্ঘ্য = `introFrames − hookFrames` (`introOnlyFrames`)।
+   * Main শুরুর আগের সব ফ্রেম = Hook + Teaser + Intro (Main, Caption, SVG, অডিও, দিন-রাত — সবাই এটাকেই "Main কোথায় শুরু" ধরে;
+   * তাই Hook যোগ হলেও ওই কোড বদলাতে হয়নি)। শুধু Intro-র নিজের দৈর্ঘ্য = `introFrames − hookFrames − teaserFrames` (`introOnlyFrames`)।
    */
   introFrames: number;
   /** Hook-এর ফ্রেম (ভিডিওর শুরুতে; `introFrames`-এর ভেতরেই ধরা)। নেই/০ = Hook নেই */
   hookFrames?: number;
+  /** অডিও টিজারের ফ্রেম (Hook-এর ঠিক পরে; `introFrames`-এর ভেতরেই ধরা)। নেই/০ = টিজার নেই */
+  teaserFrames?: number;
   mainFrames: number;
   outroFrames: number;
   totalFrames: number;
@@ -54,9 +56,16 @@ export const hookFramesOf = (t: Pick<Timing, "introFrames" | "hookFrames">): num
   return Math.min(Math.floor(h), Math.max(0, Math.floor(t.introFrames)));
 };
 
-/** শুধু Intro দৃশ্যের ফ্রেম (Hook বাদ দিয়ে) */
-export const introOnlyFrames = (t: Pick<Timing, "introFrames" | "hookFrames">): number =>
-  Math.max(0, Math.floor(t.introFrames) - hookFramesOf(t));
+/** টিজারের ফ্রেম (নেই/অবৈধ = ০; Hook বাদে বাকি `introFrames`-এর বেশি হয় না) */
+export const teaserFramesOf = (t: Pick<Timing, "introFrames" | "hookFrames" | "teaserFrames">): number => {
+  const v = t.teaserFrames;
+  if (typeof v !== "number" || !Number.isFinite(v) || v <= 0) return 0;
+  return Math.min(Math.floor(v), Math.max(0, Math.floor(t.introFrames) - hookFramesOf(t)));
+};
+
+/** শুধু Intro দৃশ্যের ফ্রেম (Hook ও টিজার বাদ দিয়ে) */
+export const introOnlyFrames = (t: Pick<Timing, "introFrames" | "hookFrames" | "teaserFrames">): number =>
+  Math.max(0, Math.floor(t.introFrames) - hookFramesOf(t) - teaserFramesOf(t));
 
 /** Intro/Main/Outro ফ্রেম। Main কমপক্ষে ১ ফ্রেম (ফাঁকা অডিওতেও ভিডিও ভাঙে না) */
 export function computeTiming(args: {
@@ -65,17 +74,21 @@ export function computeTiming(args: {
   audioSeconds: number;
   /** Hook-এর সেকেন্ড (ঐচ্ছিক; নেই/০ = Hook নেই) */
   hookSeconds?: number;
+  /** অডিও টিজারের সেকেন্ড (ঐচ্ছিক; নেই/০ = টিজার নেই) */
+  teaserSeconds?: number;
   fps?: number;
 }): Timing {
   const fps = args.fps ?? FPS;
   const hookFrames = Math.max(0, secondsToFrames(args.hookSeconds ?? 0, fps));
-  const introFrames = hookFrames + secondsToFrames(args.introSeconds, fps);
+  const teaserFrames = Math.max(0, secondsToFrames(args.teaserSeconds ?? 0, fps));
+  const introFrames = hookFrames + teaserFrames + secondsToFrames(args.introSeconds, fps);
   const outroFrames = secondsToFrames(args.outroSeconds, fps);
   const mainFrames = Math.max(1, Math.ceil(args.audioSeconds * fps));
   return {
     fps,
     introFrames,
     ...(hookFrames > 0 ? { hookFrames } : {}),
+    ...(teaserFrames > 0 ? { teaserFrames } : {}),
     mainFrames,
     outroFrames,
     totalFrames: introFrames + mainFrames + outroFrames,
@@ -88,17 +101,19 @@ export function computeTiming(args: {
  */
 export function timingFromConfig(
   durationInFrames: number,
-  props: Pick<HadisVideoProps, "introSeconds" | "outroSeconds"> & { hookSeconds?: number },
+  props: Pick<HadisVideoProps, "introSeconds" | "outroSeconds"> & { hookSeconds?: number; teaserSeconds?: number },
   fps: number = FPS,
 ): Timing {
   const hookFrames = Math.max(0, secondsToFrames(props.hookSeconds ?? 0, fps));
-  const introFrames = hookFrames + secondsToFrames(props.introSeconds, fps);
+  const teaserFrames = Math.max(0, secondsToFrames(props.teaserSeconds ?? 0, fps));
+  const introFrames = hookFrames + teaserFrames + secondsToFrames(props.introSeconds, fps);
   const outroFrames = secondsToFrames(props.outroSeconds, fps);
   const mainFrames = Math.max(1, durationInFrames - introFrames - outroFrames);
   return {
     fps,
     introFrames,
     ...(hookFrames > 0 ? { hookFrames } : {}),
+    ...(teaserFrames > 0 ? { teaserFrames } : {}),
     mainFrames,
     outroFrames,
     totalFrames: durationInFrames,

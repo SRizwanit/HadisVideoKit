@@ -70,24 +70,35 @@ export function mainFadeIn(localFrame: number, introFrames: number, mainFrames: 
 export type ScenePlan = {
   /** ভিডিওর শুরুতে Hook (hook.wav থাকলে); নেই = null */
   hook: { from: number; frames: number } | null;
+  /** Hook-এর পরে অডিও টিজার (JSON-এ `teaser` থাকলে); নেই = null */
+  teaser: { from: number; frames: number } | null;
   intro: { from: number; frames: number } | null;
   main: { from: number; frames: number } | null;
   outro: { from: number; frames: number } | null;
 };
 
 /**
- * @param introFrames Main শুরুর আগের সব ফ্রেম (= Hook + Intro; `timing.introFrames`)
+ * @param introFrames Main শুরুর আগের সব ফ্রেম (= Hook + Teaser + Intro; `timing.introFrames`)
  * @param hookFrames  এর মধ্যে Hook-এর ফ্রেম (ডিফল্ট ০ = Hook নেই, আচরণ আগের মতো)
+ * @param teaserFrames এর মধ্যে টিজারের ফ্রেম — Hook-এর ঠিক পরে (ডিফল্ট ০ = টিজার নেই)
  */
-export function planScenes(introFrames: number, mainFrames: number, outroFrames: number, hookFrames: number = 0): ScenePlan {
+export function planScenes(
+  introFrames: number,
+  mainFrames: number,
+  outroFrames: number,
+  hookFrames: number = 0,
+  teaserFrames: number = 0,
+): ScenePlan {
   const pre = toCount(introFrames);
   const h = Math.min(toCount(hookFrames), pre);
-  const i = pre - h;
+  const t = Math.min(toCount(teaserFrames), pre - h);
+  const i = pre - h - t;
   const m = toCount(mainFrames);
   const o = toCount(outroFrames);
   return {
     hook: h > 0 ? { from: 0, frames: h } : null,
-    intro: i > 0 ? { from: h, frames: i } : null,
+    teaser: t > 0 ? { from: h, frames: t } : null,
+    intro: i > 0 ? { from: h + t, frames: i } : null,
     main: m > 0 ? { from: pre, frames: m } : null,
     outro: o > 0 ? { from: pre + m, frames: o } : null,
   };

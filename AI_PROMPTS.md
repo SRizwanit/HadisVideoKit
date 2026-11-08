@@ -17,7 +17,7 @@ Work **one file at a time, one step at a time**. Never ask the AI for several fi
 |---|---|---|---|
 | 0 | `hadis<ID>.wav` (your recorded/generated voice) | `public/hadis/hadis<ID>.wav` | not an AI file |
 | 0b | `hook.wav` (the opening question voice, same for every video) — **optional** | `public/audio/hook.wav` | not an AI file (see "About the Hook" below) |
-| 1 | `hadis<ID>_timestamp.json` | `public/hadis/hadis<ID>_timestamp.json` | **Prompt 1** |
+| 1 | `hadis<ID>_timestamp.json` (optionally with a `teaser` block = Audio Teaser) | `public/hadis/hadis<ID>_timestamp.json` | **Prompt 1** |
 | 2 | `svg1.svg`, `svg2.svg`, … `svgN.svg` (one prompt per file) | `public/svg/svg1.svg` … | **Prompt 2A + 2B** |
 | 3 | SFX list, then each SFX file (one at a time) | `public/sfx/<name>.mp3` | **Prompt 3A + 3B** |
 
@@ -30,6 +30,16 @@ Every video can start with a **Hook**: a big on-screen question **"এই হা
 - `hook.wav` is a voice file, so it is **not** made with the prompts below. One file is shared by all hadiths; keep it small (a few seconds) and clear, with no background music.
 - Hook, Intro and Outro show **no captions** (captions exist only in Main).
 
+### About the Audio Teaser (cold open) — optional, chosen inside the timestamp JSON
+
+After the Hook, the video can play the **strongest phrase of the hadith first** (big text, the spoken word glows), and then Intro → the full hadith from the very beginning. Order: **Hook → Teaser → Intro → Hadith → Outro**.
+- **"Selected" = the JSON has a `teaser` block.** Prompt 1 below can make it for you. **No `teaser` = no Teaser** (the video is exactly as before). Nothing to type in GitHub Actions; `render.yml` is unchanged.
+- `teaser` is `{ "start": 12.4, "end": 17.9 }` in seconds, measured from the start of the hadith `.wav` (same clock as the segments). The audio of exactly that part is played, with a tiny fade at both ends.
+- Length rules (the code enforces them): shorter than 0.5 s → ignored; longer than 12 s → cut to 12 s; `end` beyond the audio → cut to the audio length. The Teaser scene lasts the phrase + 0.15 s.
+- The words shown come from the `words` timings of the segments inside that range (so **word-level times give the best result**). Without `words` the segment text is split evenly. Optional `"text"` inside `teaser` is only a fallback when no segment matches.
+- **Pick a complete, meaningful phrase** (a full clause, ideally 3–15 words) that starts and ends exactly at word boundaries — never in the middle of a word. The phrase must be a part of the hadith that is really spoken there; the AI must never write new words.
+- To switch the Teaser off everywhere without editing JSON files: `TEASER_ENABLED = false` in `src/constants.ts`.
+
 `<ID>` is the `hadis_id` you type in GitHub Actions, for example `0101` → `hadis0101.wav`, `hadis0101_timestamp.json`. Allowed characters: English letters, digits, `-` and `_` only.
 
 ---
@@ -38,13 +48,14 @@ Every video can start with a **Hook**: a big on-screen question **"এই হা
 
 ## Step 1.1 — Collect what the AI needs
 
-You need three things before you paste the prompt:
+You need these things before you paste the prompt:
 
 1. **HADITH_TEXT** — the exact hadith text (Bengali), exactly as it is spoken in the audio.
 2. **AUDIO_TIMING** — when each part is spoken. Use one of:
    - a transcript with timestamps from a speech tool (word-level is best), or
    - the audio length in seconds, if you have nothing else (the AI will then split the time evenly).
 3. **SVG_COUNT** — how many SVG files you plan to make (for example `4`). If you plan none, write `0`.
+4. **TEASER_WANTED** — `yes` if you want the Audio Teaser (cold open) after the Hook (needs word-level times), otherwise `no`.
 
 ## Step 1.2 — Paste this prompt
 
@@ -57,11 +68,13 @@ INPUT
 - AUDIO_TIMING (seconds measured from the very start of the .wav file):
 <<< paste the timestamps here, or: "audio length = 38.5 seconds, no timestamps" >>>
 - SVG_COUNT: <<< number, e.g. 4 >>>
+- TEASER_WANTED: <<< yes or no >>>
 
 OUTPUT FORMAT — return exactly this JSON structure and NOTHING else
 (no explanation, no greeting, no Markdown code fence, no comments):
 {
   "language": "bn",
+  "teaser": { "start": 12.4, "end": 17.9 },
   "segments": [
     {
       "id": 1,
@@ -87,6 +100,7 @@ HARD RULES (a file that breaks any rule is rejected by the video code)
 7. "sfx" is OPTIONAL. Use it sparingly: at most one segment out of every three. "name" may only be one of: whoosh, pop, chime, ding, swoosh. "volume" is a number from 0 to 1 (use 0.3 to 0.6; the default is 0.4). Put whoosh/swoosh on a strong topic change, pop on a key word, chime/ding on a closing or praise phrase. Never put sfx on the first segment (the intro already plays one). If unsure, omit "sfx".
 8. "id" is OPTIONAL; if used, number the segments 1, 2, 3 ... in order.
 9. The output must be valid JSON: double quotes only, no trailing commas, no comments, numbers without quotes.
+10. "teaser" is OPTIONAL (a block at the top level, next to "language" and "segments"). Include it ONLY if TEASER_WANTED is "yes" AND AUDIO_TIMING has word-level times. It marks the single STRONGEST phrase of the hadith (the core message, the key promise, warning or advice), which the video plays first as a cold open. Rules: "start" = the start time of the FIRST word of that phrase, "end" = the end time of the LAST word of that phrase (exactly the word times you used in "words"; never in the middle of a word); the phrase is one complete, meaningful clause of 3 to 15 words, lasting between 1 and 10 seconds (never less than 0.5 and never more than 12); it must lie inside the audio, with end > start, and it is NOT cut out of the segments (the segments still cover the whole hadith from the start to the end). Do NOT add "text" to teaser. If TEASER_WANTED is "no", or there are no word-level times, OMIT "teaser" completely.
 
 RETURN ONLY THE JSON.
 ```
@@ -100,6 +114,7 @@ RETURN ONLY THE JSON.
 - [ ] `svg` values are only `svg1`, `svg2` … and the numbers are not larger than your SVG count
 - [ ] `sfx.name` is one of `whoosh`, `pop`, `chime`, `ding`, `swoosh`
 - [ ] The last `end` is not (much) larger than the audio length
+- [ ] If you asked for a Teaser: there is one `"teaser": { "start": …, "end": … }` block at the top level; `end` is larger than `start`; the span is between 1 and 10 seconds; its start/end match the start of a word and the end of a word; the phrase is really spoken there. If you did not ask for one, there is no `teaser` block
 
 If one item fails, reply to the AI with the exact problem ("segment 3 has end smaller than start") and ask for the **whole JSON again**.
 

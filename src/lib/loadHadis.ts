@@ -16,9 +16,11 @@ import {
   INTRO_AUDIO_PATH,
   INTRO_OUTRO_AUDIO_ENABLED,
   OUTRO_AUDIO_PATH,
+  TEASER_MIN_SECONDS,
 } from "../constants";
 import { parseTimestampFile, type HadisVideoProps, type TimestampFile } from "../types";
 import { fitHookSeconds, fitSecondsToAudio } from "./introOutroAudio";
+import { buildTeaser, fitTeaserSeconds } from "./teaser";
 import { computeTiming } from "./timing";
 
 /**
@@ -130,14 +132,14 @@ export async function loadHadis(hadisId: string): Promise<LoadedHadis> {
 
 /**
  * Composition-এর calculateMetadata:
- *   durationInFrames = (hook + intro + .wav + outro) × FPS  (intro/outro = max(দেওয়া সেকেন্ড, ভয়েসের দৈর্ঘ্য) — Part 14C-audio)
+ *   durationInFrames = (hook + teaser + intro + .wav + outro) × FPS  (intro/outro = max(দেওয়া সেকেন্ড, ভয়েসের দৈর্ঘ্য) — Part 14C-audio)
  *   width/height     = orientation অনুযায়ী (বেস HD সাইজ; 4K-তে render scale=2)
  * Studio-তে props প্যানেলে hadisId/orientation/intro/outro বদলালে নিজে নিজে আবার চলে।
  */
 export const calculateHadisMetadata: CalculateMetadataFunction<HadisVideoProps> = async ({
   props,
 }) => {
-  const { audioSeconds, warnings } = await loadHadis(props.hadisId);
+  const { audioSeconds, timestamp, warnings } = await loadHadis(props.hadisId);
   for (const w of warnings) console.warn(`⚠️ ${w}`);
 
   // Part 14C-audio: Intro/Outro ভয়েস থাকলে দৃশ্য অন্তত অডিওর সমান লম্বা (অডিও কাটে না); ব্যবহারকারীর সেকেন্ড বেশি হলে সেটাই থাকে;
@@ -152,14 +154,31 @@ export const calculateHadisMetadata: CalculateMetadataFunction<HadisVideoProps> 
   const hookAudio = HOOK_ENABLED ? await loadVoiceSeconds(HOOK_AUDIO_PATH) : null;
   const hookSeconds = fitHookSeconds(hookAudio);
 
-  const timing = computeTiming({ introSeconds, outroSeconds, audioSeconds, hookSeconds });
+  // অডিও টিজার (cold open): JSON-এ `teaser` থাকলে হাদিসের ওই অংশ Hook-এর পরে আগে বাজে; না থাকলে/অবৈধ হলে নেই (সতর্কতাসহ)
+  const teaser = buildTeaser(timestamp, audioSeconds);
+  if (timestamp.teaser && !teaser) {
+    console.warn(
+      `⚠️ hadis${props.hadisId}: teaser বাদ — অংশটা ছাঁটার পর খুব ছোট (<${TEASER_MIN_SECONDS}s) বা .wav-এর বাইরে, বা TEASER_ENABLED বন্ধ।`,
+    );
+  }
+  const teaserSeconds = fitTeaserSeconds(teaser?.durationSeconds);
+
+  const timing = computeTiming({ introSeconds, outroSeconds, audioSeconds, hookSeconds, teaserSeconds });
   const size = BASE_SIZES[props.orientation];
 
   return {
     durationInFrames: timing.totalFrames,
     width: size.width,
     height: size.height,
-    props: { ...props, introSeconds, outroSeconds, hookSeconds },
+    props: {
+      ...props,
+      introSeconds,
+      outroSeconds,
+      hookSeconds,
+      teaserSeconds,
+      teaserStartSeconds: teaser?.startSeconds,
+      teaserEndSeconds: teaser?.endSeconds,
+    },
   };
 };
 

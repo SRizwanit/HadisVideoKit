@@ -99,3 +99,21 @@ export const HOOK_AUDIO_VOLUME = 1;
 export const HOOK_AUDIO_FADE_OUT_FRAMES = 6;
 /** Hook দৃশ্য = অডিও + এই বাড়তি সেকেন্ড (শেষ শব্দ কেটে যায় না; ফেড-আউটের জায়গা) */
 export const HOOK_AUDIO_TAIL_SECONDS = 0.12;
+
+// ---------- অডিও টিজার / cold open (Hook-এর পরে) ----------
+/**
+ * হাদিসের সবচেয়ে শক্তিশালী বাক্যাংশ আগে একবার বাজে (বড় লেখায় শব্দ-ধরে হাইলাইট), তারপর Intro → হাদিস শুরু থেকে।
+ * ক্রম: [ Hook ][ Teaser ][ Intro ][ Main ][ Outro ]
+ * "সিলেক্ট" = হাদিসের timestamp JSON-এ `"teaser": { "start": 12.4, "end": 17.9 }` থাকা (সেকেন্ড, .wav-এর শুরু থেকে)।
+ * `teaser` না থাকলে টিজার নেই (আগের মতো)। বন্ধ করতে `TEASER_ENABLED = false`। workflow বদলাতে হয় না।
+ */
+export const TEASER_ENABLED = true;
+/** এর চেয়ে ছোট অংশ বাদ (null) */
+export const TEASER_MIN_SECONDS = 0.5;
+/** এর চেয়ে লম্বা অংশ `start + এই সেকেন্ডে` ছাঁটা */
+export const TEASER_MAX_SECONDS = 12;
+/** দৃশ্য = অংশ + এই বাড়তি সেকেন্ড (শেষ শব্দ কেটে যায় না) */
+export const TEASER_TAIL_SECONDS = 0.15;
+/** অংশের শুরু ও শেষে ফেড (ফ্রেম) — বাক্যের মাঝখান কাটলে "ক্লিক" শোনা যায় না */
+export const TEASER_AUDIO_FADE_FRAMES = 4;
+export const TEASER_AUDIO_VOLUME = 1;
