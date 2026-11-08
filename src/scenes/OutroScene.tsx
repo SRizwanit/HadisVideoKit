@@ -185,6 +185,8 @@ export const OutroScene: React.FC<Props> = ({
                 height: lineH,
                 display: "flex",
                 alignItems: "center",
+                // Part 14C-fix: বাংলা মাথার অংশ কাটা বন্ধ — FitText নিজে উপরে বাড়তি জায়গা রাখে, এখানে কিছু কাটা হয় না
+                overflow: "visible",
                 opacity: look.opacity,
                 transform: `translateY(${look.offsetUnits * u}px)`,
               }}

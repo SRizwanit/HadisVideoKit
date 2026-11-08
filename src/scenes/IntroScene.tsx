@@ -203,13 +203,19 @@ export const IntroScene: React.FC<Props> = ({
         return (
           <div
             key={i}
-            // লাইনের মাস্ক: ভেতরের লেখা নিচ থেকে উঠে আসে (বাংলা নিচের অংশ কাটা পড়ে না — উপর-নিচে ফাঁক)
-            style={{ width: "100%", overflow: "hidden", padding: `${6 * u}px 0` }}
+            // লাইনের মাস্ক: ভেতরের লেখা নিচ থেকে উঠে আসে। Part 14C-fix: উপরে ০.৪em / নিচে ০.৩em ফাঁক (আগে ৬ unit) —
+            // বাংলা মাথার অংশ (মাত্রা, ই-কার, রেফ) আর নিচের অংশ কাটা পড়ে না; negative margin-এ মোট উচ্চতা আগের মতোই থাকে
+            style={{
+              width: "100%",
+              overflow: "hidden",
+              padding: `${nameBase * 0.4}px 0 ${nameBase * 0.3}px`,
+              margin: `${6 * u - nameBase * 0.4}px 0 ${6 * u - nameBase * 0.3}px`,
+            }}
           >
             <div
               style={{
                 opacity: Math.min(1, prog * 1.5),
-                transform: `translateY(${interpolate(prog, [0, 1], [110, 0])}%)`,
+                transform: `translateY(${interpolate(prog, [0, 1], [150, 0])}%)`,
               }}
             >
               <FitText
@@ -260,7 +266,8 @@ export const IntroScene: React.FC<Props> = ({
         borderRadius: 999,
         border: `${3 * u}px solid ${p.accent}`,
         background: withAlpha("#000000", 0.22),
-        overflow: "hidden",
+        // Part 14C-fix: hidden ছিল — কিতাবের নামের মাথার অংশ কাটত
+        overflow: "visible",
       }}
     >
       <FitText

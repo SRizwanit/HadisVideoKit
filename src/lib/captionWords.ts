@@ -35,7 +35,8 @@ export const ACTIVE_HOLD_FRAMES = 6;
 export const POP_SCALE = 1.15;
 export const CAPTION_LINE_HEIGHT = 1.4;
 /** লাইনের কত অংশ আসলে ভরে (শব্দ ভেঙে না পড়ার জন্য বাকিটা ফাঁকা ধরা হয়) */
-export const LINE_FILL = 0.92;
+// Part 14C-fix: ০.৯২ → ০.৮৬ — প্রতিটি শব্দ inline-block (দুই পাশে ০.০৫em) + pop, তাই আসল লাইন আন্দাজের চেয়ে বেশি হত (ক্যাপশনের উপর-নিচ কাটার কারণ)
+export const LINE_FILL = 0.86;
 
 // ---------- ছোট সহায়ক ----------
 const finite = (v: unknown, fallback: number): number =>

@@ -28,6 +28,11 @@ type Props = {
   style?: React.CSSProperties;
 };
 
+/** মাথার অংশের জন্য বাড়তি জায়গা (ফন্ট-সাইজের ভগ্নাংশ, em) */
+export const ASCENT_PAD_EM = 0.34;
+/** নিচের অংশের (য-ফলা, উ-কার ইত্যাদি) জন্য বাড়তি জায়গা (em) */
+export const DESCENT_PAD_EM = 0.2;
+
 export const FitText: React.FC<Props> = ({
   text,
   baseSize,
@@ -78,6 +83,12 @@ export const FitText: React.FC<Props> = ({
 
   const common: React.CSSProperties = { fontFamily, fontWeight, lineHeight };
 
+  // ⚠️ Part 14C-fix: বাংলার মাথার অংশ (মাত্রা, ই-কার, রেফ, ঈ-কার) লাইন-বক্সের উপরে উঠে যায় (বিশেষ করে Baloo Da 2-তে)।
+  // নিচের `overflow: hidden` তখন উপরটা কেটে ফেলত। তাই ভেতরে উপরে/নিচে বাড়তি জায়গা (padding) দিই আর সমান negative margin দিয়ে
+  // বাইরের লেআউট হুবহু আগের মতো রাখি — মাপ/অবস্থান বদলায় না, শুধু কাটা বন্ধ।
+  const padTop = ASCENT_PAD_EM;
+  const padBottom = fit.wrap ? 0 : DESCENT_PAD_EM; // একাধিক লাইনে ছাঁটলে নিচে বাড়তি জায়গা দিলে পরের লাইনের উঁকি দেয়
+
   return (
     <>
       {/* মাপার জন্য লুকানো কপি (বেস সাইজ, এক লাইন) */}
@@ -108,6 +119,11 @@ export const FitText: React.FC<Props> = ({
           whiteSpace: fit.wrap ? "normal" : "nowrap",
           textWrap: fit.wrap ? "balance" : undefined,
           overflowWrap: "break-word",
+          boxSizing: "content-box",
+          paddingTop: `${padTop}em`,
+          paddingBottom: `${padBottom}em`,
+          marginTop: `${-padTop}em`,
+          marginBottom: `${-padBottom}em`,
           // দুই লাইনের বেশি হলে "…" দিয়ে ছাঁটা
           display: fit.wrap ? "-webkit-box" : "block",
           WebkitBoxOrient: "vertical",

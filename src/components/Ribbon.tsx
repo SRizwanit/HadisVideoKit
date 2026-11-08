@@ -36,7 +36,8 @@ export const Ribbon: React.FC<Props> = ({ text, height, fontSize, accent, accent
       fontFamily: FONT_DISPLAY,
       fontWeight: 800,
       fontSize,
-      lineHeight: 1,
+      // Part 14C-fix: ১ থেকে ১.৪ — বাংলা মাথার অংশ clipPath-এ কাটত (রিবনের উচ্চতা `height` ঠিক করে, তাই মাপ বদলায় না)
+      lineHeight: 1.4,
       whiteSpace: "nowrap",
       transformOrigin: "center",
       ...style,

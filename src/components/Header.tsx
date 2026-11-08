@@ -179,7 +179,8 @@ export const Header: React.FC<Props> = ({
         borderRadius: 999,
         border: `${2.5 * u}px solid ${p.accent}`,
         background: withAlpha("#000000", 0.22),
-        overflow: "hidden",
+        // Part 14C-fix: `overflow: hidden` ছিল — বাংলা মাথার অংশ কাটত। FitText নিজেই বাক্সের ভেতরে থাকে, তাই এখানে দরকার নেই
+        overflow: "visible",
       }}
     >
       <FitText

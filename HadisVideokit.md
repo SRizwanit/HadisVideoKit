@@ -3,7 +3,7 @@
 > An **automatic hadith video kit** built with React + Remotion + GitHub Actions.
 > You only put a `.wav` + `_timestamp.json` (+ AI-made SVG/SFX) in the repo, type the **book name** and **hadith number (in Bengali)** in GitHub Actions, press Run, and the video renders. No video editor or PC needed.
 
-**Version 2.51 (English edition) — Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
+**Version 2.52 (English edition) — Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
 
 3 themes: Emerald Night, Royal Navy, Green Day & Night (with fireflies). Book name and Bengali hadith number come straight from GitHub Actions inputs (no book-code list).
 
@@ -480,7 +480,7 @@ Remotion renders frame by frame, so ordinary CSS/SMIL animation may not play cor
 
 **Part 6 — layout + background.** `useLayout()` / `computeLayout(width, height)`: Portrait top margin 3.5 % | header 18 % | SVG 43 % (826×826) | caption 24 % | bottom safe 8.5 %; Landscape: thin header 15 %, SVG left 768×768, caption right; `unit = min(w,h)/1080` (4K exactly 2×). `useNightFactor(timing, frameOffset?)`; `Background theme timing`; all animation from `useCurrentFrame()` + `random(seed)`.
 
-**Part 7 — logo/header.** `Logo`, `Header theme bookname number timing frameOffset`, `FitText` (+ `fitText.ts`; shrink → two lines → "…"). `frameOffset` is essential inside Main (day/night colours).
+**Part 7 — logo/header.** `Logo`, `Header theme bookname number timing frameOffset`, `FitText` (+ `fitText.ts`; shrink → two lines → "…"). **Bengali top-clipping fix (14C-fix):** `FitText` keeps `0.34em` top / `0.2em` bottom padding inside its `overflow: hidden` box (cancelled by equal negative margins, so layout is unchanged) — Bengali matra / ই-kar / reph rise above the line box and used to be cut. Never put a tight `overflow: hidden` (or `clip-path`) directly around Bengali text without that room. `frameOffset` is essential inside Main (day/night colours).
 
 **Part 8 — Intro scene.** `IntroScene theme bookname number timing` (90-frame sequence compressed/held, last 12 frames fade-out, SFX `whoosh` frame 0 + `chime` frame 48, volume 0.4), `Ribbon`, `splitAppName()`, `useSfxSrc(name)` (`.mp3` then `.wav`, missing → `null` + one warning, no crash). `introSeconds = 0` draws nothing.
 
@@ -751,6 +751,11 @@ node scripts/render.mjs --id 0101 --book "সহীহ বুখারী" --num
 ---
 
 ## 📝 Change log
+
+**Version 2.51 → 2.52**
+- 🔧 **Bug fix (not a font problem): the Bengali app name and book name were clipped at the top** in Intro, Main (Header) and Outro, and the Main caption was clipped at top and bottom. Cause: Bengali glyphs (matra, ই-kar, reph) rise above the line box, but `FitText` (`overflow: hidden`, line-height 1.18–1.3), the Header/Intro label pills (`overflow: hidden`), the Intro name mask (only 6 unit padding) and the Ribbon (`line-height: 1` + `clip-path`) cut them. The caption was clipped for a different reason: every word is `inline-block` with `0.05em` side padding, but the fit calculation measured plain text, so real text wrapped into more lines than estimated and the fixed-height box cut the first and last lines.
+- 🧩 **Files changed (6 code files + this md):** `src/components/FitText.tsx` (ascent/descent padding + equal negative margins; exported `ASCENT_PAD_EM = 0.34`, `DESCENT_PAD_EM = 0.2`; no padding below when wrapped to avoid showing the next line), `src/components/Header.tsx` (label pill `overflow: visible`), `src/components/Ribbon.tsx` (`lineHeight` 1 → 1.4; height still set by `height`), `src/scenes/IntroScene.tsx` (name mask padding 0.4em / 0.3em with equal negative margins; slide-in offset 110 % → 150 %; label pill `overflow: visible`), `src/scenes/OutroScene.tsx` (name line `overflow: visible`), `src/components/Caption.tsx` (measuring span now uses the same `inline-block` words; after the estimate it measures the real height and shrinks the font by 6 % steps, down to 75 % of `captionMin`, until it fits — stable inside a segment, so no jitter; render-safe), `src/lib/captionWords.ts` (`LINE_FILL` 0.92 → 0.86).
+- 🔒 Nothing else changed: layouts, colours, timings, audio, SVG stage, `outroPlan.ts`, `render.mjs`, `render.yml`, `package.json`, tests. `fitCaption` stays pure and its existing cases still hold (checked: 500 px → 1 line at 66 px; 5000+ px → shrinks and wraps). Part 14C file 2 (`README.md`) is still next.
 
 **Version 2.50 → 2.51**
 - 🧩 **Part 14C, file 1 of 2 delivered:** `AI_PROMPTS.md` — **English, step by step, one prompt per file** (as requested): Prompt 1 timestamp JSON; Prompt 2 plan + one prompt per `svg<N>.svg`; Prompt 3 SFX plan + one prompt per SFX file; checklists, valid SVG example, final upload checklist, the "replace the sample `whoosh.mp3`" note. The 14C plan said "Bengali + English headings"; changed to all-English on request. Header, tracker, file tree, 14C section (file progress, checklist ticks, done note) and the continue line updated; next is `পরের ফাইল` (14C file 2: `README.md`). No code changed.

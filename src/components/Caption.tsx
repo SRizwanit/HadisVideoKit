@@ -120,7 +120,23 @@ const CaptionBox: React.FC<{
     maxHeight: innerH,
     lineHeight: CAPTION_LINE_HEIGHT,
   });
-  const fs = fit.fontSize;
+  // Part 14C-fix: আন্দাজের পর আসল উচ্চতা মেপে দেখা — বাক্সে না আঁটলে ফন্ট ৬% করে কমে (ন্যূনতম captionMin-এর ৭৫%)।
+  // সেগমেন্টের মধ্যে ফলাফল স্থির (state), তাই ফন্ট কাঁপে না; রেন্ডারে প্রতিটি ফ্রেম একই ধাপে একই মানে পৌঁছায়।
+  const textRef = useRef<HTMLDivElement>(null);
+  const [adj, setAdj] = useState<{ base: number; k: number }>({ base: fit.fontSize, k: 1 });
+  const k = adj.base === fit.fontSize ? adj.k : 1;
+  const floorSize = L.fontSizes.captionMin * 0.75;
+  const fs = Math.max(Math.min(fit.fontSize, floorSize), fit.fontSize * k);
+
+  useLayoutEffect(() => {
+    const el = textRef.current;
+    if (!el || natural <= 0) return;
+    const h = el.offsetHeight;
+    if (h > innerH + 0.5 && fs > floorSize + 0.01) {
+      setAdj({ base: fit.fontSize, k: k * 0.94 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fs, fit.fontSize, innerH, innerW, natural, fullText]);
   const barH = Math.max(3 * u, fs * 0.06);
 
   const wordNodes: React.ReactNode[] = [];
@@ -216,7 +232,13 @@ const CaptionBox: React.FC<{
           lineHeight: CAPTION_LINE_HEIGHT,
         }}
       >
-        {fullText}
+        {/* Part 14C-fix: আসল শব্দের মতোই inline-block + ০.০৫em padding, নইলে মাপ কম আসত */}
+        {words.map((w, i) => (
+          <React.Fragment key={i}>
+            <span style={{ display: "inline-block", padding: "0 0.05em" }}>{w.word}</span>
+            {i < words.length - 1 ? " " : null}
+          </React.Fragment>
+        ))}
       </span>
       <div
         data-caption-text=""
@@ -233,6 +255,7 @@ const CaptionBox: React.FC<{
         }}
       >
         <div
+          ref={textRef}
           style={{
             width: "100%",
             // ছাঁটার দরকার হলেই শুধু উচ্চতা-সীমা; নইলে বাড়তে দিই (pop-স্কেল/আন্ডারলাইন কাটা পড়ে না, আর উপচে পড়লে মাপা যায়)
