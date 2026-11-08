@@ -1,0 +1,796 @@
+# 🕌 HadisVideokit — Islamic Encyclopedia & Al-Hadith S2
+
+> An **automatic hadith video kit** built with React + Remotion + GitHub Actions.
+> You only put a `.wav` + `_timestamp.json` (+ AI-made SVG/SFX) in the repo, type the **book name** and **hadith number (in Bengali)** in GitHub Actions, press Run, and the video renders. No video editor or PC needed.
+
+**Version 2.54 (English edition) — Parts 1–13 done ✅ (Part 9 = 9A–9L, Part 12 = 12A–12E, Part 13 = 13A–13C) | Part 14 (real `render.mjs`, AI prompts) was split into 3 sub-parts: 14A ✅ (`renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅) · 14B ✅ (code done; first real browser render is your GitHub run) · 14C ⬜ (file 1/2: `AI_PROMPTS.md` ✅ · file 2/2: `README.md` ⬜) | Next: `পরের ফাইল` (14C file 2: `README.md`) | Then Part 15 (final end-to-end test + README) | One single workflow (`render.yml`) does everything 📱**
+
+3 themes: Emerald Night, Royal Navy, Green Day & Night (with fireflies). Book name and Bengali hadith number come straight from GitHub Actions inputs (no book-code list).
+
+> 📝 In this version the finished-Part notes (9K–13C) are condensed again: checklists, "how it was verified" stories, preview-image details and the old change log are removed. **All files/APIs/fixed rules/numbers/constants that Parts 14–15 or later edits still need are kept, and the Part 14 plan is kept in full (now spread across 14A–14C).**
+> ℹ️ User-facing strings inside code (the YAML, Bengali on-screen text such as "আজকের হাদিস") stay in Bengali on purpose, because that is what the video and your repo actually use. Only comments/explanations are translated.
+
+---
+
+## 📌 How to use this file
+
+The whole kit cannot be built in one go (tokens would run out), so the work is split into **15 Parts** (Part 9 → 12 sub-parts, Part 12 → 5, Part 13 → 3, **Part 14 → 3**). Parts 1–13, 14A, 14B and 14C file 1 (`AI_PROMPTS.md`) are done. The next message is **`পরের ফাইল`** (14C file 2: `README.md`) ("দাও" = "give").
+
+1. Tell the chat: **"Part N দাও"** (e.g. `Part 15 দাও`).
+2. I give the code for that Part as a **new zip of the whole project** (`HadisVideokit-partN.zip`) plus the updated `HadisVideokit.md`.
+3. Upload the zip to the GitHub repo and run **Actions → Render Hadis Video** (mobile workflow below). No commands to run.
+4. When Actions turns green ✅, ask for the next Part.
+
+> ⚠️ If a Part errors, copy the red text of the failed Actions step and send it; only that file will be fixed.
+
+---
+
+## 📱 Mobile workflow — one single workflow: `render.yml`
+
+You have no PC, so **everything is done by one workflow (`.github/workflows/render.yml`)**: unzip, check, video render, Release. No local `npm install` / `npm run dev`.
+
+| action | What happens | Where the result is |
+|---|---|---|
+| `check` | Bundle + render an image of every composition (verification) | Artifacts → `check-images` |
+| `render` | Render the video (real after Part 14) | Artifacts → `videos` |
+| `render_and_release` | Render + upload to a GitHub Release | Releases tab |
+
+> 🔒 **Once you paste this `render.yml` by hand you never need to change it again.** All logic lives in `scripts/`, which updates through the zip. Part 14 puts the real render into `scripts/render.mjs`, which the workflow already calls with fixed arguments.
+
+### One-time setup
+
+1. Create a new GitHub repo (e.g. `hadis-videokit`). "Desktop site" in the phone browser helps.
+2. **Add file → Create new file** → name `.github/workflows/render.yml` (typing `/` creates the folder).
+3. Paste the `render.yml` code below, **Commit changes**.
+4. If you made `setup.yml` earlier, delete it.
+
+### After every Part (each time you get a new zip)
+
+1. **Add file → Upload files** → upload `HadisVideokit-partN.zip` and Commit.
+2. **Actions → Render Hadis Video → Run workflow** → `action = check`, `zip_file` = the zip name → Run.
+3. The workflow: unzips → commits → deletes the zip → `npm ci` → `typecheck` → renders **images** of the compositions.
+4. Open **Artifacts → `check-images`** at the bottom of the run page. The **Summary** lists the compositions.
+
+**Overwrite safety:** unzipping never deletes/replaces your `src/logo.jpg`, `src/google-play-badge.png` and files in `public/` (audio, SVG, SFX).
+**`.github/workflows/` files:** GitHub does not allow automatic changes; if a zip changes a workflow file, the Summary shows ⚠️ and you update it by hand.
+
+### `.github/workflows/render.yml` (copy-paste code)
+
+```yaml
+name: Render Hadis Video
+
+# One single workflow — everything is done from here (from the phone too):
+#   action = check               → verify (bundle + render images), Artifacts: check-images
+#   action = render              → render video, Artifacts: videos
+#   action = render_and_release  → render + upload to GitHub Release
+#
+# Uploaded a new zip? Write the zip's name in zip_file (e.g. HadisVideokit-part3.zip);
+# the workflow first unzips and commits the files, then does the job. zip_file empty = no unzip.
+#
+# ⚠️ This file uses all the scripts inside the kit (scripts/*.mjs), so in later Parts
+#    it need not change again; only the zip updates.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "কী করবে?"
+        required: true
+        default: "check"
+        type: choice
+        options:
+          - check
+          - render
+          - render_and_release
+      zip_file:
+        description: "রিপোতে আপলোড করা zip-এর নাম (যেমন HadisVideokit-part3.zip)। ফাঁকা = zip খোলা হবে না"
+        required: false
+        default: ""
+        type: string
+      hadis_id:
+        description: "ফাইলের কী (যেমন 0101 → hadis0101.wav)"
+        required: false
+        default: "0101"
+        type: string
+      hadis_bookname:
+        description: "কিতাবের নাম (ভিডিওতে দেখাবে)"
+        required: false
+        default: "সহীহ বুখারী"
+        type: string
+      hadis_number:
+        description: "হাদিস নম্বর (বাংলা সংখ্যায়, যেমন ১২৩)"
+        required: false
+        default: "১"
+        type: string
+      theme:
+        description: "থিম"
+        required: false
+        default: "emerald"
+        type: choice
+        options:
+          - emerald
+          - navy
+          - greenDayNight
+      orientation:
+        description: "ওরিয়েন্টেশন"
+        required: false
+        default: "portrait"
+        type: choice
+        options:
+          - portrait
+          - landscape
+          - both
+      quality:
+        description: "কোয়ালিটি"
+        required: false
+        default: "hd"
+        type: choice
+        options:
+          - hd
+          - 4k
+          - both
+      intro_seconds:
+        description: "Intro কত সেকেন্ড"
+        required: false
+        default: "3"
+        type: string
+      outro_seconds:
+        description: "Outro কত সেকেন্ড"
+        required: false
+        default: "4"
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: render-hadis
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unpack zip
+        if: ${{ inputs.zip_file != '' }}
+        env:
+          ZIP_FILE: ${{ inputs.zip_file }}
+        run: |
+          set -euo pipefail
+
+          if ! [[ "$ZIP_FILE" =~ ^[A-Za-z0-9._-]+\.zip$ ]]; then
+            echo "::error::zip ফাইলের নাম ঠিক নেই। শুধু ইংরেজি অক্ষর, সংখ্যা, . - _ এবং শেষে .zip থাকতে হবে (ফোল্ডার পাথ নয়)।"
+            exit 1
+          fi
+          if [ ! -f "$ZIP_FILE" ]; then
+            echo "::error::'$ZIP_FILE' রিপোর রুটে পাওয়া যায়নি। আগে Add file → Upload files দিয়ে আপলোড করো।"
+            exit 1
+          fi
+
+          # .github/workflows cannot be updated automatically (GitHub does not allow it) → excluded.
+          # Your own logo, badge and files in public/ are never overwritten.
+          unzip -o -q "$ZIP_FILE" \
+            -x ".github/workflows/*" "public/*" "src/logo.jpg" "src/google-play-badge.png" "__MACOSX/*" "*.DS_Store"
+          unzip -n -q "$ZIP_FILE" "public/*" "src/logo.jpg" "src/google-play-badge.png" || true
+
+          # Check whether the zip's workflow file matches the repo
+          {
+            echo "### 🔧 Workflow ফাইল যাচাই"
+            changed=0
+            for f in $(unzip -Z1 "$ZIP_FILE" | grep -E '^\.github/workflows/.*\.ya?ml$' || true); do
+              mkdir -p /tmp/wf && unzip -o -q "$ZIP_FILE" "$f" -d /tmp/wf
+              if [ ! -f "$f" ] || ! diff -q "/tmp/wf/$f" "$f" > /dev/null; then
+                echo "- ⚠️ \`$f\` নতুন/বদলেছে → GitHub-এ হাতে আপডেট করতে হবে (HadisVideokit.md দেখো)"
+                changed=1
+              fi
+            done
+            if [ "$changed" = "0" ]; then echo "- ✅ workflow ফাইল আপ-টু-ডেট"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          rm -f "$ZIP_FILE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "কোনো পরিবর্তন নেই।"
+          else
+            git commit -q -m "chore: unpack $ZIP_FILE"
+            git push
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Install Chrome system libraries
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            libnss3 libdbus-1-3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 \
+            libgbm1 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+            libasound2t64 libpango-1.0-0 libcairo2
+
+      # ---------- action = check ----------
+      - name: Bundle & render check images
+        if: ${{ inputs.action == 'check' }}
+        run: npm run check
+
+      - name: Upload check images
+        if: ${{ always() && inputs.action == 'check' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-images
+          path: out/*.png
+          if-no-files-found: warn
+          retention-days: 7
+
+      # ---------- action = render / render_and_release ----------
+      - name: Render videos
+        if: ${{ startsWith(inputs.action, 'render') }}
+        env:
+          HADIS_ID: ${{ inputs.hadis_id }}
+          HADIS_BOOKNAME: ${{ inputs.hadis_bookname }}
+          HADIS_NUMBER: ${{ inputs.hadis_number }}
+          THEME: ${{ inputs.theme }}
+          ORIENTATION: ${{ inputs.orientation }}
+          QUALITY: ${{ inputs.quality }}
+          INTRO_SECONDS: ${{ inputs.intro_seconds }}
+          OUTRO_SECONDS: ${{ inputs.outro_seconds }}
+        run: |
+          node scripts/render.mjs \
+            --id "$HADIS_ID" \
+            --book "$HADIS_BOOKNAME" \
+            --number "$HADIS_NUMBER" \
+            --theme "$THEME" \
+            --orientation "$ORIENTATION" \
+            --quality "$QUALITY" \
+            --intro "$INTRO_SECONDS" \
+            --outro "$OUTRO_SECONDS"
+
+      - name: List rendered files
+        if: ${{ startsWith(inputs.action, 'render') }}
+        run: |
+          {
+            echo "### 🎬 রেন্ডার হওয়া ভিডিও"
+            ls -lh out/*.mp4 | awk '{print "- `" $9 "` — " $5}'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload videos
+        if: ${{ startsWith(inputs.action, 'render') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: videos
+          path: out/*.mp4
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      - name: Create GitHub Release
+        if: ${{ inputs.action == 'render_and_release' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HADIS_ID: ${{ inputs.hadis_id }}
+          HADIS_BOOKNAME: ${{ inputs.hadis_bookname }}
+          HADIS_NUMBER: ${{ inputs.hadis_number }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          TAG="hadis${HADIS_ID}-run${RUN_NUMBER}"
+          gh release create "$TAG" out/*.mp4 \
+            --title "${HADIS_BOOKNAME} নং : ${HADIS_NUMBER}" \
+            --notes "ইসলামী বিশ্বকোষ ও আল হাদিস S2 — hadis${HADIS_ID}"
+```
+
+> ℹ️ Only the comments above are translated. Descriptions, error messages and the Release title inside the YAML stay in Bengali so that the file is identical to the one already in your repo.
+> 🧪 The Chrome-library install step could not be run in my environment (browser download blocked), so your first run is its real test. If it fails, copy the red text and send it.
+> 📌 **Contract with Part 14:** the workflow passes exactly `--id --book --number --theme --orientation --quality --intro --outro` (all as strings; the numbers/seconds may be empty or have English/Bengali digits), expects videos at `out/*.mp4` (`if-no-files-found: error`), and a non-zero exit code on any error.
+
+---
+
+## ✅ Progress tracker
+
+| Part | Topic | Status |
+|---|---|---|
+| 1 | Project setup and config | ✅ |
+| 2 | Types, constants, Zod schema + mobile verify workflow | ✅ |
+| 3 | 3 themes and fonts + unified `render.yml` | ✅ |
+| 4 | Bengali digits and input normalizer | ✅ |
+| 5 | Data loader and calculateMetadata | ✅ |
+| 6 | Layout + background (with fireflies) | ✅ |
+| 7 | Logo and header | ✅ |
+| 8 | Intro scene | ✅ |
+| 9A–9L | Animated SVG stage (sanitize, sync, load, `AnimatedSvg`, picker, inventory, `FallbackSvg`, `SvgStage`, cross-fade) | ✅ |
+| 10 | Animated colorful caption | ✅ |
+| 11 | Audio and SFX engine | ✅ |
+| 12A–12E | Outro scene: `outroPlan.ts`, `PlayBadge.tsx`, `OutroScene.tsx`, `OutroPreview` | ✅ |
+| 13A–13C | `MainScene.tsx`, `HadisVideo.tsx` + final `Root.tsx`, `HadisVideoPreview` + sample SFX | ✅ |
+| **14A** | `scripts/lib/renderPlan.mjs`: argument parsing, validation, job list, output names, file pre-checks, `--dry-run` + pure cases | ✅ Done — `renderPlan.mjs` ✅ · `test-render-plan.mjs` ✅ (65 cases) |
+| **14B** | `scripts/render.mjs`: the real bundle + `selectComposition` + `renderMedia` loop (HD/4K, both orientations, concurrency/crf, errors, progress) | ✅ Done — flow proven with stand-in modules; first real render = your GitHub run |
+| **14C** | `AI_PROMPTS.md` (3 prompts) + `README.md` (usage) | 🔄 In progress — `AI_PROMPTS.md` ✅ · `README.md` ⬜ |
+| 15 | Final end-to-end test and README (troubleshooting, time estimates) | ⬜ Pending |
+
+> When a Part (or sub-part) finishes, ⬜ becomes ✅ and a short "done note" is added at the end of that Part.
+
+---
+
+## 🧭 Step 0: Core decisions of the kit (all Parts follow these)
+
+### Video structure
+
+| Section | Time | Contents |
+|---|---|---|
+| **Intro** | 3 seconds (changeable) | Round logo, "ইসলামী বিশ্বকোষ ও আল হাদিস S2", "আজকের হাদিস", "(book name) নং : (number)" |
+| **Main** | Length of the `.wav` | Top: logo + app name + Today's Hadith + book/number. Middle: Animated SVG. Bottom: Animated colorful caption. Audio + SFX |
+| **Outro** | 4 seconds (changeable) | "আজই প্লে স্টোর থেকে ইনস্টল করুন:" + round logo + app name + animated Google Play badge |
+
+### Format and resolution
+
+Compositions are always designed at the base size; for 4K Remotion's `--scale 2` enlarges them (one code base, design never breaks).
+
+| Orientation | Base (HD) | 4K (scale=2) |
+|---|---|---|
+| 9:16 (Portrait) | 1080 × 1920 | 2160 × 3840 |
+| 16:9 (Landscape) | 1920 × 1080 | 3840 × 2160 |
+
+FPS = **30**.
+
+### GitHub Actions inputs (core decision)
+
+| Input | Example | Purpose |
+|---|---|---|
+| `action` | `check` / `render` / `render_and_release` | What to do |
+| `zip_file` | `HadisVideokit-part3.zip` | Unzip a new zip (empty = do not unzip) |
+| `hadis_id` | `0101` | **Only for finding files** → `hadis0101.wav`, `hadis0101_timestamp.json` |
+| `hadis_bookname` | `সহীহ বুখারী` | Book name shown in the video |
+| `hadis_number` | `১২৩` | Hadith number (Bengali digits; English digits are converted by the code) |
+| `theme` | `emerald` / `navy` / `greenDayNight` | Theme |
+| `orientation` | `portrait` / `landscape` / `both` | 9:16 / 16:9 |
+| `quality` | `hd` / `4k` / `both` | Resolution |
+| `intro_seconds` / `outro_seconds` | `3` / `4` | Intro and Outro duration |
+
+10 inputs in total (GitHub's limit). The video shows **"সহীহ বুখারী নং : ১২৩"**. **One hadith per run** (run separately for several).
+
+### File naming rule
+
+```
+hadis<hadis_id>.wav
+hadis<hadis_id>_timestamp.json
+Example: hadis0101.wav, hadis0101_timestamp.json
+```
+The code does not analyse the meaning of `hadis_id`; it is only a key to match file names.
+
+### Repo structure (final)
+
+```
+hadis-videokit/
+├─ .github/workflows/render.yml   # the one workflow (unzip + verify + render + Release)
+├─ public/                        # Remotion staticFile() reads from here
+│  ├─ hadis/
+│  │  ├─ hadis0101.wav, hadis0101_timestamp.json
+│  │  ├─ hadis0000.wav (6 s silent sample) + hadis0000_timestamp.json   # for verification, may be deleted
+│  │  ├─ hadis0000same_timestamp.json   # dev sample (cross-fade cells); may be deleted with hadis0000
+│  │  └─ hadis0000gap_timestamp.json    # dev sample (gap + tail); may be deleted with hadis0000
+│  ├─ svg/                        # svg1.svg, svg2.svg (samples), svg3.svg ...
+│  ├─ audio/                      # intro.wav, outro.wav — Intro/Outro voice (audio only, no captions) — Part 14C-audio
+│  └─ sfx/                        # whoosh.mp3 (sample, synthetic 0.9 s; replace with your own), pop.mp3, chime.mp3 ...
+├─ src/
+│  ├─ logo.jpg, google-play-badge.png (1600×474), index.ts, Root.tsx, HadisVideo.tsx
+│  ├─ types.ts, constants.ts, themes.ts, fonts.ts, assets.d.ts
+│  ├─ lib/        # dayNight, sky, useNightFactor, bnDigits, displayText, loadHadis, timing, useLayout, fitText,
+│  │              # useSfxSrc, introOutroAudio, useIntroOutroAudio, svgSanitize, svgSync, svgLoad, svgPicker, svgInventory, svgStage, svgTransition,
+│  │              # captionWords, audioPlan, outroPlan, sceneFade
+│  ├─ components/ # Background(+DayNightSky, Fireflies), Header, Logo, Ribbon, FitText, AnimatedSvg, FallbackSvg,
+│  │              # SvgStage, Caption, HadisAudio, SfxPlayer, IntroOutroAudio, PlayBadge
+│  ├─ scenes/     # IntroScene, MainScene, OutroScene
+│  └─ dev/        # *Preview / *Check images + pure *Cases files (ThemePreview, DataCheck, BackgroundPreview,
+│                 # HeaderPreview, IntroPreview, SvgSanitizeCheck, SvgSyncPreview, AnimatedSvgPreview, SvgPickerCheck,
+│                 # SvgInventoryCheck, SvgStagePreview, CaptionPreview, AudioPreview, AudioSmoke, OutroPreview,
+│                 # MainSceneCheck, HadisVideoPreview)
+├─ scripts/
+│  ├─ check.mjs                   # verification (render images) — done
+│  ├─ render.mjs                  # real render — Part 14B ✅ (replaced the stub)
+│  ├─ lib/renderPlan.mjs          # pure arguments/jobs/names maths — Part 14A, file 1 ✅
+│  └─ test-render-plan.mjs        # pure cases for renderPlan.mjs — Part 14A, file 2 ✅
+├─ AI_PROMPTS.md                  # Part 14C, file 1 ✅
+├─ remotion.config.ts, package.json, tsconfig.json
+└─ README.md                      # Part 14C, finished in Part 15
+```
+
+> You wanted SVGs under `svg/svg1…`. In Remotion static files must live in `public/`, so the path is `public/svg/svg1.svg`.
+
+### Timestamp JSON schema (tell the AI to produce exactly this format)
+
+Book name/number are **not** here (they come from the workflow inputs).
+
+```json
+{
+  "language": "bn",
+  "segments": [
+    {
+      "id": 1,
+      "start": 0.0,
+      "end": 3.4,
+      "text": "নিশ্চয়ই সকল আমল নিয়তের উপর নির্ভরশীল",
+      "words": [
+        { "word": "নিশ্চয়ই", "start": 0.0, "end": 0.7 },
+        { "word": "সকল", "start": 0.7, "end": 1.1 }
+      ],
+      "svg": "svg1",
+      "sfx": { "name": "whoosh", "volume": 0.6 }
+    }
+  ]
+}
+```
+
+Rules:
+- `start`/`end` are in seconds, measured **from the start of the `.wav`** (the code adds the Intro offset itself).
+- `words` is optional (if absent, the segment time is split equally). `svg` optional (if absent, svgs rotate serially). `sfx` optional.
+- Keep a segment under **~25 words** (longer text is clipped with "…" at the minimum font).
+
+### Animated SVG rules (very important)
+
+Remotion renders frame by frame, so ordinary CSS/SMIL animation may not play correctly. Solution (built in Part 9): inline the SVG and set the time on every frame with the **Web Animations API + SMIL `setCurrentTime`**. Conditions for the SVG you ask the AI to make:
+- `viewBox="0 0 1000 1000"`, background **transparent**
+- Animation only by **CSS `@keyframes`** or **SMIL** (`<animate>`, `<animateTransform>`, `<animateMotion>`, `<set>`)
+- **No `<script>`, no external image/font, no `on…=` attributes**
+- Loop length 2–6 s, `infinite`/`repeatCount="indefinite"`, durations that divide the loop length (2, 3, 6 s)
+- SMIL must be **time based** (`begin="0s"`, `begin="-2s"`, `begin="id.end"`); never `click`/`indefinite`/`accessKey`
+- Style with **classes/ids only — no bare element selectors** (`circle{…}` leaks to other inline SVGs); ids/keyframe names written inside the SVG only (the code prefixes them)
+- File names `svg1.svg`, `svg2.svg`… (any `[A-Za-z0-9_-]+.svg` works; numbered ones rotate first; without gaps — the render-time probe stops at the first missing number)
+- Colours visible on all 3 themes: white/golden/bright green-teal; avoid pure black
+- **Islamic etiquette: no faces of animals/humans** — symbolic, geometric, nature, object-based drawings
+
+---
+
+## 🎨 Themes
+
+| ID | Name | Background | Specialty |
+|---|---|---|---|
+| `emerald` | Emerald Night | Dark green gradient | Golden accent, faint geometric pattern |
+| `navy` | Royal Navy | Dark blue-violet gradient | Sky-blue/white accent, slow star particles |
+| `greenDayNight` | Green Day & Night | Green sky, day → evening → night | **Firefly animation** 🌿✨ |
+
+`greenDayNight`: Intro = morning (soft sun, rays, clouds, very few fireflies) → Main slowly afternoon → dusk → night (`progress = frame / mainFrames`; sun sinks, moon + stars appear, fireflies increase) → Outro = deep night, full moon, twinkling stars, most/brightest fireflies. ~32 fireflies with fixed `random(seed)` positions (same every render), almost invisible by day. Text always sits on a semi-transparent dark panel, so reading is never hard.
+
+---
+
+## ✅ Parts 1–8 — Done (what later Parts need)
+
+> No new packages after Part 2; `render.yml`/`package.json` unchanged by Parts 3–13.
+
+**Part 1 — setup.** `package.json` (`"type": "module"`), `tsconfig.json`, `remotion.config.ts` (jpeg, h264, overwrite), `.gitignore`, `src/index.ts`, `src/assets.d.ts`. Pinned: `remotion` + all `@remotion/*` = `4.0.541`; `react`/`react-dom` = `19.2.3`; `zod` = `4.3.6`; `typescript` = `5.9.3`. Scripts: `dev`, `render`, `typecheck`, `upgrade`, `check`.
+
+**Part 2 — types/constants/mobile verify.** `constants.ts`: `FPS=30`; `THEME_IDS`, `ORIENTATIONS`, `QUALITIES`; `BASE_SIZES`; `QUALITY_SCALE` (hd=1, 4k=2); output labels (`9x16`/`16x9`, `HD`/`4K`); default intro 3 s / outro 4 s (max 15 s); `TRANSITION_FRAMES=12`; Bengali texts (`APP_NAME`, `TAGLINE`, `OUTRO_TEXT`, `NUMBER_LABEL`); path helpers `hadisAudioPath`, `hadisTimestampPath`, `svgPath`, `sfxPath`; `VOICE_VOLUME=1`, `DEFAULT_SFX_VOLUME=0.4`. `types.ts`: `hadisVideoSchema`/`HadisVideoProps` (`hadisId`, `hadisBookname`, `hadisNumber`, `theme`, `orientation`, `introSeconds`, `outroSeconds`), `defaultHadisProps`, timestamp schemas, `parseTimestampFile()` (Bengali error where/what). `hadisId` and SFX names allow only English letters, digits, `-`, `_`. `scripts/check.mjs` (`npm run check`): bundle → every composition → `out/check-<ID>.png` → Summary; picks up new compositions itself; a `[HADIS_DATA]` error from `selectComposition` is listed as "⚠️ skipped" (run stays green), code bugs are ❌.
+
+**Part 3 — themes/fonts/`render.yml`.** `themes.ts` (`THEMES`, `getTheme`, `getThemeColors(themeId, nightFactor)`, `skyGradient`; 6 `captionColors` per theme; `greenDayNight` has `scenery` + `dusk` set), `dayNight.ts` (`computeNightFactor`: Intro 0, rises through Main to 0.95, 1 within the first 15 Outro frames), `fonts.ts` (Baloo Da 2 titles = `FONT_DISPLAY`, Hind Siliguri body = `FONT_BODY`; `bengali` + `latin` subsets; `loadFont()`), `ThemePreview`. All text on the dark `panelBg` panel.
+
+**Part 4 — Bengali digits.** `toBnDigits`, `cleanText` (removes invisible characters, keeps ZWJ/ZWNJ), `normalizeBookname`, `normalizeHadisNumber`, `buildHadisLabel(bookname, number)` → `"সহীহ বুখারী নং : ১২৩"`. Header and Intro both use it, so **`render.mjs` may pass the raw strings**.
+
+**Part 5 — data loader.** `loadHadis.ts`: `loadTimestamp`, `loadAudioSeconds`, `loadHadis`, **`calculateHadisMetadata`** (total frames + `width/height` at base HD), `useHadisTimestamp`, `HadisDataError` (message starts `[HADIS_DATA]`, includes the path searched). `timing.ts`: `computeTiming`, `timingFromConfig`, `buildFrameSegments`, `findActiveSegment`, `splitWords`, `secondsToFrames`. Total = `(intro + wav + outro) × 30`; Main = `ceil(wav × 30)` min 1; segments beyond the WAV are trimmed + warning. Sample `hadis0000.wav` (6 s) + JSON.
+
+**Part 6 — layout + background.** `useLayout()` / `computeLayout(width, height)`: Portrait top margin 3.5 % | header 18 % | SVG 43 % (826×826) | caption 24 % | bottom safe 8.5 %; Landscape: thin header 15 %, SVG left 768×768, caption right; `unit = min(w,h)/1080` (4K exactly 2×). `useNightFactor(timing, frameOffset?)`; `Background theme timing`; all animation from `useCurrentFrame()` + `random(seed)`.
+
+**Part 7 — logo/header.** `Logo`, `Header theme bookname number timing frameOffset`, `FitText` (+ `fitText.ts`; shrink → two lines → "…"). **Bengali top-clipping fix (14C-fix):** `FitText` keeps `0.34em` top / `0.2em` bottom padding inside its `overflow: hidden` box (cancelled by equal negative margins, so layout is unchanged) — Bengali matra / ই-kar / reph rise above the line box and used to be cut. Never put a tight `overflow: hidden` (or `clip-path`) directly around Bengali text without that room. `frameOffset` is essential inside Main (day/night colours).
+
+**Part 8 — Intro scene.** `IntroScene theme bookname number timing` (90-frame sequence compressed/held, last 12 frames fade-out, SFX `whoosh` frame 0 + `chime` frame 48, volume 0.4), `Ribbon`, `splitAppName()`, `useSfxSrc(name)` (`.mp3` then `.wav`, missing → `null` + one warning, no crash). `introSeconds = 0` draws nothing.
+
+### 👁️ Your own visual checks (run `action = check`, then Artifacts → `check-images`)
+
+> If a header is not all ✅, copy the red text/row and send it.
+
+| Image | Header / what to look for |
+|---|---|
+| first `check` run | Green ✅ (Chrome-library step is tested only on GitHub) |
+| `check-ThemePreview.png` | Bengali conjuncts unbroken, readable in all 5 panels |
+| `check-DataCheck.png` | 1080×1920, 390 frames = 13.00 s, 3 segments, Bengali correct |
+| `check-BackgroundPreview.png` | 6 Portrait + 4 Landscape tiles; coloured boxes; fireflies/moon/sun correct |
+| `check-HeaderPreview.png` / `check-IntroPreview.png` | logo round, text clear, long names inside |
+| `check-SvgSanitizeCheck.png` | "সব ✅ · 23/23" |
+| `check-SvgSyncPreview.png` | 7 ✅ rows; cells visibly different per frame |
+| `check-AnimatedSvgPreview.png` | "সব ✅ · 22/22"; 3 empty "fallback আসবে" boxes |
+| `check-SvgPickerCheck.png` | "সব ✅ · 26/26" |
+| `check-SvgInventoryCheck.png` | "সব ✅ · 27/27"; `source = probe` normal in `check` |
+| `check-SvgStagePreview.png` (1080×9189) | "সব ✅ · 57/57"; 8 cross-fade cells show two see-through stars; row 10 exactly **1** "কোনো SVG পাওয়া যায়নি" warning |
+| `check-CaptionPreview.png` (1080×4505) | "সব ✅ · 33/33"; active word glows; long text stays inside |
+| `check-AudioPreview.png` (1080×3270) | "সব ✅ · 33/33"; 3 timelines, nothing cut |
+| `check-AudioSmoke.png` | "AudioSmoke ✅", Intro 90 · Main 180 · Outro 120 frames |
+| `check-OutroPreview.png` (1080×5196) | "সব ✅ · 44/44"; badge sharp and unstretched with space around it, tap hint below, all inside the dark panel |
+| `check-MainSceneCheck.png` (1080×2240) | "সব ✅ · 13/13"; header top, SVG middle, caption bottom; no overlap |
+| `check-HadisPortrait.png` + `check-HadisLandscape.png` | The two real compositions at frame 45 (middle of the 90-frame Intro): round logo, two-line name, ribbon, "সহীহ বুখারী নং : ১"; correct 9:16 / 16:9 |
+| `check-HadisVideoPreview.png` (1080×4570) | "সব ✅ · 28/28" (16 rows + 12 `sceneFade` cases); 33 cells: Intro fades out → Main fades in (f96 half-visible) → caption + SVG → Outro with badge; greenDayNight f190 lighter than f340 |
+
+**Things only you can judge (Studio or first real video):** caption highlight matches the audio · voice starts right after the Intro, SFX on time and not too loud (default 0.4) · 10-frame voice fade does not cut the last syllable (`VOICE_FADE_OUT_FRAMES = 0` if it does) · panel blur looks fine (`PANEL_BLUR_UNITS = 0` if not) · SVG cross-fade blur fine (`BLUR_UNITS = 0` if not) · Intro ↔ Main fade smooth · sky smoothly day → night, fireflies drifting · scrubbing frames moves the SVG back and forth · Outro badge pulse/shine/tap tasteful, `chime` loudness, typewriter speed, readable on greenDayNight night (`OUTRO_FADE_OUT = false` keeps the CTA until the last frame).
+
+---
+
+## ✅ Part 9 (9A–9L) — Animated SVG stage — Done (what later Parts need)
+
+No new packages; `render.yml`/`package.json`/`check.mjs` unchanged. Part 13's `MainScene` uses `SvgStage`, not `AnimatedSvg` directly.
+⚠️ **React 19 rule (9D):** a new `{ __html }` object re-inserts the inner `<svg>` and the animation looks stuck — always memoize it (`AnimatedSvg` does).
+
+- **9A–9B `svgSanitize.ts`** (pure, never throws): `sanitizeSvg(text, { prefix })` → `{ svg | null, removed, warnings, viewBox, renamed, prefix }`; removes `<?xml>`, DOCTYPE, `<script>`, `<foreignObject>`, `iframe/object/embed/link`, `on…=`, `javascript:`/`data:text/html` hrefs, external `href`/`url(http…)`/`@import`; keeps everything else byte-for-byte; fixes root (`width/height` → 100 %, `viewBox` kept or built, default `0 0 1000 1000`); idempotent. `prefix` renames ids/classes/keyframes/`href="#x"`/`url(#x)`/SMIL `begin` refs defined by the SVG itself (two SVGs on screen need **different** prefixes). `cleanPrefix`, `describeRemoved`. Known limit: bare element selectors stay page-global (the AI prompt forbids them).
+- **9C–9D `svgSync.ts`:** `useSvgSync(ref, localFrame, contentKey, label?)` sets CSS animations (`getAnimations` list cached at first sync so a finished animation can be rewound) and SMIL (`pauseAnimations` + `setCurrentTime`) to the exact frame; stateless (same frame → same image, going backwards works); holds `delayRender` until the first sync. Samples `public/svg/svg1.svg` (CSS, 6 s) and `svg2.svg` (SMIL, 6 s) — your own files replace them.
+- **9E `svgLoad.ts`:** `useSvgSource(name)` → `loading | ready | missing` (holds `delayRender` while loading), `svgLoader`, `createSvgLoader`, `classifySvgResponse` (HTML returned by the Studio for a missing file = missing), 15 s timeout, successes cached / failures not, one warning per missing name.
+- **9F `AnimatedSvg`:** `<AnimatedSvg name size frame? prefix? loader? onReport? style? />` → load → sanitize → memoized inline → sync; draws `null` when loading/missing/invalid (the fallback is the stage's job).
+- **9G–9H `svgPicker.ts`:** `pickSvgNames(segments, available)` — written `svg` always used (if in folder), others rotate through the sorted list (skipping a repeat of the previous), N = 0 → all `null` + one warning, written name not in folder → `null` + one warning; `pickSvgReport`, `pickSvgDetailed`.
+- **9I `svgInventory.ts`:** `useSvgInventory()` → `{ names, count, source: "static" | "probe" | null, ready }`; first way `getStaticFiles()` (Studio), second way sequential probe `svg1, svg2…` (max 60, stops at first miss — **this is the real-render path**); `ready` must be true before `pickSvgNames` (avoids a false "no SVG" warning).
+- **9J `FallbackSvg`:** transparent geometric 8-point star (ring, two 45° squares, inner star, dot), frame-computed rotation/pulse, dark outline for any sky; used for `null`/missing/invalid.
+- **9K `svgStage.ts` + `SvgStage`:** `<SvgStage hadisId theme timing frameOffset? />` (dev props `size?`, `frame?`, `idScope?`, `inventory?`); wrapper exactly at `svgBox`; glow (`radial-gradient`, no blur) + disc stay still, SVG/fallback floats (`±6 × unit`, period 120 frames); draws nothing outside Main / before data; empty folder → fallback star + one warning. Pure: `activeSegmentIndex`, `segmentLocalFrame`, `floatOffset`, `stageGlow`.
+- **9L `svgTransition.ts`:** cross-fade starts at the new segment's start, lasts `min(12, ⌊len ÷ 3⌋)`; same neighbour SVG → no transition; old: opacity 1→0, scale 1→1.06, blur 0→6u; new: 0→1, 0.94→1, 6u→0; glow/disc never fade. `BLUR_UNITS = 0` switches blur off.
+
+---
+
+## ✅ Part 10 — Animated colorful caption — Done
+
+- **Files:** `captionWords.ts` (pure), `Caption.tsx`, dev `captionCases.ts` (24) + `CaptionPreview`.
+- **API:** `<Caption hadisId theme timing frameOffset? />`. `PANEL_BLUR_UNITS = 10` (0 if blur looks wrong), `CAPTION_PAD_UNITS = 36`. Draws nothing outside Main, in a gap, with no segments/words.
+- **Rules:** box enter 10 / exit 8 frames (shortened to ⌊len ÷ 3⌋), contiguous segments → no blink; active word from its start until `max(start+1, min(next start, end + 6))`, colour `(segment index + word index) mod 6`; font fit Portrait 66→40, Landscape 60→34 (×2 at 4K), "…" if still too long; all computed from the frame.
+
+---
+
+## ✅ Part 11 — Audio and SFX engine — Done
+
+- **Files:** `audioPlan.ts` (pure), `HadisAudio.tsx`, `SfxPlayer.tsx`, dev `audioCases.ts` (26), `AudioPreview`, `AudioSmoke`.
+- **Constants:** `VOICE_FADE_OUT_FRAMES = 10`, `SFX_FADE_OUT_FRAMES = 6`, `SFX_MAX_SECONDS = 4`, `OUTRO_SFX_NAME = "whoosh"`, `OUTRO_SFX_ENABLED = true`.
+- **API:** `<HadisAudio hadisId timing />`, `<SfxPlayer hadisId timing />` — **top level of `HadisVideo` only**. Voice starts at `introFrames`, lasts `mainFrames`. One SFX per segment with `sfx` at its start frame; volume default 0.4, clamped 0–1; invalid name → dropped + warning; cue never runs into the Outro; Outro `whoosh` at the first Outro frame; missing SFX files → silent + one ⚠️ per name (`Audio` is only mounted if the file exists).
+
+- **Intro/Outro voice (Part 14C-audio):** `public/audio/intro.wav` (5.44 s) and `public/audio/outro.wav` (5.52 s) play **only as audio** in Intro and Outro (captions exist only in Main). Files: `lib/introOutroAudio.ts` (pure: `fitSecondsToAudio`, `planIntroOutroAudio`, `introOutroGain`), `lib/useIntroOutroAudio.ts` (checks the files exist; `ready` flag + `delayRender`; missing file → `null`, no crash), `components/IntroOutroAudio.tsx` (`<Sequence><Audio/></Sequence>` at the top level of `HadisVideo`). Constants: `INTRO_AUDIO_PATH`, `OUTRO_AUDIO_PATH`, `INTRO_OUTRO_AUDIO_ENABLED = true` (set `false` for the old behaviour), `INTRO_OUTRO_AUDIO_VOLUME = 1`, `INTRO_OUTRO_AUDIO_FADE_OUT_FRAMES = 6`, `INTRO_OUTRO_AUDIO_TAIL_SECONDS = 0.1`. **Rules:** Intro voice starts at frame 0 and Outro voice at the end of Main; the scene length is `max(your seconds, audio length + 0.1 s)` (so the default 3 s / 4 s becomes ≈ 5.57 s / 5.63 s with these files, never above 15 s); `0` seconds still means "no scene, no voice"; `calculateHadisMetadata` (`loadHadis.ts`) returns the fitted `introSeconds`/`outroSeconds` in `props`, so `timingFromConfig` gets the same numbers. When a voice file exists, that scene's own SFX is switched off (Intro `whoosh`/`chime`; Outro `whoosh` via `SfxPlayer` option `outroSfx: false`, and the Outro `chime`) so nothing plays over the voice; without the file everything works as before. `DEFAULT_*_SECONDS`, `render.mjs`, `renderPlan.mjs` and `render.yml` are unchanged. The `.wav` files are in `public/`, so zip updates never overwrite them (`unzip -n`).
+---
+
+## ✅ Part 12 (12A–12E) — Outro scene — Done (what later Parts need)
+
+- **Files:** `outroPlan.ts` (pure; 33 cases in `outroCases.ts`), `PlayBadge.tsx`, `OutroScene.tsx` (+ optional `visibleText` prop added to `FitText`), dev `OutroPreview` (1080×5196, "সব ✅ · 44/44").
+- **API:** `<OutroScene theme timing nightFactor? frameOffset? frame? size? sfx? />` — `outroFrames = 0` → `null`; `frameOffset` defaults to `introFrames + mainFrames`; `frame?`/`size?`/`sfx?` are preview props. `<PlayBadge box tapBox? unit? outroFrames? frame? aspect? label? showTap? tapColor? nightFactor? debugOutline? style? />` + pure `playBadgeLook`. `outroPlan.ts`: `planOutro(frame, outroFrames)`, `outroLayout(computeLayout(w, h))`, `typewriterText/Units/Count`, `outroSpeed`, `sceneFadeFrames`, `settleSpring`, `pulseScale`, `shineLook/shineCenter`, `tapLook`, `badgeSize/badgeBox/badgeIsSharp/scaledBox`, `OUTRO_STEPS`.
+- **Timing (120 frames = 4 s):** logo 0 · name 8/14 · CTA typewriter 20–48 · badge bounce 50 · shine 66–90 · pulse from 80 (period 40, 1 → 1.06 → 1) · tap hint 86; fade-in/out `min(12, ⌊n × 25 %⌋)`; shorter Outros are compressed, < 6 frames = static finished scene, > 120 holds (pulse/tap keep looping).
+- **Fixed rules:** no background in the scene · all text/badge on the dark panel · all numbers from `outroPlan.ts`/`computeLayout` · closed-form from the frame · Google's clear space = ¼ of the badge height (`CLEAR_SPACE_RATIO`) · aspect `BADGE_ASPECT` (1600/474, no distortion) · 4K = exactly 2× HD · badge ≤ `BADGE_MAX_SCALE` 1.07 and never upscaled past the PNG's 1600 px (1280/1120 px wide at 4K → sharp) · typewriter never splits a conjunct (own cluster rule, no `Intl.Segmenter`) · badge image only through `PlayBadge`.
+- **Switches:** `OUTRO_CHIME_ENABLED` (chime plays at badge pop-in; missing file → silent + one ⚠️), `OUTRO_TAP_ENABLED`, `OUTRO_FADE_IN`, `OUTRO_FADE_OUT`, `BADGE_HALO_DAY/NIGHT`, `showTap`.
+- **Outro hand cursor polish (Cursor-update 2):** the hand now follows a slightly curved path (`CLICK_ARC`, outward bulge that vanishes at the badge) · it **hovers 3 frames** on the badge before pressing (`CLICK_PHASES.hover`) · the fingertip lands on the badge's **lower-right corner** (`CLICK_TARGET` = 0.92 / 0.84) so the "Play" text stays visible · the badge **shrinks to ≈ 0.97** while pressed and springs back (`BADGE_PRESS_SCALE`) · a soft **`tap` SFX** (`public/sfx/tap.wav`, `.mp3` also works; volume `OUTRO_TAP_VOLUME` = 0.3, switch `CLICK_SFX_ENABLED`, prop `tapSfx`) plays on the exact click frame of every cycle (`clickFrames()` in `outroPlan.ts`; it still plays when the Outro voice file exists; a missing file → silent + one ⚠️) · right after the click the badge gets a **glow** and a small **"ইনস্টল"** pill (`OUTRO_INSTALL_LABEL`, prop `installLabel`) that appears above the badge and fades out (`CLICK_AFTER_FRAMES` = 18). Timing at 120 frames: hand starts f76, arrives f88, hover f88–91, **click f95**, retreat done f111.
+
+---
+
+## ✅ Part 13 (13A–13C) — Assemble the main composition — Done (what Part 14 needs)
+
+- **Files:** `scenes/MainScene.tsx`, `HadisVideo.tsx`, `lib/sceneFade.ts` (pure; 12 cases in `dev/sceneFadeCases.ts`), final `Root.tsx`, `public/sfx/whoosh.mp3` (sample), dev `MainSceneCheck` (1080×2240, 13 rows), `HadisVideoPreview` (1080×4570, 28 rows, 33 cells).
+- **`MainScene`:** `<MainScene hadisId theme bookname number timing />` (`frameOffset` defaults to `timing.introFrames`); layers bottom → top: `SvgStage`, `Header`, `Caption`; transparent, no background.
+- **`HadisVideo`:** `<HadisVideo {...HadisVideoProps} />` = `HadisVideoView` (the drawing; takes `timing`, preview-only `size`/`idScope`/`audio`/`sfx`) + `useVideoConfig` → `timingFromConfig`. Layers: `Background` (real `timing`) → Intro / Main (wrapped in `MainFadeIn`) / Outro `Sequence`s, **each only when its frames > 0** (`planScenes`) → `HadisAudio` + `SfxPlayer` at the top level. Intro ↔ Main: Intro fades out itself, Main fades in over `min(12, ⌊Main ÷ 3⌋)` frames (opacity 0 → 1, scale 0.97 → 1; **no style outside the window**, so the caption's backdrop blur sees the real background); Intro 0 s → no fade; Main → Outro relies on the Outro's own fade-in.
+- **`Root.tsx` (final):** compositions **`HadisPortrait`** (1080×1920) and **`HadisLandscape`** (1920×1080), `component={HadisVideo}`, `schema={hadisVideoSchema}`, 30 fps, `calculateMetadata = forceOrientation(...)` (**the composition ID fixes the size**, a wrong `orientation` prop cannot change it); exports `forceOrientation`, `hadisPortraitDefaults`, `hadisLandscapeDefaults` (`hadisId: "0000"`, "সহীহ বুখারী", "১"). If the files are missing, `calculateMetadata` throws `[HADIS_DATA]`. All dev preview compositions stay (`SvgStagePreview`, `CaptionPreview`, … `HadisVideoPreview`) — **never render those as videos**.
+- **Fixed rules:** one `HadisVideo` for both orientations · scene `Sequence` only when frames > 0 · audio at top level · `MainScene`/`OutroScene` get no `frameOffset`/`frame`/`size`/`idScope` in the real video · no timing/size maths in components · no CSS animation, no `Math.random()`.
+- **Sample timing of `hadis0000` (Intro 90 · Main 180 · Outro 120 frames):** fade-in covers frames 90–101, segments 90–150 · 150–210 · 210–270, Outro starts at 270; whoosh planned at 90 (vol 0.6) and 270 (vol 0.4).
+- **Not testable in my environment (needs your GitHub run/Studio):** `npm ci`, `typecheck` of the whole project, the browser step (`renderStill`) of `check.mjs`, real fonts, real sound/timing.
+
+---
+
+## 🧩 Part 14 — Real `render.mjs` + AI prompt templates → split into 3 sub-parts (14A · 14B · 14C)
+
+**Goal:** put the real form into `scripts/render.mjs` which `render.yml` calls (a stub since Part 3), and ready-made templates for what to tell the AI to produce the files.
+
+**Files (whole Part 14):** `scripts/render.mjs`, `AI_PROMPTS.md`, `README.md` (+ small additions planned below: `scripts/lib/renderPlan.mjs` and `scripts/test-render-plan.mjs`, as the token-saving rule allows, like `outroPlan.ts` in 12A).
+
+Each sub-part delivers a zip of the whole project (`HadisVideokit-part14A.zip`, `…part14B.zip`, `…part14C.zip`) and the updated `HadisVideokit.md`. Messages: `Part 14A দাও`, `Part 14B দাও`, `Part 14C দাও`. **`render.yml` does not change and no new package is needed** (`@remotion/bundler` and `@remotion/renderer` are already dependencies since Part 2).
+
+**Token-saving rules (14A–14C):**
+- Each sub-part writes **only that sub-part's files**; earlier files are not rewritten (only small fixes).
+- In `HadisVideokit.md` only that sub-part's tick (⬜ → ✅) and short "done note" change.
+- If a sub-part still runs out of tokens it can be split further (e.g. 14B → 14B-1, 14B-2), as was done with 9I, 9K, 12, 13.
+
+> 🔒 **Fixed from earlier Parts (14A–14C must follow them):**
+> - Render **`HadisPortrait`** / **`HadisLandscape`** only (never a dev `*Preview`/`*Check`). Props: `hadisId`, `hadisBookname`, `hadisNumber`, `theme`, `orientation`, `introSeconds`, `outroSeconds`. The composition ID fixes the size; `orientation` in the props is set to match.
+> - 4K = Remotion `scale: 2` (CLI `--scale 2`); the composition stays HD. Total frames and `width/height` come from `calculateMetadata` (via `selectComposition({ inputProps })`) — never computed in the script.
+> - `calculateMetadata` throws `[HADIS_DATA] …` (with the searched path) when the `.wav` or JSON is missing/bad → turn it into a clear Bengali message before/while rendering; exit code ≠ 0 on any failure.
+> - Audio (voice + SFX) is part of the composition → no separate audio step. Missing SFX files only warn (silent), never stop a render.
+> - Workflow contract (see `render.yml` above): exactly the 8 arguments `--id --book --number --theme --orientation --quality --intro --outro`; values arrive as strings (Bengali text allowed; `--intro`/`--outro` may be empty); output must be `out/*.mp4`.
+> - `package.json` has `"type": "module"` → scripts are ESM `.mjs`; Node 22; no TypeScript at run time in `scripts/` (so shared constants are duplicated in `renderPlan.mjs` and a case cross-checks them against `src/constants.ts` text).
+> - Large renders: 4K and `greenDayNight` are heavy → lower concurrency at 4K; the workflow timeout is 350 min.
+
+| Part | Topic | Main risk caught here |
+|---|---|---|
+| **14A** | `scripts/lib/renderPlan.mjs`: parse + validate arguments, build the job list, output names, input-file pre-checks, `--dry-run`, + pure cases | Empty/odd inputs from the workflow, wrong names, missing files found too late |
+| **14B** | `scripts/render.mjs`: real bundle + `selectComposition` + `renderMedia` loop, HD/4K, both orientations, concurrency/crf, progress, errors | 4K memory, wrong size/scale, `[HADIS_DATA]` not explained, empty/zero-byte mp4 |
+| **14C** | `AI_PROMPTS.md` (3 prompts) + `README.md` (usage) | Prompts that give SVG/JSON the code rejects (script, faces, no gaps, schema) |
+
+> 🔗 **Dependency order:** 14A (pure plan) → 14B (render uses the plan) → 14C (docs/prompts).
+
+---
+
+### 🔹 14A — `renderPlan.mjs`: arguments, validation, job list, pre-checks ✅
+
+**Goal:** everything that does not need a browser, as pure functions proven in plain Node (same idea as 9K-1 / 12A).
+
+**Files:** `scripts/lib/renderPlan.mjs` (new), `scripts/test-render-plan.mjs` (new; pure cases, run in plain Node; prints ✅/❌ per case, exit code ≠ 0 on a failure). `scripts/render.mjs` stays the stub (14B). `render.yml`, `package.json`, `check.mjs` unchanged.
+
+**Details:**
+- **Arguments (the workflow sends exactly these):** `--id`, `--book`, `--number`, `--theme` (`emerald|navy|greenDayNight`), `--orientation` (`portrait|landscape|both`), `--quality` (`hd|4k|both`), `--intro`, `--outro`; optional extras for hand use/tests: `--concurrency`, `--crf`, `--out-dir` (default `out`), `--frames` (e.g. `0-59`, render only a slice for a quick test), `--dry-run` (print the plan, render nothing). Both `--key value` and `--key=value` work; unknown argument → clear Bengali error.
+- **Validation (clear Bengali messages naming the argument):** `id` only `[A-Za-z0-9_-]+` (same rule as `types.ts`, blocks `../`); `theme`/`orientation`/`quality` from the fixed lists; `intro`/`outro`: empty → default (3 / 4), English/Bengali/Arabic-Indic digits accepted, 0…15 (allow decimals like `2.5`), otherwise error; `book`/`number` cleaned like Part 4 (invisible characters removed, spaces collapsed, number digits → Bengali; mixed `"১২৩/ক"` kept; both empty → warning only, since the label then shows nothing).
+- **Job list:** `orientation both` × `quality both` → up to 4 jobs, fixed order (portrait before landscape, HD before 4K). Each job: `compositionId` (`HadisPortrait`/`HadisLandscape`), `inputProps` (the 7 props, `orientation` matching the ID), `scale` (1/2), `label`, **`outputFile` = `<outDir>/hadis<id>_9x16_HD.mp4`, `…_16x9_4K.mp4`** (labels from `constants.ts`), `concurrency` and `crf` defaults per job (4K lower concurrency; `--concurrency`/`--crf` override; clamped to sane ranges).
+- **Input pre-checks (before any bundle, so errors come in seconds):** `public/hadis/hadis<id>.wav` and `hadis<id>_timestamp.json` exist (non-empty), JSON parses (message names the file and the reason; the full schema check stays in `calculateMetadata`), `src/logo.jpg` and `src/google-play-badge.png` exist; informational (never fatal) notes: how many `public/svg/svg*.svg` and `public/sfx/*` files were found, and a ⚠️ line if no SVG exists (the fallback star will be used) or `public/sfx/` is empty (silent SFX).
+- **`--dry-run`:** prints the numbered job table (composition, size, scale, output, concurrency, crf, frames if known) and exits 0 without a browser.
+- **Pure cases (`test-render-plan.mjs`):** all argument forms, empty/Bengali-digit/`2.5`/`16`/`-1`/`abc` for intro/outro, bad id (`../x`, spaces), bad theme/orientation/quality, 1/2/4 jobs and their order/names, `orientation` in props matches the ID, scale 1/2, output names for the 4 sizes, concurrency lower at 4K and overridden by `--concurrency`, clamping, missing-file messages (using a temp folder), `--dry-run` writes nothing, the duplicated lists equal the lists in `src/constants.ts` (read as text), deterministic, never throws unexpected errors.
+
+**📂 File progress (14A is delivered one file at a time; the next file comes when you write `পরের ফাইল`):**
+- [x] ✅ File 1: `scripts/lib/renderPlan.mjs` — written; smoke-checked in plain Node (all-4-jobs table, error list, warnings, `checkInputs`)
+- [x] ✅ File 2: `scripts/test-render-plan.mjs` — all pure cases listed above (65 cases, all ✅ in plain Node, exit code 0; a failing case prints ❌ and exits 1)
+
+**✅ Checklist:**
+- [x] ✅ All pure cases ✅ in plain Node (file 2): `node scripts/test-render-plan.mjs`
+- [x] ✅ Every error message names the argument/file and says what to do (file 1)
+- [x] ✅ Output file names exactly match the pattern above (`out/*.mp4` for the workflow) — `hadis<id>_9x16_HD.mp4` … `_16x9_4K.mp4` (file 1)
+- [x] ✅ `--dry-run` works without a browser (`buildPlan` + `formatDryRun` + `checkInputs` write nothing — a case proves no folder is created; the flag itself is wired into `render.mjs` in 14B)
+- [ ] ⬜ Type-check of the project still passes (the new files are `.mjs` outside `src/`, so `tsc` is not affected; confirm on your next GitHub run)
+
+**📝 Done note — file 1 (`scripts/lib/renderPlan.mjs`, pure ESM, no TypeScript, no browser, never throws):**
+- **Exports 14B/the test use:** `buildPlan(argv)` → `{ ok, errors[], warnings[], plan }` (all errors reported together; `plan = { id, outDir, dryRun, jobs[] }`) · `parseArgs(argv)` (`--key value`, `--key=value`, `--dry-run`, empty value `""` allowed, unknown argument → Bengali error, repeated argument → warning, last wins) · `parseSeconds(raw, argName, default)` (empty → default; English/Bengali/Arabic-Indic digits; decimals `2.5`/`২.৫`/`2,5`; 0…15) · `checkInputs(plan, rootDir)` → `{ ok, errors, warnings, notes }` · `formatDryRun(plan)` (returns the numbered job table as a string; prints nothing) · `formatReport({errors,warnings,notes})` (adds the ❌/⚠️/ℹ️ prefixes) · `cleanText`, `toBnDigits` (copies of `bnDigits.ts`) · the copied constants (`THEME_IDS`, `ORIENTATIONS`, `QUALITIES`, `ORIENTATION_LABEL`, `QUALITY_LABEL`, `QUALITY_SCALE`, `BASE_SIZES`, defaults, `HADIS_DIR`, `SVG_DIR`, `SFX_DIR`) for the cross-check case.
+- **Defaults when a value is empty:** `theme emerald`, `orientation portrait`, `quality hd`, `intro 3`, `outro 4`, `out-dir out`, `crf 18`, `concurrency` HD 4 / 4K 2 (clamped 1–8; crf clamped 1–51, with a warning when clamped). A wrong non-empty `theme/orientation/quality` is an error (lists the allowed values). `id` empty → error; `id` not `[A-Za-z0-9_-]+` → error (blocks `../`). `book`/`number` cleaned like Part 4; both empty → warning only.
+- **Job:** `{ index, compositionId, orientation, quality, scale, width, height, label, inputProps (7 props, orientation = the job's), outputFile, concurrency, crf, frameRange|null }`; order portrait → landscape, HD → 4K; `width/height` here are only for the table (14B takes the real size from `selectComposition`). `--frames` accepts `0-59` or one number.
+- **`checkInputs`:** errors for missing/zero-byte `.wav`, missing/zero-byte/invalid-JSON timestamp (message includes the JSON parse reason), missing `src/logo.jpg` / `src/google-play-badge.png`; notes with the SVG/SFX counts; warnings for no SVG (fallback star) and empty `public/sfx/` (silent). Never fatal for the notes/warnings.
+- **For 14B (order):** `buildPlan(process.argv.slice(2))` → print `formatReport`, exit 1 on `!ok` → `checkInputs(plan, process.cwd())` → print `formatReport`, exit 1 on `!ok` (errors in seconds) → if `plan.dryRun` print `formatDryRun(plan)` and exit 0 → only then bundle + render.
+- **Not testable in my environment:** nothing browser-related is used here.
+
+**📝 Done note — file 2 (`scripts/test-render-plan.mjs`, 65 pure cases, plain Node, `✅`/`❌` per case, exit 1 on any failure):**
+- **Covered:** argument forms (`--key value`, `--key=value`, `=` inside a value, the workflow's 8 arguments with empty intro/outro, empty value followed by another `--arg`, `--dry-run` flag forms, unknown/stray arguments, repeated argument) · intro/outro (empty, Bengali/Arabic-Indic/Persian digits, `2.5`/`২.৫`/`2,5`, 0 and 15 accepted, 16 / -1 / abc / `1.2.3` rejected, argument name in the message) · id (`../x`, spaces, `/`, `.`, non-ASCII rejected; empty/missing rejected) · bad theme/orientation/quality with the allowed list · several errors reported at once · defaults for empty values · book/number cleaning (digits → Bengali, mixed `১২3/ক` kept, invisible characters removed, ZWJ kept, both-empty warning only) · 1/2/4 jobs, order, 4 output names, `--out-dir`, props `orientation` = composition ID, exactly 7 props, scale 1/2 and sizes, concurrency lower at 4K, overrides, clamping with warnings, `--frames` forms · input pre-checks in temp folders (all present, nothing present, zero-byte, broken JSON with reason, other id, no SVG/empty SFX = warnings only, `readme.txt` not counted, missing root) · `--dry-run` writes nothing + table content · `formatReport` prefixes · copied lists/numbers/labels/sizes/folders equal the text of `src/constants.ts` and the composition IDs exist in `src/Root.tsx` · deterministic, input argv not mutated, never throws on odd input, `plan = null` on errors, every error message is Bengali and non-trivial.
+- **How to run by hand (optional):** `node scripts/test-render-plan.mjs` (needs only Node; reads `src/constants.ts` and `src/Root.tsx` as text). `render.yml` does not call it, so it never blocks a render.
+- **Test-only detail to remember:** an empty `--book`/`--number` adds a warning, so cases that count warnings pass `--book x`.
+
+---
+
+### 🔹 14B — `render.mjs`: the real render ✅
+
+**Goal:** the script `render.yml` already calls now really renders the videos.
+
+**Files:** `scripts/render.mjs` (replaced; uses `scripts/lib/renderPlan.mjs`). Nothing else changes (`render.yml`, `package.json`, `check.mjs`, all `src/`).
+
+```bash
+node scripts/render.mjs --id 0101 --book "সহীহ বুখারী" --number ১ \
+  --theme greenDayNight --orientation both --quality hd
+```
+
+**Details:**
+- Flow: parse + validate + pre-checks (14A) → **bundle once** (`@remotion/bundler`, entry `src/index.ts`, `publicDir` = `public/`) → for each job in order: `selectComposition({ id, inputProps })` (gets total frames/size; catches `[HADIS_DATA]` and prints a clear Bengali explanation + the path) → `renderMedia({ codec: "h264", scale, crf, concurrency, inputProps, outputLocation, overwrite, jpegQuality, … })` → verify the file exists and is not zero bytes → next job. Jobs run **one after another** (memory safety); `out/` is created if missing; stale `out/*.mp4` of the same names are overwritten.
+- `--frames a-b` → `frameRange` (quick test render, output name gets a `_test` suffix so it never mixes with a real one).
+- **Progress:** one log line per ~10 % (job n/total, % , elapsed, ETA); at the end a table: file, size, duration, render time. Also appends the same table to `$GITHUB_STEP_SUMMARY` if set (the workflow's own "List rendered files" step stays).
+- **Memory/stability:** concurrency default from 14A (4K lower), browser/bundle closed between jobs, `chromiumOptions` safe defaults for GitHub runners (no extra Chrome-library change), clear message if a render fails with an out-of-memory-like error suggesting `quality = hd` or lower `--concurrency`; **exit code 1** on any failed job (already finished mp4s stay in `out/`).
+- **Warnings are kept, not fatal:** missing SVG/SFX/`[HADIS_DATA]` warnings printed once from the render logs (the components already warn once).
+- **Verification plan:** `--dry-run` for all argument combinations; a real short test render of `hadis0000` with `--frames 0-59` in `action = render` (needs your GitHub run — my environment has no browser; this is the first real proof) → a few-second mp4 in Artifacts `videos`; then a full `hadis0000` render for `portrait/hd`.
+
+**✅ Checklist:** arguments and output paths (`out/*.mp4`) match `render.yml` exactly — **`render.yml` need not change**.
+- [x] ✅ `--dry-run` correct for portrait / landscape / both × hd / 4k / both (all 9 combinations: exit 0, 1/1/2/1/1/2/2/2/4 jobs)
+- [x] ✅ Missing `.wav`/JSON gives a clear Bengali error before any heavy work, exit code 1 (also bad arguments → exit 1)
+- [ ] ⬜ `hadis0000` short test render (your GitHub run: `action = render`, see "How to test" below) → mp4 plays, correct size, audio present
+- [x] ✅ `render.yml`, `package.json`, `check.mjs`, all `src/` untouched
+- [ ] ⬜ Type-check passes (`scripts/*.mjs` are outside `tsc`; confirm on your next GitHub run)
+
+**📝 Done note — 14B (`scripts/render.mjs`, replaces the Part 3 stub; uses `scripts/lib/renderPlan.mjs`):**
+- **Flow:** `buildPlan` (errors → exit 1) → `checkInputs` against the project root (errors → exit 1, in seconds) → `--dry-run`: prints the job table and exits 0 before any browser → `ensureBrowser()` → **one** `bundle({ entryPoint: src/index.ts, publicDir: public/ })` → jobs **one after another**: `selectComposition({ serveUrl, id, inputProps })` → `renderMedia(...)` → file must exist and be > 0 bytes → next. The bundle's temp folder is removed at the end. Exit code **1** if any job failed (finished mp4s stay in `out/`); a failed job does not stop the others, **except** `[HADIS_DATA]` (same for every job → stops at once).
+- **`renderMedia` options used:** `codec h264`, `scale` (1 / 2), `crf` (default 18), `concurrency` (job value, lowered to the frame count if needed, because Remotion rejects more workers than frames), `frameRange`, `overwrite: true`, `imageFormat jpeg`, `jpegQuality 90`, `timeoutInMilliseconds 120000` (heavy SVG/fonts; default is 30 s), `chromiumOptions { enableMultiProcessOnLinux: true }` (no `gl` override, no Chrome-library change), `onProgress`.
+- **`--frames a-b`:** quick test render; the file name gets `_test` (`out/hadis0000_9x16_HD_test.mp4`, still matches `out/*.mp4`); a start beyond the video is an error naming the real frame count, an end beyond it is clamped with a ⚠️.
+- **Messages (Bengali):** `[HADIS_DATA]` → what happened + the exact reason/path from `calculateMetadata` + what to do; out-of-memory-like errors (`out of memory`, `ENOMEM`, `heap`, `Target closed`, `Page crashed`, `SIGKILL`, `Protocol error` …) → suggests `quality = hd` or a lower `--concurrency`; other errors → first line + full stack (our own known errors show no stack).
+- **Progress/summary:** one line per ~10 % (`[job/total] % | elapsed | ETA`); at the end a Markdown table (file, size, video length, render time) and, if failed, a list of failed jobs. The same Markdown (plan table, errors, final table) is appended to `$GITHUB_STEP_SUMMARY`; the workflow's own "List rendered files" step stays.
+- **How it was verified here (no browser, no npm install in my environment):** `node --check`; the flow with stand-in `@remotion/bundler` / `@remotion/renderer` modules in a temp copy: all 9 `--dry-run` combinations, missing `.wav`/JSON, bad arguments, a full 4-job run (names, sizes, table, summary file), `--frames` (suffix, start beyond, end clamp), a simulated 4K out-of-memory (the HD job still finishes, exit 1), a zero-byte output, a `[HADIS_DATA]` error (stops early). **Not proven here:** the real `bundle`/`renderMedia` calls, the exact option names against Remotion 4.0.541, real timing and memory — that is the first real proof.
+- **How to test (your GitHub run):** `render.yml` → `action = render`, `hadis_id = 0000` (the sample files, about 10 s of video), `orientation = portrait`, `quality = hd`. The workflow has no `--frames` input, so this is a full (short) render; `--frames` is for hand use only. Download the mp4 from Artifacts `videos` and check size, picture and sound. If it fails, send the red text of the step "Render videos" and only `render.mjs` will be fixed (a likely spot: a `renderMedia` option name).
+- **For 14C/15:** `README.md` must mention `--dry-run`, `--frames`, `--concurrency`, `--crf`, `--out-dir`, the `_test` suffix, and what to do on the out-of-memory message.
+
+---
+
+### 🔹 14C — `AI_PROMPTS.md` + `README.md` (usage) 🔄 (file 1 ✅ · file 2 ⬜)
+
+**Goal:** ready-made prompts so the daily files (JSON, SVG, SFX list) come out in the exact form the code accepts, plus the README usage part.
+
+**Files:** `AI_PROMPTS.md` (new), `README.md` (usage section; troubleshooting/time estimates are finished in Part 15). No code changes.
+
+**`AI_PROMPTS.md` (three prompts, each copy-paste ready; **changed on your request: the whole file is in English and works step by step, one prompt per file** — Prompt 2 = one prompt per SVG file, Prompt 3 = SFX list + one prompt per SFX file):**
+1. **Timestamp JSON generation** — from the hadith text + audio timing, schema-conforming JSON (exactly the Step 0 schema, with word-level timing): `start/end` in seconds from the start of the `.wav`, segments contiguous or with deliberate gaps, **each segment under ~25 words**, text copied exactly (no edits to hadith text), optional `svg` (`svg1…svgN`) and `sfx` (`name`, `volume` 0–1), output = JSON only, validated by `parseTimestampFile` rules (valid names `[A-Za-z0-9_-]`).
+2. **Animated SVG generation** — `svg1…svgN` for the segments, following the "Animated SVG rules" of Step 0 verbatim (viewBox 1000×1000, transparent, CSS/SMIL only, time-based SMIL, 2–6 s infinite loops, no script/external/on-events, classes/ids only, no bare element selectors, colours for all 3 themes, **no faces of humans/animals — geometric/nature/object symbols only**), one file per answer, numbered without gaps.
+3. **SFX list** — which names (`whoosh`, `pop`, `chime`, `ding`, `swoosh`), where to use each, loudness advice (default 0.4), royalty-free source suggestions; the note that **`public/sfx/whoosh.mp3` is only a synthetic sample — replace it with real royalty-free files named `whoosh`, `pop`, `chime`, `ding`, `swoosh`** (`.mp3` or `.wav`).
+
+**`README.md` (usage part):** what the kit is, one-time setup (`render.yml`), the daily workflow (below), file/folder rules, the 10 inputs, example run, where results appear (Artifacts / Release), "if the run fails" (copy the red text).
+
+**✅ Checklist:**
+- [x] ✅ Each prompt, answered literally, gives a file that passes the code (JSON through `parseTimestampFile` rules, SVG through `sanitizeSvg` with nothing removed) — checked in plain Node with samples built from the prompt examples (SVG: the real `svgSanitize.ts`; JSON: the schema rules re-implemented, because `zod` is not installed in my environment)
+- [x] ✅ The SFX prompt carries the "replace the sample `whoosh.mp3`" note
+- [ ] ⬜ README usage matches the real workflow inputs and file names (file 2)
+
+**📂 File progress (14C is delivered one file at a time):**
+- [x] ✅ File 1: `AI_PROMPTS.md` — written, English, step by step
+- [ ] ⬜ File 2: `README.md` (usage part; must also mention `--dry-run`, `--frames`, `--concurrency`, `--crf`, `--out-dir`, the `_test` suffix and the out-of-memory advice — see the 14B done note)
+
+**📝 Done note — file 1 (`AI_PROMPTS.md`, English, no code changes):**
+- **Structure:** golden rules → overview table of files and repo paths → **Prompt 1** (Steps 1.1 collect input · 1.2 prompt · 1.3 checklist · 1.4 save/upload) → **Prompt 2** (Step 2.0 plan the pictures, no file · 2.1 one prompt per SVG file `svg<N>.svg` · 2.2 a valid example · 2.3 checklist · 2.4 save/upload) → **Prompt 3** (3.0 names table · 3.1 where to use SFX, no file · 3.2 one prompt per SFX file: where to download legally · 3.3 checklist) → final upload checklist.
+- **Prompt 1 rules (match `types.ts`):** text copied exactly (joined segments = hadith text) · `start`/`end` seconds from the start of the `.wav`, `end > start`, sorted by `start` · < 25 words per segment (aim 8–18) · `words` only with real word-level times · `svg` = `svg<number>` ≤ SVG_COUNT · `sfx.name` ∈ `whoosh, pop, chime, ding, swoosh`, `volume` 0–1 (0.3–0.6), at most one per three segments, none on segment 1 · `id` optional · valid JSON, JSON only.
+- **Prompt 2 rules (match the "Animated SVG rules" + `sanitizeSvg` + `svgSync`):** root `<svg viewBox="0 0 1000 1000" xmlns=…>` with no width/height · transparent · CSS `@keyframes` or time-based SMIL only · forbidden: script, foreignObject, iframe/object/embed/link, external image/font, `@import`, `url(http…)`, `on…=`, `javascript:`, DOCTYPE, `<?xml?>` · 6 s loop, every duration divides 6 (2/3/6 s), infinite · `begin` only `0s`/`±Ns`/`id.end` · classes/ids only, **every class/id/keyframes name prefixed `svg<N>-`**, `transform-origin` in px · white/gold/bright green-teal/sky blue, no pure black · no faces or bodies of humans/animals (no hands, birds, fish either) · < 150 elements, < 30 KB, no text inside the SVG · files numbered without gaps (the render-time probe stops at the first missing number, max 60).
+- **Prompt 3 facts (match the code):** built-in uses — `whoosh` at the intro start and at Main → Outro, `chime` when the intro label appears; `pop`/`ding`/`swoosh` only via JSON; `.mp3` or `.wav`; missing file = silent, never an error; longer than 4 s is cut (`SFX_MAX_SECONDS`); default volume 0.4. **The note "replace the synthetic sample `public/sfx/whoosh.mp3` with real royalty-free files named `whoosh`, `pop`, `chime`, `ding`, `swoosh`" is in the file.** Prompt 3B tells the AI **not to invent download links** (only sources, licence type and search words).
+- **How it was verified here:** the SVG example inside the file went through the real `svgSanitize.ts` in plain Node (nothing removed, no warnings, `viewBox` kept, content unchanged except the root's `width/height 100%` that `sanitizeSvg` always adds; only class selectors; durations 6/3/3; loops infinite; SMIL `begin` time-based; all names prefixed) · the shipped `svg1.svg`/`svg2.svg` pass the same check · forbidden things (script, on-event, external href) are caught · a JSON sample built from the Prompt 1 format passes the schema rules; end ≤ start, bad `svg` name, bad `sfx` name, volume 1.5 and unsorted segments are rejected. **Not proven here:** how a given AI model actually answers — the first real answers should be run once through `action = render`.
+
+---
+
+## 🧩 Part 15 — Final end-to-end test, README and troubleshooting
+
+**Goal:** from the phone, render and download a real video with `render.yml`, verifying everything together.
+
+**Files:** `README.md` (troubleshooting + time estimates finished), small fixes if needed (if `render.yml` must change it will be said separately; the aim is that it need not).
+
+**Already built:** `render.yml` (10 inputs, `timeout-minutes: 350`, `concurrency`, Bengali inputs via `env`, Artifact upload `videos` 7 days `compression-level: 0`, Release via `gh release create`), real `render.mjs` (Part 14).
+
+**Final test plan:**
+1. `emerald / portrait / hd` with the `hadis0101` sample
+2. Same ID `navy / landscape / hd`
+3. `greenDayNight / both / hd` (verify day-night and fireflies)
+4. `greenDayNight / portrait / 4k`
+5. `render_and_release` once (do the files reach the Release)
+6. Deliberately remove a file and check the error message
+
+**README will contain:** time/memory each setting may need (4K and `greenDayNight` are heavy), Artifact size and Release alternative, what to do if Git LFS is needed.
+
+**✅ Checklist:** Actions → Run workflow → book name and Bengali number → download the `.mp4` from Artifacts → plays fine and shows the correct "book নং : number". 🎉
+
+---
+
+## 🔁 Your daily workflow (after the kit is finished)
+
+1. Pick a hadith from the app and make the audio → `hadis0101.wav`
+2. Have the AI (using `AI_PROMPTS.md`) make `hadis0101_timestamp.json`, `svg1…svgN.svg`, SFX list
+3. Upload to the repo (Add file → Upload files; keep folder paths): `public/hadis/hadis0101.wav`, `public/hadis/hadis0101_timestamp.json`, `public/svg/svg*.svg`, new SFX in `public/sfx/`
+4. **Actions → Render Hadis Video → Run workflow** → `action = render`, `hadis_id`, `hadis_bookname`, `hadis_number` (Bengali), theme, orientation, quality (leave `zip_file` empty)
+5. Download the video from Artifact/Release and upload it 🚀
+
+---
+
+## ⚠️ Things to know
+
+- **Islamic etiquette:** hadith/ayah text and translation must come from verified sources; no changes in captions.
+- **Repo size:** large `.wav` and videos piling up in Git make the repo heavy; Part 15's README gives Git LFS / old-file cleanup steps if needed.
+- **Google Play badge:** aspect ratio and clear space follow Google's guidelines (¼ of the badge height; never distorted) — built in Part 12.
+- **Remotion license:** free for personal/small teams; for commercial use as a company, check Remotion's license terms once.
+
+---
+
+## 📝 Change log
+
+**Version 2.53 → 2.54**
+- 🖼️ **Landscape Intro only:** the app name is now on **one line** (Portrait keeps two lines), and the app name + "আজকের হাদিস" ribbon + book label are **centered** in the text column (they were left-aligned in Landscape).
+- 🧩 **File changed (1 code file + this md):** `src/scenes/IntroScene.tsx` — `lines = isPortrait ? splitAppName(...) : [APP_NAME]` with `FitText maxLines={1}` in Landscape; Landscape card width `0.74 → 0.80` of the frame (text column ≈ 1022 px, so the one-line name fits at almost the full 66 px; `FitText` still shrinks it down to 55 % if a different app name is longer); `align` is always `"center"`, `textAlign="center"`, ribbon `alignSelf: "center"`. The logo stays on the left of the card, and the card itself stays centered in the frame.
+- 🔒 Nothing else changed: Portrait Intro, Main, Outro, the Bengali clipping fix (2.52), the Intro/Outro voice (2.53), timings, scripts, tests. `splitAppName` is kept (still used for Portrait). Not rendered here — please check the Landscape Intro in your next run.
+
+**Version 2.52 → 2.53**
+- 🔊 **Intro and Outro now play your voice files (audio only, no captions):** `inro.wav` (typo) → `public/audio/intro.wav`, `outro.wav` → `public/audio/outro.wav`.
+- 🧩 **New files:** `src/lib/introOutroAudio.ts`, `src/lib/useIntroOutroAudio.ts`, `src/components/IntroOutroAudio.tsx`, `public/audio/intro.wav`, `public/audio/outro.wav`. **Changed:** `src/constants.ts` (new constants at the end only), `src/lib/loadHadis.ts` (`loadVoiceSeconds`; `calculateHadisMetadata` fits intro/outro seconds to the voice and returns them in `props`), `src/HadisVideo.tsx` (mounts `IntroOutroAudio`; turns the scene SFX off when a voice file exists), this md.
+- ✅ **Checked:** TypeScript clean for the new/changed files; pure maths run in Node (3 s + 5.44 s → 167 frames, 4 s + 5.52 s → 169 frames, user 8 s stays 8 s, 0 stays 0, clamp 15 s, fade 1 → 0 over the last 6 frames). Not rendered here — the first real check is your GitHub run.
+- 🔒 Nothing else changed (the Bengali clipping fix of 2.52, all other `src/`, scripts, `render.yml`, `package.json`, tests, Part 15 plan).
+
+**Version 2.51 → 2.52**
+- 🔧 **Bug fix (not a font problem): the Bengali app name and book name were clipped at the top** in Intro, Main (Header) and Outro, and the Main caption was clipped at top and bottom. Cause: Bengali glyphs (matra, ই-kar, reph) rise above the line box, but `FitText` (`overflow: hidden`, line-height 1.18–1.3), the Header/Intro label pills (`overflow: hidden`), the Intro name mask (only 6 unit padding) and the Ribbon (`line-height: 1` + `clip-path`) cut them. The caption was clipped for a different reason: every word is `inline-block` with `0.05em` side padding, but the fit calculation measured plain text, so real text wrapped into more lines than estimated and the fixed-height box cut the first and last lines.
+- 🧩 **Files changed (6 code files + this md):** `src/components/FitText.tsx` (ascent/descent padding + equal negative margins; exported `ASCENT_PAD_EM = 0.34`, `DESCENT_PAD_EM = 0.2`; no padding below when wrapped to avoid showing the next line), `src/components/Header.tsx` (label pill `overflow: visible`), `src/components/Ribbon.tsx` (`lineHeight` 1 → 1.4; height still set by `height`), `src/scenes/IntroScene.tsx` (name mask padding 0.4em / 0.3em with equal negative margins; slide-in offset 110 % → 150 %; label pill `overflow: visible`), `src/scenes/OutroScene.tsx` (name line `overflow: visible`), `src/components/Caption.tsx` (measuring span now uses the same `inline-block` words; after the estimate it measures the real height and shrinks the font by 6 % steps, down to 75 % of `captionMin`, until it fits — stable inside a segment, so no jitter; render-safe), `src/lib/captionWords.ts` (`LINE_FILL` 0.92 → 0.86).
+- 🔒 Nothing else changed: layouts, colours, timings, audio, SVG stage, `outroPlan.ts`, `render.mjs`, `render.yml`, `package.json`, tests. `fitCaption` stays pure and its existing cases still hold (checked: 500 px → 1 line at 66 px; 5000+ px → shrinks and wraps). Part 14C file 2 (`README.md`) is still next.
+
+**Version 2.50 → 2.51**
+- 🧩 **Part 14C, file 1 of 2 delivered:** `AI_PROMPTS.md` — **English, step by step, one prompt per file** (as requested): Prompt 1 timestamp JSON; Prompt 2 plan + one prompt per `svg<N>.svg`; Prompt 3 SFX plan + one prompt per SFX file; checklists, valid SVG example, final upload checklist, the "replace the sample `whoosh.mp3`" note. The 14C plan said "Bengali + English headings"; changed to all-English on request. Header, tracker, file tree, 14C section (file progress, checklist ticks, done note) and the continue line updated; next is `পরের ফাইল` (14C file 2: `README.md`). No code changed.
+
+**Version 2.49 → 2.50**
+- ✅ **Part 14B delivered:** the real `scripts/render.mjs` (replaces the stub; bundle once, jobs one after another, `selectComposition` + `renderMedia`, `--frames` test renders with `_test` suffix, progress every ~10 %, final table + `$GITHUB_STEP_SUMMARY`, Bengali explanations for `[HADIS_DATA]` and out-of-memory errors, exit code 1 on any failed job). Header, tracker, 14B section (checklist ticks, done note), file tree and the continue line updated; next is `Part 14C দাও`. Nothing else changed (`render.yml`, `package.json`, `check.mjs`, `renderPlan.mjs`, all `src/`).
+
+**Version 2.48 → 2.49**
+- ✅ **Part 14A finished (file 2 of 2):** `scripts/test-render-plan.mjs` (65 pure cases, all pass in plain Node). Header, tracker, 14A section (file progress, checklist ticks, done note), file tree and the continue line updated; next is `Part 14B দাও`. Nothing else changed.
+
+**Version 2.47 → 2.48**
+- 🧩 **Part 14A, file 1 of 2 delivered:** `scripts/lib/renderPlan.mjs` (argument parsing, validation, job list, output names, input pre-checks, `--dry-run` table, report formatter). `scripts/test-render-plan.mjs` (file 2) came next. Header, tracker, 14A section (file progress, checklist ticks, done note) and the continue line updated. Nothing else changed (`render.mjs` stub, `render.yml`, `package.json`, `check.mjs`, all Parts 1–13 code).
+
+**Version 2.46 → 2.47**
+- 🔀 **Part 14 split into 3 sub-parts:** 14A (`scripts/lib/renderPlan.mjs` + `scripts/test-render-plan.mjs`: argument parsing, validation, job list, output names, input pre-checks, `--dry-run`, pure cases), 14B (the real `scripts/render.mjs`: bundle + `selectComposition` + `renderMedia`, HD/4K, both orientations, concurrency/crf, progress, errors), 14C (`AI_PROMPTS.md` three prompts + `README.md` usage). Tracker, file tree, header, "How to use" and continue line updated. **All original Part 14 details (arguments, output names, `--scale 2`, concurrency/crf, missing-file error, the three prompts, Islamic etiquette rule, `render.yml` unchanged) are kept** and spread across 14A–14C.
+- 🧹 **Completed Parts condensed:** the long done notes, checklists, "how it was verified" notes, preview-image details and the old change log (2.37 – 2.46) of Parts 9–13 were removed; every API, fixed rule, constant, number and "what Part 14 needs" item is kept (Parts 9, 12, 13 are now one section each). The visual-check table was shortened to image + header + one thing to look at.
+- 🔧 Small deliberate additions (planned, not yet built): `renderPlan.mjs` + `test-render-plan.mjs`, optional `--dry-run`, `--frames`, `--concurrency`, `--crf`, `--out-dir`; SVG rules now also say "no gaps in numbering".
+- 🔒 Nothing else changed: all code of Parts 1–13, Part 15 plan, Step 0 decisions, themes, JSON schema, `render.yml`, `package.json`, `check.mjs`.
+
+**Older history:** 2.12 condensed Parts 1–8 and made this English edition a separate file (`HadisVideokit_EN.md`; the Bengali one is `HadisVideokit.md`); 2.13 – 2.46 added Parts 9A – 13C (details now live in the "Done" sections).
+
+---
+
+*To continue, write: **"পরের ফাইল"** (= "next file" — 14C file 2: `README.md`)*
