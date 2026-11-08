@@ -19,6 +19,11 @@ name: Render Hadis Video
 #                  Intro → হাদিস শুরু থেকে। অংশটা আসে hadis<id>_timestamp.json-এর "teaser": {"start":..,"end":..} থেকে
 #                  (JSON-এ না থাকলে টিজার হবে না)। টিক তুলে দিলে টিজার বন্ধ।
 #   ক্রম: [ Hook ][ Teaser ][ Intro ][ Main ][ Outro ]
+#
+# 🖼️ থাম্বনেইল (নতুন ইনপুট):
+#   thumbnail    = টিক থাকলে (ডিফল্ট) ভিডিওর পাশে 4K থাম্বনেইল: Hook + Teaser + Intro এক ছবিতে।
+#                  ওরিয়েন্টেশন অনুযায়ী (9:16 → ২১৬০×৩৮৪০, 16:9 → ৩৮৪০×২১৬০), PNG + JPG; কোয়ালিটি ইনপুট যাই হোক সবসময় 4K।
+#                  Artifacts: thumbnails; render_and_release হলে Release-এও যায়।
 
 on:
   workflow_dispatch:
@@ -101,6 +106,11 @@ on:
         type: string
       teaser:
         description: "অডিও টিজার (cold open): হুকের পরে হাদিসের শক্তিশালী অংশ আগে বাজবে (JSON-এ teaser থাকলে)"
+        required: false
+        default: true
+        type: boolean
+      thumbnail:
+        description: "4K থাম্বনেইল (Hook + Teaser + Intro এক ছবিতে, PNG + JPG) বানাবে"
         required: false
         default: true
         type: boolean
@@ -216,6 +226,7 @@ jobs:
           HOOK_TEXT: ${{ inputs.hook_text }}
           HOOK_SECONDS: ${{ inputs.hook_seconds }}
           TEASER: ${{ inputs.teaser }}
+          THUMBNAIL: ${{ inputs.thumbnail }}
         run: |
           node scripts/render.mjs \
             --id "$HADIS_ID" \
@@ -228,7 +239,8 @@ jobs:
             --outro "$OUTRO_SECONDS" \
             --hook-text "$HOOK_TEXT" \
             --hook-seconds "$HOOK_SECONDS" \
-            --teaser "$TEASER"
+            --teaser "$TEASER" \
+            --thumbnail "$THUMBNAIL"
 
       - name: List rendered files
         if: ${{ startsWith(inputs.action, 'render') }}
@@ -236,6 +248,11 @@ jobs:
           {
             echo "### 🎬 রেন্ডার হওয়া ভিডিও"
             ls -lh out/*.mp4 | awk '{print "- `" $9 "` — " $5}'
+            if ls out/*_thumbnail_* > /dev/null 2>&1; then
+              echo ""
+              echo "### 🖼️ থাম্বনেইল (4K)"
+              ls -lh out/*_thumbnail_* | awk '{print "- `" $9 "` — " $5}'
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload videos
@@ -248,6 +265,17 @@ jobs:
           retention-days: 7
           compression-level: 0
 
+      - name: Upload thumbnails
+        if: ${{ startsWith(inputs.action, 'render') && inputs.thumbnail }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: thumbnails
+          path: |
+            out/*_thumbnail_*.png
+            out/*_thumbnail_*.jpg
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Create GitHub Release
         if: ${{ inputs.action == 'render_and_release' }}
         env:
@@ -258,6 +286,8 @@ jobs:
           RUN_NUMBER: ${{ github.run_number }}
         run: |
           TAG="hadis${HADIS_ID}-run${RUN_NUMBER}"
-          gh release create "$TAG" out/*.mp4 \
+          shopt -s nullglob
+          FILES=(out/*.mp4 out/*_thumbnail_*.png out/*_thumbnail_*.jpg)
+          gh release create "$TAG" "${FILES[@]}" \
             --title "${HADIS_BOOKNAME} নং : ${HADIS_NUMBER}" \
             --notes "ইসলামী বিশ্বকোষ ও আল হাদিস S2 — hadis${HADIS_ID}"
