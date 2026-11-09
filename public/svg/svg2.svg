@@ -1,102 +1,120 @@
-<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTo2ZjA3MjlmNi01ZTVmLTQ5ZWUtOWRjNC03ZjEzNmI1MmRmZTEAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaPDahaSJhcaAqNrA8QuLhUcAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDo3YzVmYjIwZS0yMDc1LTQ5YzctYTQzMi1iMWMyMmNjZWI0MGVscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoFHrSOtYYfxBYmbUjD9INHwAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggG+c/IC1wfr3EOnscrryHGNng5K/bmShekGdL/BhpgiykZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaE2LMIMHueODesRV5dWzHMsAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCCyubybPH/Ujp4gt0iM0evf216Kc5B80ubYuENh4RjudWRuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBh/Zmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOjZmMDcyOWY2LTVlNWYtNDllZS05ZGM0LTdmMTM2YjUyZGZlMS9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmJhNWMxM2JlLTczNzAtNDdiMi1iMTc0LTA1ZmJhYTg5ZmM3M3JjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCAb5z8gLXB+vcQ6exyuvIcY2eDkr9uZKF6QZ0v8GGmCLKJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggHb4+Rm0WuKZUh9l7viP+eN+oeYxEaNbIGgMqPA+m40GiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggGMj9aoSN2DZo4Qw1gmY1Xak5OSddFLw8t2k7q+fCiJ90Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQHcqMVELIzmn1URkq2npzcYKT2kfSqSLmkM3A0alNTGG9fngKP3onx64gXrzTPEzFrMYOLdrc2ziXn7JBVPd6ao=</c2pa:manifest></metadata>
   <defs>
     <radialGradient id="svg2-glow" cx="50%" cy="50%" r="50%">
       <stop offset="0" stop-color="#fff6c8" stop-opacity="0.85"/>
-      <stop offset="1" stop-color="#f5d77a" stop-opacity="0"/>
+      <stop offset="0.6" stop-color="#8fd3ff" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#8fd3ff" stop-opacity="0"/>
     </radialGradient>
     <style>
-      /* Stage 1 (0-2s): the minbar steps rise */
+      /* Stage 1: মুদ্রা ও ক্যামেরার লেন্স (শুরুতে ছোট থেকে বড় হয়) */
       @keyframes svg2-k1 {
-        0%   { transform: scale(0.65); opacity: 0.7; }
-        30%  { transform: scale(1);    opacity: 1; }
-        90%  { transform: scale(1);    opacity: 1; }
-        100% { transform: scale(0.65); opacity: 0.7; }
+        0%   { transform: scale(0.6); opacity: 0.7; }
+        30%  { transform: scale(1);   opacity: 1; }
+        90%  { transform: scale(1);   opacity: 1; }
+        100% { transform: scale(0.6); opacity: 0.7; }
       }
-      /* Stage 2 (2-4s): pillars, dome and crescent appear */
+      /* মুদ্রা: শেষ ধাপে ম্লান হয়, লুপের শেষে আবার উজ্জ্বল */
+      @keyframes svg2-coin {
+        0%, 60%   { opacity: 1; }
+        78%, 90%  { opacity: 0.22; }
+        100%      { opacity: 1; }
+      }
+      /* Stage 2: ৩৩% এ ফোটে, ৯০% এ মিলিয়ে যায় */
       @keyframes svg2-k2 {
-        0%, 30%  { opacity: 0; transform: translateY(40px); }
-        45%, 88% { opacity: 1; transform: translateY(0); }
-        100%     { opacity: 0; transform: translateY(40px); }
+        0%, 30%   { opacity: 0; }
+        38%, 88%  { opacity: 1; }
+        100%      { opacity: 0; }
       }
-      /* Stage 3 (4-6s): voice waves and glow spread out */
+      /* সংখ্যা ধাপে ধাপে বাড়ে */
+      @keyframes svg2-k2a {
+        0%, 32%   { opacity: 0; }
+        40%, 88%  { opacity: 1; }
+        100%      { opacity: 0; }
+      }
+      @keyframes svg2-k2b {
+        0%, 42%   { opacity: 0; }
+        50%, 88%  { opacity: 1; }
+        100%      { opacity: 0; }
+      }
+      @keyframes svg2-k2c {
+        0%, 52%   { opacity: 0; }
+        60%, 88%  { opacity: 1; }
+        100%      { opacity: 0; }
+      }
+      /* Stage 3: ৬৬% এ ফোটে, ৯০% এ মিলিয়ে যায় */
       @keyframes svg2-k3 {
-        0%, 63%  { opacity: 0; }
-        78%, 88% { opacity: 1; }
-        100%     { opacity: 0; }
-      }
-      @keyframes svg2-wave {
-        0%   { transform: scale(0.4); opacity: 0; }
-        20%  { opacity: 0.9; }
-        100% { transform: scale(1.5); opacity: 0; }
-      }
-      @keyframes svg2-pulse {
-        0%, 100% { transform: scale(0.9); opacity: 0.55; }
-        50%      { transform: scale(1.1); opacity: 1; }
+        0%, 63%   { opacity: 0; }
+        78%, 88%  { opacity: 1; }
+        100%      { opacity: 0; }
       }
       @keyframes svg2-twinkle {
-        0%, 100% { opacity: 0.2; transform: scale(0.7); }
-        50%      { opacity: 1;   transform: scale(1.2); }
+        0%, 100% { opacity: 1; }
+        50%      { opacity: 0.4; }
       }
       @keyframes svg2-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-      .svg2-s1 { animation: svg2-k1 6s ease-in-out infinite; transform-origin: 500px 840px; }
+      .svg2-s1 { animation: svg2-k1 6s ease-in-out infinite; transform-origin: 500px 500px; }
+      .svg2-coin { animation: svg2-coin 6s ease-in-out infinite; }
       .svg2-s2 { animation: svg2-k2 6s ease-in-out infinite; }
+      .svg2-s2a { animation: svg2-k2a 6s ease-in-out infinite; }
+      .svg2-s2b { animation: svg2-k2b 6s ease-in-out infinite; }
+      .svg2-s2c { animation: svg2-k2c 6s ease-in-out infinite; }
       .svg2-s3 { animation: svg2-k3 6s ease-in-out infinite; }
-
-      .svg2-halo1 { animation: svg2-pulse 3s ease-in-out infinite; transform-origin: 500px 760px; }
-      .svg2-moon  { animation: svg2-pulse 3s ease-in-out infinite; transform-origin: 500px 395px; }
-      .svg2-ring  { animation: svg2-spin 6s linear infinite; transform-origin: 500px 520px; }
-
-      .svg2-halo3 { animation: svg2-pulse 3s ease-in-out infinite; transform-origin: 500px 520px; }
-      .svg2-w1 { animation: svg2-wave 3s ease-out infinite;       transform-origin: 500px 520px; }
-      .svg2-w2 { animation: svg2-wave 3s ease-out infinite -1s;   transform-origin: 500px 520px; }
-      .svg2-w3 { animation: svg2-wave 3s ease-out infinite -2s;   transform-origin: 500px 520px; }
-      .svg2-sp1 { animation: svg2-twinkle 2s ease-in-out infinite;       transform-origin: 250px 300px; }
-      .svg2-sp2 { animation: svg2-twinkle 2s ease-in-out infinite -0.7s; transform-origin: 750px 300px; }
-      .svg2-sp3 { animation: svg2-twinkle 3s ease-in-out infinite -1.4s; transform-origin: 200px 560px; }
-      .svg2-sp4 { animation: svg2-twinkle 3s ease-in-out infinite -0.5s; transform-origin: 800px 560px; }
-      .svg2-sp5 { animation: svg2-twinkle 2s ease-in-out infinite -1.2s; transform-origin: 340px 200px; }
-      .svg2-sp6 { animation: svg2-twinkle 2s ease-in-out infinite -0.3s; transform-origin: 660px 200px; }
+      .svg2-tw1 { animation: svg2-twinkle 2s ease-in-out infinite; }
+      .svg2-tw2 { animation: svg2-twinkle 2s ease-in-out -1s infinite; }
+      .svg2-rays { animation: svg2-spin 6s linear infinite; transform-origin: 650px 515px; }
     </style>
   </defs>
 
-  <!-- Stage 1: the minbar's three steps and landing -->
+  <!-- Stage 1: মুদ্রা ও ক্যামেরার লেন্স -->
   <g class="svg2-s1">
-    <circle class="svg2-halo1" cx="500" cy="760" r="230" fill="url(#svg2-glow)"/>
-    <rect x="320" y="790" width="360" height="60" rx="8" fill="#f5d77a" fill-opacity="0.2" stroke="#f5d77a" stroke-width="10"/>
-    <rect x="370" y="730" width="260" height="60" rx="8" fill="#1abc9c" fill-opacity="0.18" stroke="#1abc9c" stroke-width="10"/>
-    <rect x="420" y="670" width="160" height="60" rx="8" fill="#8fd3ff" fill-opacity="0.18" stroke="#8fd3ff" stroke-width="10"/>
-    <rect x="400" y="640" width="200" height="30" rx="6" fill="#f0c040" fill-opacity="0.35" stroke="#f0c040" stroke-width="8"/>
-    <circle cx="500" cy="820" r="9" fill="#ffffff"/>
-    <circle cx="500" cy="760" r="9" fill="#ffffff"/>
-    <circle cx="500" cy="700" r="9" fill="#ffffff"/>
+    <g class="svg2-coin">
+      <circle cx="320" cy="520" r="110" fill="#f0c040" fill-opacity="0.25" stroke="#f0c040" stroke-width="14"/>
+      <circle cx="320" cy="520" r="82" fill="none" stroke="#f5d77a" stroke-width="6"/>
+      <path d="M0 -50 L13 -13 L50 0 L13 13 L0 50 L-13 13 L-50 0 L-13 -13 Z" fill="#f5d77a" transform="translate(320 520)"/>
+    </g>
+    <rect x="530" y="430" width="240" height="170" rx="22" fill="#ffffff" fill-opacity="0.1" stroke="#8fd3ff" stroke-width="10"/>
+    <rect x="590" y="395" width="70" height="30" rx="8" fill="none" stroke="#8fd3ff" stroke-width="8"/>
+    <circle cx="650" cy="515" r="58" fill="none" stroke="#ffffff" stroke-width="10"/>
+    <circle cx="650" cy="515" r="32" fill="#8fd3ff" fill-opacity="0.35" stroke="#8fd3ff" stroke-width="6"/>
+    <circle cx="738" cy="458" r="9" fill="#f5d77a"/>
   </g>
 
-  <!-- Stage 2: pillars, dome canopy and crescent above the pulpit -->
+  <!-- Stage 2: লেন্সের চারপাশে হৃদয় ও তারার সংখ্যা বাড়ে -->
   <g class="svg2-s2">
-    <rect x="415" y="520" width="18" height="120" rx="6" fill="#f5d77a"/>
-    <rect x="567" y="520" width="18" height="120" rx="6" fill="#f5d77a"/>
-    <path d="M405 525 Q500 380 595 525 Z" fill="#1abc9c" fill-opacity="0.2" stroke="#f5d77a" stroke-width="10" stroke-linejoin="round"/>
-    <circle cx="500" cy="500" r="16" fill="#ffffff"/>
-    <g class="svg2-moon">
-      <path d="M500 345 A45 45 0 1 0 535 425 A36 36 0 1 1 500 345 Z" fill="#f0c040" stroke="#fff6c8" stroke-width="4"/>
+    <g class="svg2-s2a">
+      <path d="M0 20 C -30 -2, -24 -26, -8 -22 C -3 -20, 0 -14, 0 -10 C 0 -14, 3 -20, 8 -22 C 24 -26, 30 -2, 0 20 Z" fill="#f0c040" transform="translate(560 300) scale(1.3)"/>
+      <path d="M0 20 C -30 -2, -24 -26, -8 -22 C -3 -20, 0 -14, 0 -10 C 0 -14, 3 -20, 8 -22 C 24 -26, 30 -2, 0 20 Z" fill="#2ecc71" transform="translate(790 330) scale(1.1)"/>
+      <path class="svg2-tw1" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#ffffff" transform="translate(680 250)"/>
     </g>
-    <g class="svg2-ring">
-      <circle cx="500" cy="520" r="170" fill="none" stroke="#8fd3ff" stroke-width="5" stroke-dasharray="10 18" opacity="0.7"/>
+    <g class="svg2-s2b">
+      <path d="M0 20 C -30 -2, -24 -26, -8 -22 C -3 -20, 0 -14, 0 -10 C 0 -14, 3 -20, 8 -22 C 24 -26, 30 -2, 0 20 Z" fill="#f0c040" transform="translate(850 560) scale(1.2)"/>
+      <path d="M0 20 C -30 -2, -24 -26, -8 -22 C -3 -20, 0 -14, 0 -10 C 0 -14, 3 -20, 8 -22 C 24 -26, 30 -2, 0 20 Z" fill="#2ecc71" transform="translate(470 330)"/>
+      <path class="svg2-tw2" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#f5d77a" transform="translate(870 450)"/>
+      <path class="svg2-tw1" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#8fd3ff" transform="translate(500 210)"/>
+    </g>
+    <g class="svg2-s2c">
+      <path d="M0 20 C -30 -2, -24 -26, -8 -22 C -3 -20, 0 -14, 0 -10 C 0 -14, 3 -20, 8 -22 C 24 -26, 30 -2, 0 20 Z" fill="#f0c040" transform="translate(700 700) scale(1.3)"/>
+      <path d="M0 20 C -30 -2, -24 -26, -8 -22 C -3 -20, 0 -14, 0 -10 C 0 -14, 3 -20, 8 -22 C 24 -26, 30 -2, 0 20 Z" fill="#2ecc71" transform="translate(580 760)"/>
+      <path d="M0 20 C -30 -2, -24 -26, -8 -22 C -3 -20, 0 -14, 0 -10 C 0 -14, 3 -20, 8 -22 C 24 -26, 30 -2, 0 20 Z" fill="#f0c040" transform="translate(850 680) scale(0.9)"/>
+      <path class="svg2-tw2" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#ffffff" transform="translate(790 790)"/>
+      <path class="svg2-tw1" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#f5d77a" transform="translate(500 700)"/>
     </g>
   </g>
 
-  <!-- Stage 3: the voice spreads in waves, sparkles and a glow -->
+  <!-- Stage 3: লেন্সের চারপাশে আলো, মুদ্রা ম্লান -->
   <g class="svg2-s3">
-    <circle class="svg2-halo3" cx="500" cy="520" r="300" fill="url(#svg2-glow)"/>
-    <circle class="svg2-w1" cx="500" cy="520" r="280" fill="none" stroke="#ffffff" stroke-width="8"/>
-    <circle class="svg2-w2" cx="500" cy="520" r="280" fill="none" stroke="#f5d77a" stroke-width="8"/>
-    <circle class="svg2-w3" cx="500" cy="520" r="280" fill="none" stroke="#2ecc71" stroke-width="8"/>
-    <circle class="svg2-sp1" cx="250" cy="300" r="9" fill="#ffffff"/>
-    <circle class="svg2-sp2" cx="750" cy="300" r="9" fill="#f0c040"/>
-    <circle class="svg2-sp3" cx="200" cy="560" r="8" fill="#8fd3ff"/>
-    <circle class="svg2-sp4" cx="800" cy="560" r="8" fill="#ffffff"/>
-    <circle class="svg2-sp5" cx="340" cy="200" r="7" fill="#f5d77a"/>
-    <circle class="svg2-sp6" cx="660" cy="200" r="7" fill="#2ecc71"/>
+    <circle cx="650" cy="515" r="270" fill="url(#svg2-glow)"/>
+    <g class="svg2-rays">
+      <path d="M650 265 L650 325" stroke="#fff6c8" stroke-width="10" stroke-linecap="round" fill="none" transform="rotate(0 650 515)"/>
+      <path d="M650 265 L650 325" stroke="#fff6c8" stroke-width="10" stroke-linecap="round" fill="none" transform="rotate(45 650 515)"/>
+      <path d="M650 265 L650 325" stroke="#fff6c8" stroke-width="10" stroke-linecap="round" fill="none" transform="rotate(90 650 515)"/>
+      <path d="M650 265 L650 325" stroke="#fff6c8" stroke-width="10" stroke-linecap="round" fill="none" transform="rotate(135 650 515)"/>
+      <path d="M650 265 L650 325" stroke="#fff6c8" stroke-width="10" stroke-linecap="round" fill="none" transform="rotate(180 650 515)"/>
+      <path d="M650 265 L650 325" stroke="#fff6c8" stroke-width="10" stroke-linecap="round" fill="none" transform="rotate(225 650 515)"/>
+      <path d="M650 265 L650 325" stroke="#fff6c8" stroke-width="10" stroke-linecap="round" fill="none" transform="rotate(270 650 515)"/>
+      <path d="M650 265 L650 325" stroke="#fff6c8" stroke-width="10" stroke-linecap="round" fill="none" transform="rotate(315 650 515)"/>
+    </g>
+    <path class="svg2-tw1" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#fff6c8" transform="translate(180 250) scale(1.5)"/>
+    <path class="svg2-tw2" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#fff6c8" transform="translate(190 790) scale(1.3)"/>
   </g>
 </svg>

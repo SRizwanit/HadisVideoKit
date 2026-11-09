@@ -1,0 +1,73 @@
+<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="svg9-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#b8ffd8" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#2ecc71" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      @keyframes svg9-k1 {
+        0%   { transform: scale(0.6); opacity: 0.7; }
+        30%  { transform: scale(1);   opacity: 1; }
+        90%  { transform: scale(1);   opacity: 1; }
+        100% { transform: scale(0.6); opacity: 0.7; }
+      }
+      @keyframes svg9-k2 {
+        0%, 30%  { opacity: 0; transform: scale(0.85); }
+        48%      { opacity: 1; transform: scale(1); }
+        88%      { opacity: 1; transform: scale(1); }
+        100%     { opacity: 0; transform: scale(0.85); }
+      }
+      @keyframes svg9-k3 {
+        0%, 63%  { opacity: 0; }
+        78%, 88% { opacity: 1; }
+        100%     { opacity: 0; }
+      }
+      @keyframes svg9-dim {
+        0%, 60%  { opacity: 1; }
+        78%, 100% { opacity: 0.25; }
+      }
+      @keyframes svg9-twinkle {
+        0%, 100% { opacity: 0.3; }
+        50%      { opacity: 1; }
+      }
+      .svg9-s1 { animation: svg9-k1 6s ease-in-out infinite; transform-origin: 500px 840px; }
+      .svg9-s2 { animation: svg9-k2 6s ease-in-out infinite; transform-origin: 500px 690px; }
+      .svg9-s3 { animation: svg9-k3 6s ease-in-out infinite; }
+      .svg9-dim { animation: svg9-dim 6s ease-in-out infinite; }
+      .svg9-tw1 { animation: svg9-twinkle 2s ease-in-out infinite; }
+      .svg9-tw2 { animation: svg9-twinkle 3s ease-in-out infinite; }
+    </style>
+  </defs>
+
+  <!-- Stage 1: দরজা -->
+  <g class="svg9-s1">
+    <path d="M430 850 L430 745 Q430 680 500 680 Q570 680 570 745 L570 850 Z" fill="#f5d77a" fill-opacity="0.22" stroke="#f5d77a" stroke-width="10" stroke-linejoin="round"/>
+    <line x1="500" y1="690" x2="500" y2="850" stroke="#ffffff" stroke-width="5" stroke-opacity="0.6"/>
+    <circle cx="535" cy="775" r="9" fill="#ffffff"/>
+  </g>
+
+  <!-- Stage 2: দুটি পথ — বামে তারা-চাঁদ, ডানে মুদ্রা -->
+  <g class="svg9-s2">
+    <g>
+      <path d="M500 680 Q500 520 300 415" fill="none" stroke="#8fd3ff" stroke-width="12" stroke-linecap="round" stroke-dasharray="4 22"/>
+      <path d="M300 300 A60 60 0 1 0 300 400 A50 50 0 0 1 300 300 Z" fill="#f5d77a" stroke="#f0c040" stroke-width="5" stroke-linejoin="round"/>
+      <polygon points="335,324 340.9,341.9 359.7,342 344.5,353.1 350.3,371 335,360 319.7,371 325.5,353.1 310.3,342 329.1,341.9" fill="#fff6c8" stroke="#f0c040" stroke-width="4" stroke-linejoin="round"/>
+    </g>
+    <g class="svg9-dim">
+      <path d="M500 680 Q500 520 700 385" fill="none" stroke="#8fd3ff" stroke-width="12" stroke-linecap="round" stroke-dasharray="4 22"/>
+      <circle cx="700" cy="340" r="46" fill="#f0c040" fill-opacity="0.3" stroke="#f0c040" stroke-width="8"/>
+      <circle cx="700" cy="340" r="28" fill="none" stroke="#f0c040" stroke-width="5"/>
+    </g>
+    <circle class="svg9-tw1" cx="400" cy="560" r="7" fill="#8fd3ff"/>
+    <circle class="svg9-tw2" cx="620" cy="590" r="7" fill="#ffffff"/>
+  </g>
+
+  <!-- Stage 3: তারা-চাঁদের পথ সবুজ আলোয় জ্বলে -->
+  <g class="svg9-s3">
+    <circle cx="300" cy="360" r="190" fill="url(#svg9-glow)"/>
+    <path d="M500 680 Q500 520 300 415" fill="none" stroke="#2ecc71" stroke-width="20" stroke-linecap="round" stroke-opacity="0.75"/>
+    <circle class="svg9-tw1" cx="200" cy="270" r="9" fill="#ffffff"/>
+    <circle class="svg9-tw2" cx="400" cy="270" r="9" fill="#fff6c8"/>
+    <circle class="svg9-tw2" cx="420" cy="520" r="8" fill="#1abc9c"/>
+  </g>
+</svg>

@@ -1,0 +1,87 @@
+<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="svg11-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#fff6c8" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#f5d77a" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      @keyframes svg11-k1 {
+        0%   { transform: scale(0.6); opacity: 0.7; }
+        30%  { transform: scale(1);   opacity: 1; }
+        90%  { transform: scale(1);   opacity: 1; }
+        100% { transform: scale(0.6); opacity: 0.7; }
+      }
+      @keyframes svg11-k2 {
+        0%, 30%  { opacity: 0; transform: scale(0.7); }
+        48%      { opacity: 1; transform: scale(1); }
+        88%      { opacity: 1; transform: scale(1); }
+        100%     { opacity: 0; transform: scale(0.7); }
+      }
+      @keyframes svg11-k3 {
+        0%, 63%  { opacity: 0; }
+        68%, 88% { opacity: 1; }
+        100%     { opacity: 0; }
+      }
+      @keyframes svg11-ka {
+        0%, 64%  { opacity: 0; transform: scale(0.4); }
+        74%      { opacity: 1; transform: scale(1.12); }
+        80%, 100% { opacity: 1; transform: scale(1); }
+      }
+      @keyframes svg11-kb {
+        0%, 75%  { opacity: 0; transform: scale(0.4); }
+        85%      { opacity: 1; transform: scale(1.12); }
+        90%, 100% { opacity: 1; transform: scale(1); }
+      }
+      @keyframes svg11-flame {
+        0%, 100% { transform: scale(1); }
+        50%      { transform: scale(1.15); }
+      }
+      @keyframes svg11-twinkle {
+        0%, 100% { opacity: 0.3; }
+        50%      { opacity: 1; }
+      }
+      .svg11-s1 { animation: svg11-k1 6s ease-in-out infinite; transform-origin: 500px 820px; }
+      .svg11-s2 { animation: svg11-k2 6s ease-in-out infinite; transform-origin: 500px 365px; }
+      .svg11-s3 { animation: svg11-k3 6s ease-in-out infinite; }
+      .svg11-ga { animation: svg11-ka 6s ease-in-out infinite; transform-origin: 380px 160px; }
+      .svg11-gb { animation: svg11-kb 6s ease-in-out infinite; transform-origin: 620px 140px; }
+      .svg11-flame { animation: svg11-flame 2s ease-in-out infinite; transform-origin: 500px 365px; }
+      .svg11-tw1 { animation: svg11-twinkle 2s ease-in-out infinite; }
+      .svg11-tw2 { animation: svg11-twinkle 3s ease-in-out infinite; }
+    </style>
+  </defs>
+
+  <!-- Stage 1: ফাঁকা আয়তক্ষেত্র (উপুড় করা পর্দা) -->
+  <g class="svg11-s1">
+    <path d="M300 820 L300 600 A50 50 0 0 1 400 600 A50 50 0 0 1 500 600 A50 50 0 0 1 600 600 A50 50 0 0 1 700 600 L700 820 Z" fill="#f5d77a" fill-opacity="0.15" stroke="#f5d77a" stroke-width="10" stroke-linejoin="round"/>
+    <line x1="400" y1="620" x2="400" y2="810" stroke="#ffffff" stroke-width="4" stroke-opacity="0.4"/>
+    <line x1="500" y1="620" x2="500" y2="810" stroke="#ffffff" stroke-width="4" stroke-opacity="0.4"/>
+    <line x1="600" y1="620" x2="600" y2="810" stroke="#ffffff" stroke-width="4" stroke-opacity="0.4"/>
+  </g>
+
+  <!-- Stage 2: ওপরে লণ্ঠন জ্বলে ওঠে -->
+  <g class="svg11-s2">
+    <circle cx="500" cy="365" r="150" fill="url(#svg11-glow)"/>
+    <circle cx="500" cy="250" r="13" fill="none" stroke="#f5d77a" stroke-width="7"/>
+    <polygon points="470,272 530,272 552,306 448,306" fill="#f0c040" fill-opacity="0.6" stroke="#f0c040" stroke-width="6" stroke-linejoin="round"/>
+    <rect x="455" y="306" width="90" height="122" rx="14" fill="#f5d77a" fill-opacity="0.3" stroke="#f5d77a" stroke-width="8"/>
+    <rect x="465" y="428" width="70" height="14" rx="5" fill="#f0c040"/>
+    <ellipse class="svg11-flame" cx="500" cy="368" rx="15" ry="28" fill="#fff6c8"/>
+  </g>
+
+  <!-- Stage 3: লণ্ঠন থেকে দুটি তারা, দুই ধাপে -->
+  <g class="svg11-s3">
+    <path d="M500 244 Q440 220 392 196" fill="none" stroke="#f5d77a" stroke-width="6" stroke-linecap="round" stroke-dasharray="3 16"/>
+    <path d="M500 244 Q560 210 606 178" fill="none" stroke="#f5d77a" stroke-width="6" stroke-linecap="round" stroke-dasharray="3 16"/>
+    <g class="svg11-ga">
+      <circle cx="380" cy="160" r="80" fill="url(#svg11-glow)"/>
+      <polygon points="380,110 391.8,143.8 427.6,144.5 399,166.2 409.4,200.5 380,180 350.6,200.5 361,166.2 332.4,144.5 368.2,143.8" fill="#fff6c8" stroke="#f0c040" stroke-width="6" stroke-linejoin="round"/>
+    </g>
+    <g class="svg11-gb">
+      <circle cx="620" cy="140" r="80" fill="url(#svg11-glow)"/>
+      <polygon points="620,90 631.8,123.8 667.6,124.5 639,146.2 649.4,180.5 620,160 590.6,180.5 601,146.2 572.4,124.5 608.2,123.8" fill="#fff6c8" stroke="#f0c040" stroke-width="6" stroke-linejoin="round"/>
+    </g>
+    <circle class="svg11-tw1" cx="250" cy="260" r="7" fill="#8fd3ff"/>
+    <circle class="svg11-tw2" cx="750" cy="260" r="7" fill="#8fd3ff"/>
+  </g>
+</svg>

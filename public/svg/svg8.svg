@@ -1,0 +1,87 @@
+<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="svg8-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#fff6c8" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#f5d77a" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      @keyframes svg8-k1 {
+        0%   { transform: scale(0.6); opacity: 0.7; }
+        30%  { transform: scale(1);   opacity: 1; }
+        90%  { transform: scale(1);   opacity: 1; }
+        100% { transform: scale(0.6); opacity: 0.7; }
+      }
+      @keyframes svg8-k2 {
+        0%, 30%  { opacity: 0; transform: scale(0.3); }
+        48%      { opacity: 1; transform: scale(1); }
+        88%      { opacity: 1; transform: scale(1); }
+        100%     { opacity: 0; transform: scale(0.3); }
+      }
+      @keyframes svg8-k3 {
+        0%, 63%  { opacity: 0; transform: scale(0.3); }
+        80%      { opacity: 1; transform: scale(1.05); }
+        88%      { opacity: 1; transform: scale(1); }
+        100%     { opacity: 0; transform: scale(0.3); }
+      }
+      @keyframes svg8-twinkle {
+        0%, 100% { opacity: 0.3; }
+        50%      { opacity: 1; }
+      }
+      @keyframes svg8-pulse {
+        0%, 100% { transform: scale(1); }
+        50%      { transform: scale(1.12); }
+      }
+      @keyframes svg8-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      .svg8-s1 { animation: svg8-k1 6s ease-in-out infinite; transform-origin: 500px 780px; }
+      .svg8-s2 { animation: svg8-k2 6s ease-in-out infinite; transform-origin: 500px 770px; }
+      .svg8-s3 { animation: svg8-k3 6s ease-in-out infinite; transform-origin: 500px 770px; }
+      .svg8-rays { animation: svg8-spin 6s linear infinite; transform-origin: 500px 250px; }
+      .svg8-heart { animation: svg8-pulse 2s ease-in-out infinite; transform-origin: 500px 250px; }
+      .svg8-tw1 { animation: svg8-twinkle 2s ease-in-out infinite; }
+      .svg8-tw2 { animation: svg8-twinkle 3s ease-in-out infinite; }
+    </style>
+  </defs>
+
+  <!-- Stage 1: মাটিতে আলোর বীজ -->
+  <g class="svg8-s1">
+    <path d="M200 800 Q500 730 800 800 Z" fill="#2ecc71" fill-opacity="0.2" stroke="#f5d77a" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="500" cy="768" r="70" fill="url(#svg8-glow)"/>
+    <ellipse cx="500" cy="768" rx="26" ry="18" fill="#f0c040"/>
+    <ellipse cx="494" cy="762" rx="9" ry="5" fill="#ffffff" fill-opacity="0.8"/>
+  </g>
+
+  <!-- Stage 2: অঙ্কুর -->
+  <g class="svg8-s2">
+    <path d="M500 760 Q488 700 500 630" fill="none" stroke="#2ecc71" stroke-width="12" stroke-linecap="round"/>
+    <path d="M500 680 Q440 645 415 665 Q450 700 500 680 Z" fill="#2ecc71" fill-opacity="0.85"/>
+    <path d="M500 650 Q560 615 585 635 Q550 670 500 650 Z" fill="#1abc9c" fill-opacity="0.85"/>
+    <circle class="svg8-tw1" cx="400" cy="720" r="7" fill="#8fd3ff"/>
+    <circle class="svg8-tw2" cx="610" cy="700" r="7" fill="#ffffff"/>
+  </g>
+
+  <!-- Stage 3: গাছ, আলোকিত হৃদয় ও রশ্মি -->
+  <g class="svg8-s3">
+    <path d="M500 770 L500 480" fill="none" stroke="#f5d77a" stroke-width="20" stroke-linecap="round"/>
+    <path d="M500 640 Q450 600 410 560" fill="none" stroke="#f5d77a" stroke-width="12" stroke-linecap="round"/>
+    <path d="M500 600 Q550 560 590 520" fill="none" stroke="#f5d77a" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="500" cy="430" r="90" fill="#2ecc71" fill-opacity="0.55" stroke="#1abc9c" stroke-width="8"/>
+    <circle cx="405" cy="490" r="70" fill="#2ecc71" fill-opacity="0.55" stroke="#1abc9c" stroke-width="8"/>
+    <circle cx="595" cy="490" r="70" fill="#2ecc71" fill-opacity="0.55" stroke="#1abc9c" stroke-width="8"/>
+    <circle cx="435" cy="385" r="60" fill="#2ecc71" fill-opacity="0.55" stroke="#1abc9c" stroke-width="8"/>
+    <circle cx="565" cy="385" r="60" fill="#2ecc71" fill-opacity="0.55" stroke="#1abc9c" stroke-width="8"/>
+    <circle class="svg8-tw1" cx="420" cy="440" r="8" fill="#fff6c8"/>
+    <circle class="svg8-tw2" cx="580" cy="450" r="8" fill="#fff6c8"/>
+    <circle class="svg8-tw1" cx="500" cy="500" r="8" fill="#fff6c8"/>
+    <circle cx="500" cy="250" r="175" fill="url(#svg8-glow)"/>
+    <g class="svg8-rays">
+      <line x1="500" y1="130" x2="500" y2="95" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+      <line x1="380" y1="250" x2="345" y2="250" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+      <line x1="620" y1="250" x2="655" y2="250" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+      <line x1="415" y1="165" x2="390" y2="140" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+      <line x1="585" y1="165" x2="610" y2="140" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+    </g>
+    <g class="svg8-heart">
+      <path d="M500 295 C432 250 445 192 500 222 C555 192 568 250 500 295 Z" fill="#fff6c8" stroke="#f0c040" stroke-width="8" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

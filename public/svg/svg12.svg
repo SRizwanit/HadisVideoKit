@@ -1,0 +1,96 @@
+<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="svg12-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#fff6c8" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#f5d77a" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="svg12-clip">
+      <rect x="0" y="0" width="1000" height="698"/>
+    </clipPath>
+    <style>
+      @keyframes svg12-k1 {
+        0%   { transform: scale(0.6); opacity: 0.7; }
+        30%  { transform: scale(1);   opacity: 1; }
+        90%  { transform: scale(1);   opacity: 1; }
+        100% { transform: scale(0.6); opacity: 0.7; }
+      }
+      @keyframes svg12-k2 {
+        0%, 30%  { opacity: 0; transform: translateY(150px); }
+        50%      { opacity: 1; transform: translateY(0px); }
+        88%      { opacity: 1; transform: translateY(0px); }
+        100%     { opacity: 0; transform: translateY(0px); }
+      }
+      @keyframes svg12-k3 {
+        0%, 63%  { opacity: 0; }
+        70%, 88% { opacity: 1; }
+        100%     { opacity: 0; }
+      }
+      @keyframes svg12-star {
+        0%, 64%  { opacity: 0; transform: scale(0.4); }
+        76%      { opacity: 1; transform: scale(1.12); }
+        84%, 100% { opacity: 1; transform: scale(1); }
+      }
+      @keyframes svg12-draw {
+        0%, 66%  { stroke-dashoffset: 100; }
+        82%, 100% { stroke-dashoffset: 0; }
+      }
+      @keyframes svg12-dot {
+        0%, 80%  { opacity: 0; }
+        86%, 100% { opacity: 1; }
+      }
+      @keyframes svg12-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes svg12-twinkle {
+        0%, 100% { opacity: 0.3; }
+        50%      { opacity: 1; }
+      }
+      .svg12-s1 { animation: svg12-k1 6s ease-in-out infinite; transform-origin: 500px 700px; }
+      .svg12-s2 { animation: svg12-k2 6s ease-in-out infinite; }
+      .svg12-s3 { animation: svg12-k3 6s ease-in-out infinite; }
+      .svg12-star { animation: svg12-star 6s ease-in-out infinite; transform-origin: 280px 300px; }
+      .svg12-q { stroke-dasharray: 100; animation: svg12-draw 6s ease-in-out infinite; }
+      .svg12-dot { animation: svg12-dot 6s ease-in-out infinite; }
+      .svg12-rays { animation: svg12-spin 6s linear infinite; transform-origin: 500px 620px; }
+      .svg12-tw1 { animation: svg12-twinkle 2s ease-in-out infinite; }
+      .svg12-tw2 { animation: svg12-twinkle 3s ease-in-out infinite; }
+    </style>
+  </defs>
+
+  <!-- Stage 1: দিগন্তরেখা -->
+  <g class="svg12-s1">
+    <line x1="150" y1="700" x2="850" y2="700" stroke="#f5d77a" stroke-width="10" stroke-linecap="round"/>
+    <line x1="250" y1="760" x2="750" y2="760" stroke="#f5d77a" stroke-width="6" stroke-linecap="round" stroke-opacity="0.5"/>
+    <line x1="350" y1="815" x2="650" y2="815" stroke="#f5d77a" stroke-width="5" stroke-linecap="round" stroke-opacity="0.3"/>
+  </g>
+
+  <!-- Stage 2: দিগন্ত থেকে সূর্য উঠে আসে -->
+  <g clip-path="url(#svg12-clip)">
+    <g class="svg12-s2">
+      <circle cx="500" cy="620" r="190" fill="url(#svg12-glow)"/>
+      <g class="svg12-rays">
+        <line x1="610" y1="620" x2="650" y2="620" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+        <line x1="577.8" y1="697.8" x2="606.1" y2="726.1" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+        <line x1="500" y1="730" x2="500" y2="770" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+        <line x1="422.2" y1="697.8" x2="393.9" y2="726.1" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+        <line x1="390" y1="620" x2="350" y2="620" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+        <line x1="422.2" y1="542.2" x2="393.9" y2="513.9" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+        <line x1="500" y1="510" x2="500" y2="470" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+        <line x1="577.8" y1="542.2" x2="606.1" y2="513.9" stroke="#f0c040" stroke-width="8" stroke-linecap="round"/>
+      </g>
+      <circle cx="500" cy="620" r="72" fill="#f0c040"/>
+      <circle cx="500" cy="620" r="48" fill="#fff6c8" fill-opacity="0.6"/>
+    </g>
+  </g>
+
+  <!-- Stage 3: তৃতীয় তারা ও প্রশ্নচিহ্ন -->
+  <g class="svg12-s3">
+    <path d="M440 560 Q350 470 292 352" fill="none" stroke="#f5d77a" stroke-width="6" stroke-linecap="round" stroke-dasharray="3 16"/>
+    <g class="svg12-star">
+      <circle cx="280" cy="300" r="85" fill="url(#svg12-glow)"/>
+      <polygon points="280,250 291.8,283.8 327.6,284.5 299,306.2 309.4,340.5 280,320 250.6,340.5 261,306.2 232.4,284.5 268.2,283.8" fill="#fff6c8" stroke="#f0c040" stroke-width="6" stroke-linejoin="round"/>
+    </g>
+    <path class="svg12-q" pathLength="100" d="M640 245 Q640 170 705 170 Q770 170 770 235 Q770 280 725 305 Q705 318 705 350" fill="none" stroke="#8fd3ff" stroke-width="20" stroke-linecap="round"/>
+    <circle class="svg12-dot" cx="705" cy="405" r="13" fill="#8fd3ff"/>
+    <circle class="svg12-tw1" cx="160" cy="430" r="7" fill="#ffffff"/>
+    <circle class="svg12-tw2" cx="860" cy="470" r="7" fill="#fff6c8"/>
+  </g>
+</svg>
