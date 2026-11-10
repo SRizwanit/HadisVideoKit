@@ -330,25 +330,31 @@ if (!tools.ok) {
     }
     {
       const pub = newPub();
-      writeFileSync(join(pub, "background1.wav"), "old");
+      writeFileSync(join(pub, "background1.wav"), "old"); // old location (public/)
+      mkdirSync(join(pub, "background"), { recursive: true });
+      writeFileSync(join(pub, "background", "background1.ogg"), "old");
       const r = await runPrepareAsync(`${base}/track.mp3`, pub);
-      ok("prepare: link → saved as background1.mp3, old background1.* removed", r.code === 0 && existsSync(join(pub, "background1.mp3")) && !existsSync(join(pub, "background1.wav")), r.out);
-      ok("prepare: BG_MUSIC_FILE + BG_MUSIC_DOWNLOADED exported", r.env.includes("BG_MUSIC_FILE=") && r.env.includes("background1.mp3") && r.env.includes("BG_MUSIC_DOWNLOADED=true"), r.env);
+      ok(
+        "prepare: link → saved as public/background/background1.mp3, old background1.* (both folders) removed",
+        r.code === 0 && existsSync(join(pub, "background", "background1.mp3")) && !existsSync(join(pub, "background1.wav")) && !existsSync(join(pub, "background", "background1.ogg")),
+        r.out,
+      );
+      ok("prepare: BG_MUSIC_FILE + BG_MUSIC_DOWNLOADED exported", r.env.includes("BG_MUSIC_FILE=") && r.env.includes("/background/background1.mp3") && r.env.includes("BG_MUSIC_DOWNLOADED=true"), r.env);
     }
     {
       const pub = newPub();
       const r = await runPrepareAsync(`${base}/redirect`, pub);
-      ok("prepare: follows redirects", r.code === 0 && existsSync(join(pub, "background1.mp3")), r.out);
+      ok("prepare: follows redirects", r.code === 0 && existsSync(join(pub, "background", "background1.mp3")), r.out);
     }
     {
       const pub = newPub();
       const r = await runPrepareAsync(`${base}/mislabeled.mp3`, pub);
-      ok("prepare: real format decides extension (.mp3 link that is m4a → .m4a)", r.code === 0 && existsSync(join(pub, "background1.m4a")), r.out);
+      ok("prepare: real format decides extension (.mp3 link that is m4a → .m4a)", r.code === 0 && existsSync(join(pub, "background", "background1.m4a")), r.out);
     }
     {
       const pub = newPub();
       const r = await runPrepareAsync(`${base}/page`, pub);
-      ok("prepare: HTML page → warning, continue without music (exit 0)", r.code === 0 && r.out.includes("::warning::") && r.env === "" && readdirSync(pub).length === 0, r.out);
+      ok("prepare: HTML page → warning, continue without music (exit 0)", r.code === 0 && r.out.includes("::warning::") && r.env === "" && readdirSync(join(pub, "background")).length === 0, r.out);
     }
     {
       const pub = newPub();
@@ -360,6 +366,15 @@ if (!tools.ok) {
       copyFileSync(shortMp3, join(pub, "my theme (v2).mp3"));
       const r = await runPrepareAsync("my theme (v2).mp3", pub);
       ok("prepare: file name with spaces/specials from public/", r.code === 0 && r.env.includes("my theme (v2).mp3") && r.env.includes("BG_MUSIC_DOWNLOADED=false"), r.out + r.env);
+    }
+    {
+      const pub = newPub();
+      mkdirSync(join(pub, "background"), { recursive: true });
+      copyFileSync(shortMp3, join(pub, "background", "in folder.mp3"));
+      const r = await runPrepareAsync("in folder.mp3", pub);
+      ok("prepare: file name is looked up in public/background/ first", r.code === 0 && r.env.includes("/background/in folder.mp3") && r.env.includes("BG_MUSIC_DOWNLOADED=false"), r.out + r.env);
+      const r2 = await runPrepareAsync("public/background/in folder.mp3", pub);
+      ok("prepare: 'public/background/' prefix accepted", r2.code === 0 && r2.env.includes("/background/in folder.mp3"), r2.out + r2.env);
     }
     {
       const pub = newPub();

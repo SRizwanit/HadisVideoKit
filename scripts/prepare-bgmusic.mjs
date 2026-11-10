@@ -1,17 +1,18 @@
 // Resolves the optional `background_music` workflow input.
 //
 //   BACKGROUND_MUSIC = ""                     → nothing to do (video renders with no music, voice is still normalized)
-//   BACKGROUND_MUSIC = "https://.../song.mp3" → download, validate (ffprobe), save as public/background1.<ext>
-//   BACKGROUND_MUSIC = "mysong.mp3"           → use public/mysong.mp3 (error if it does not exist)
+//   BACKGROUND_MUSIC = "https://.../song.mp3" → download, validate (ffprobe), save as public/background/background1.<ext>
+//   BACKGROUND_MUSIC = "mysong.mp3"           → use public/background/mysong.mp3 (falls back to the old location public/mysong.mp3;
+//                                                error if it exists in neither)
 //
-// On success it writes   BG_MUSIC_FILE=public/background1.mp3   (relative to the repo root)
+// On success it writes   BG_MUSIC_FILE=public/background/background1.mp3   (relative to the repo root)
 //                        BG_MUSIC_DOWNLOADED=true|false
 // to $GITHUB_ENV, so the render steps pick it up. Run locally too:
 //   BACKGROUND_MUSIC="https://example.com/a.mp3" node scripts/prepare-bgmusic.mjs
 //
 // Failure policy:
 //   - download / validation problems  → ::warning:: and continue WITHOUT music (exit 0, never breaks the workflow)
-//   - a file NAME that is not in public/ → clear ::error:: (+ list of the audio files that do exist) and BG_MUSIC_ERROR is set.
+//   - a file NAME that is in neither public/background/ nor public/ → clear ::error:: (+ list of the audio files that do exist) and BG_MUSIC_ERROR is set.
 //     The workflow's own steps use `!cancelled()`, so this step cannot stop the render anyway: the videos are rendered
 //     without music, and the "Fail if background music file was not found" step turns the run ❌ at the end (and skips the
 //     Release). Run locally (no GITHUB_ENV) the script exits 1 instead. Set FAIL_ON_MISSING_FILENAME = false to only warn.
@@ -27,13 +28,16 @@ const MAX_BYTES = 150 * 1024 * 1024; // 150 MB
 const TIMEOUT_MS = 180_000;
 const ATTEMPTS = 3;
 const FIXED_NAME = "background1";
+/** Background music lives (and is committed) in public/<MUSIC_SUBDIR>/ */
+export const MUSIC_SUBDIR = "background";
 const AUDIO_EXTS = ["mp3", "wav", "m4a", "ogg", "aac", "flac", "opus"];
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // PUBLIC_DIR is only for tests/local experiments; in the workflow it is unset → <repo>/public
 const publicDir = process.env.PUBLIC_DIR ? resolve(process.env.PUBLIC_DIR) : join(projectRoot, "public");
+const musicDir = join(publicDir, MUSIC_SUBDIR);
 
-/** Path to hand to the render step: relative to the repo root (e.g. public/background1.mp3), absolute if outside it */
+/** Path to hand to the render step: relative to the repo root (e.g. public/background/background1.mp3), absolute if outside it */
 function pathForRender(absFile) {
   const rel = relative(projectRoot, absFile);
   return rel.startsWith("..") ? absFile : rel.split("\\").join("/");
@@ -111,13 +115,26 @@ export function pickExtension({ url = "", contentType = "", formatName = "" } = 
 }
 
 /**
- * Find a file the user named, inside public/ (top level only — no paths, no "..").
+ * Find a file the user named, inside public/background/ first, then (old location) public/ itself.
+ * @returns {{ok:true, file:string, dir:string}|{ok:false, error:string, available:string[]}}
+ */
+export function resolveMusicFile(rawName, musicFolder, publicFolder) {
+  const a = resolvePublicFile(rawName, musicFolder);
+  if (a.ok) return { ok: true, file: a.file, dir: musicFolder };
+  const b = resolvePublicFile(rawName, publicFolder);
+  if (b.ok) return { ok: true, file: b.file, dir: publicFolder };
+  const available = [...a.available, ...b.available.filter((f) => !a.available.includes(f))];
+  return { ok: false, error: a.error.replace("public/", `public/${MUSIC_SUBDIR}/`), available };
+}
+
+/**
+ * Find a file the user named, inside one folder (top level only — no paths, no "..").
  * Accepts "song.mp3", "public/song.mp3", "SONG.MP3" (case-insensitive) and "song" (extension omitted).
  * @returns {{ok:true, file:string}|{ok:false, error:string, available:string[]}}
  */
 export function resolvePublicFile(rawName, dir) {
   let name = String(rawName ?? "").trim().replace(/^["']|["']$/g, "").trim();
-  name = name.replace(/^\.?\/?public\//i, "");
+  name = name.replace(/^\.?\/?public\//i, "").replace(/^background\//i, "");
   const list = (() => {
     try {
       return readdirSync(dir).filter((f) => AUDIO_EXTS.includes(extname(f).slice(1).toLowerCase()));
@@ -251,8 +268,8 @@ async function main() {
     const url = normalizeDirectLink(input);
     if (url !== input) info(`Share link converted to a direct link: ${url}`);
     info("Downloading background music...");
-    mkdirSync(publicDir, { recursive: true });
-    const tmp = join(publicDir, `.${FIXED_NAME}.download`);
+    mkdirSync(musicDir, { recursive: true });
+    const tmp = join(musicDir, `.${FIXED_NAME}.download`);
     try {
       const { contentType, bytes } = await download(url, tmp);
       info(`   downloaded ${(bytes / 1048576).toFixed(2)} MB`);
@@ -261,14 +278,17 @@ async function main() {
 
       const ext = pickExtension({ url, contentType, formatName: v.probe.formatName });
       // overwrite any previous background1.* (also removes an old file with a different extension)
-      for (const f of readdirSync(publicDir)) {
-        if (f.toLowerCase().startsWith(`${FIXED_NAME}.`) && f !== basename(tmp)) rmSync(join(publicDir, f), { force: true });
+      // (also cleans the old location public/background1.* — the file now lives in public/background/)
+      for (const dir of [musicDir, publicDir]) {
+        for (const f of readdirSync(dir)) {
+          if (f.toLowerCase().startsWith(`${FIXED_NAME}.`) && f !== basename(tmp)) rmSync(join(dir, f), { force: true });
+        }
       }
       const finalName = `${FIXED_NAME}.${ext}`;
-      renameSync(tmp, join(publicDir, finalName));
-      info(`✅ Saved as public/${finalName} (${fmtDur(v.probe.duration)}, ${v.probe.audioCodec || "audio"})`);
-      summary.push(`- Downloaded from link → \`public/${finalName}\` (${fmtDur(v.probe.duration)}).`);
-      setEnv("BG_MUSIC_FILE", pathForRender(join(publicDir, finalName)));
+      renameSync(tmp, join(musicDir, finalName));
+      info(`✅ Saved as public/${MUSIC_SUBDIR}/${finalName} (${fmtDur(v.probe.duration)}, ${v.probe.audioCodec || "audio"})`);
+      summary.push(`- Downloaded from link → \`public/${MUSIC_SUBDIR}/${finalName}\` (${fmtDur(v.probe.duration)}).`);
+      setEnv("BG_MUSIC_FILE", pathForRender(join(musicDir, finalName)));
       setEnv("BG_MUSIC_DOWNLOADED", "true");
       return 0;
     } catch (err) {
@@ -278,11 +298,11 @@ async function main() {
     }
   }
 
-  // ---- B) file name in public/ ----
-  const found = resolvePublicFile(input, publicDir);
+  // ---- B) file name in public/background/ (or the old location public/) ----
+  const found = resolveMusicFile(input, musicDir, publicDir);
   if (!found.ok) {
-    const hint = found.available.length > 0 ? ` Audio files in public/: ${found.available.join(", ")}.` : " There are no audio files in public/ yet.";
-    const msg = `Background music: ${found.error}${hint} Give a direct download link, or upload the file to public/ first.`;
+    const hint = found.available.length > 0 ? ` Audio files in public/background/: ${found.available.join(", ")}.` : " There are no audio files in public/background/ yet.";
+    const msg = `Background music: ${found.error}${hint} Give a direct download link, or upload the file to public/background/ first.`;
     if (FAIL_ON_MISSING_FILENAME) {
       console.log(`::error::${msg}`);
       summary.push(`- ❌ ${msg}`);
@@ -292,15 +312,15 @@ async function main() {
     warn(`${msg} Continuing without background music.`);
     return 0;
   }
-  const rel = `public/${found.file}`;
-  const v = await validateAudio(join(publicDir, found.file));
+  const rel = found.dir === musicDir ? `public/${MUSIC_SUBDIR}/${found.file}` : `public/${found.file}`;
+  const v = await validateAudio(join(found.dir, found.file));
   if (!v.ok) {
     warn(`${rel} is not usable as background music: ${v.error}. Continuing WITHOUT background music.`);
     return 0;
   }
   info(`✅ Using ${rel} (${fmtDur(v.probe.duration)}, ${v.probe.audioCodec || "audio"})`);
   summary.push(`- Using existing file \`${rel}\` (${fmtDur(v.probe.duration)}).`);
-  setEnv("BG_MUSIC_FILE", pathForRender(join(publicDir, found.file)));
+  setEnv("BG_MUSIC_FILE", pathForRender(join(found.dir, found.file)));
   setEnv("BG_MUSIC_DOWNLOADED", "false");
   return 0;
 }

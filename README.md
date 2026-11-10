@@ -58,8 +58,8 @@
 
 | ইনপুটে কী দেবে | কী হয় |
 |---|---|
-| সরাসরি ডাউনলোড লিংক (`https://…/song.mp3`) | ডাউনলোড (রিডাইরেক্ট মানে) → ffprobe যাচাই → `public/background1.<ext>` নামে সেভ (এক্সটেনশন ফাইলের আসল ধরন/URL থেকে; আগের `background1.*` মুছে ওভাররাইট) → রিপোতেও কমিট, তাই পরের বার শুধু নাম দিলেই চলে। Dropbox / Google Drive / GitHub-এর শেয়ার-লিংক নিজে সরাসরি-লিংকে বদলে নেয়। |
-| `public/` ফোল্ডারের ফাইলের নাম (`background1.mp3`, `my song.mp3`) | ওই ফাইল সরাসরি ব্যবহার (বড়-ছোট হাতের অক্ষর বা এক্সটেনশন বাদ দিলেও চলে)। নাম না মিললে স্পষ্ট ❌ এরর + `public/`-এ থাকা অডিও ফাইলের তালিকা; ভিডিও তৈরি হয় (মিউজিক ছাড়া) কিন্তু রান ❌ দেখায় ও Release হয় না। |
+| সরাসরি ডাউনলোড লিংক (`https://…/song.mp3`) | ডাউনলোড (রিডাইরেক্ট মানে) → ffprobe যাচাই → `public/background/background1.<ext>` নামে সেভ (এক্সটেনশন ফাইলের আসল ধরন/URL থেকে; আগের `background1.*` মুছে ওভাররাইট) → রিপোতেও কমিট, তাই পরের বার শুধু নাম দিলেই চলে। Dropbox / Google Drive / GitHub-এর শেয়ার-লিংক নিজে সরাসরি-লিংকে বদলে নেয়। |
+| `public/background/` ফোল্ডারের ফাইলের নাম (`background1.mp3`, `my song.mp3`) | ওই ফাইল সরাসরি ব্যবহার (বড়-ছোট হাতের অক্ষর বা এক্সটেনশন বাদ দিলেও চলে)। নাম না মিললে স্পষ্ট ❌ এরর + `public/`-এ থাকা অডিও ফাইলের তালিকা; ভিডিও তৈরি হয় (মিউজিক ছাড়া) কিন্তু রান ❌ দেখায় ও Release হয় না। |
 | **ফাঁকা** | মিউজিক ছাড়া, আগের মতোই (তবু ভয়েস -14 LUFS-এ সমান হয়) |
 
 ডাউনলোড বা যাচাই ব্যর্থ হলে (লিংকে ওয়েব-পেজ, ৪০৪, নষ্ট/অডিও-ছাড়া ফাইল) ⚠️ সতর্কতা দিয়ে **মিউজিক ছাড়াই রেন্ডার চলে** — পুরো workflow ভাঙে না।
@@ -108,7 +108,7 @@ npm run check      # বান্ডল + ছবি রেন্ডার (out/c
 - `public/svg/` — `svg1.svg`, `svg2.svg` …
 - `public/sfx/` — `whoosh.mp3` ইত্যাদি
 - `scripts/check.mjs` — অটো-যাচাই স্ক্রিপ্ট; `scripts/render.mjs` — রেন্ডার (Part 14-এ সম্পূর্ণ)
-- `scripts/lib/audioMix.mjs` — অডিও (FFmpeg): ভয়েস -14 LUFS, নরম ব্যাকগ্রাউন্ড মিউজিক, ducking, লুপ/ট্রিম; `scripts/prepare-bgmusic.mjs` — `background_music` ইনপুট (লিংক বা `public/`-এর ফাইলের নাম) → `public/background1.<ext>`; `scripts/test-audio-mix.mjs` — এদের টেস্ট
+- `scripts/lib/audioMix.mjs` — অডিও (FFmpeg): ভয়েস -14 LUFS, নরম ব্যাকগ্রাউন্ড মিউজিক, ducking, লুপ/ট্রিম; `scripts/prepare-bgmusic.mjs` — `background_music` ইনপুট (লিংক বা `public/`-এর ফাইলের নাম) → `public/background/background1.<ext>`; `scripts/test-audio-mix.mjs` — এদের টেস্ট
 
 ## নিচের প্রোগ্রেস বার ও রেন্ডার সেটিং
 

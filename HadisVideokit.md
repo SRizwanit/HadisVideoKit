@@ -58,8 +58,8 @@ Files: `src/scenes/ThumbnailScene.tsx` (design; compositions `ThumbnailPortrait`
 
 New optional workflow input **`background_music`** — either a **direct download link** (`https://…/song.mp3`) or the **file name of an audio file already in `public/`**; **empty = no music** (the pipeline behaves exactly as before, the voice is still normalized to -14 LUFS).
 
-- **Link:** downloaded (redirects followed, 3 attempts, 150 MB cap), validated with `ffprobe`, saved as `public/background1.<ext>` (extension from the real file type, then the URL, then `Content-Type`; any older `background1.*` is removed) and committed to the repo so you can reuse it later just by typing the name. Dropbox / Google Drive / GitHub share links are converted to direct links automatically.
-- **File name:** `public/<name>` is used directly (case-insensitive, `public/` prefix and a missing extension are accepted). If it does not exist: a clear `::error::` listing the audio files in `public/`; the videos are still rendered (without music) but the run ends ❌ and no Release is created.
+- **Link:** downloaded (redirects followed, 3 attempts, 150 MB cap), validated with `ffprobe`, saved as `public/background/background1.<ext>` (extension from the real file type, then the URL, then `Content-Type`; any older `background1.*` is removed) and committed to the repo so you can reuse it later just by typing the name. Dropbox / Google Drive / GitHub share links are converted to direct links automatically.
+- **File name:** `public/background/<name>` (falling back to the old location `public/<name>`) is used directly (case-insensitive, `public/` prefix and a missing extension are accepted). If it does not exist: a clear `::error::` listing the audio files in `public/`; the videos are still rendered (without music) but the run ends ❌ and no Release is created.
 - **Download/validation problems** (HTML page instead of audio, 404, corrupt file, no audio stream) → `::warning::` and the render continues without music.
 
 What happens to every rendered video (new step after each `renderMedia`; code `scripts/lib/audioMix.mjs`, FFmpeg installed by a new workflow step):
@@ -162,7 +162,7 @@ name: Render Hadis Video
 #
 # 🎵 ব্যাকগ্রাউন্ড মিউজিক + অডিও (নতুন ইনপুট):
 #   background_music = ঐচ্ছিক। এই দুটোর যেকোনো একটা দেওয়া যায়:
-#                   ১) সরাসরি ডাউনলোড লিংক (https://.../song.mp3) → ডাউনলোড + ffprobe যাচাই করে public/background1.<ext> নামে সেভ
+#                   ১) সরাসরি ডাউনলোড লিংক (https://.../song.mp3) → ডাউনলোড + ffprobe যাচাই করে public/background/background1.<ext> নামে সেভ
 #                      (আগের background1.* মুছে ওভাররাইট হয়, আর রিপোতেও কমিট হয় — পরের বার শুধু ফাইলের নাম দিলেই চলে)
 #                   ২) public/ ফোল্ডারে থাকা ফাইলের নাম (যেমন background1.mp3) → ওই ফাইলই সরাসরি ব্যবহার; না থাকলে স্পষ্ট এরর
 #                   ফাঁকা = ব্যাকগ্রাউন্ড মিউজিক ছাড়া, আগের মতোই। লিংক/ফাইল নষ্ট বা পড়া না গেলে ⚠️ দিয়ে মিউজিক ছাড়াই রেন্ডার চলে।
@@ -421,7 +421,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends ffmpeg
           ffmpeg -version | head -n 1
 
-      # background_music ফাঁকা হলে কিছুই করে না (মিউজিক ছাড়া রেন্ডার)। লিংক হলে ডাউনলোড → public/background1.<ext>; ফাইলের নাম হলে public/ থেকে।
+      # background_music ফাঁকা হলে কিছুই করে না (মিউজিক ছাড়া রেন্ডার)। লিংক হলে ডাউনলোড → public/background/background1.<ext>; ফাইলের নাম হলে public/ থেকে।
       # সফল হলে BG_MUSIC_FILE (ও BG_MUSIC_DOWNLOADED) পরের স্টেপগুলোর জন্য সেট হয়। ডাউনলোড/যাচাই ব্যর্থ = ⚠️, মিউজিক ছাড়াই চলবে।
       - name: Prepare background music
         id: bgmusic
@@ -431,13 +431,13 @@ jobs:
         run: node scripts/prepare-bgmusic.mjs
 
       # ডাউনলোড করা হলে ফাইলটা রিপোতেও রাখি, যাতে পরের বার শুধু নাম (background1.mp3) দিলেই চলে। ব্যর্থ হলে রেন্ডার থামে না।
-      - name: Save background music to repo (public/background1.*)
+      - name: Save background music to repo (public/background/)
         if: ${{ startsWith(inputs.action, 'render') && env.BG_MUSIC_DOWNLOADED == 'true' }}
         continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- 'public/background1.*'
+          git add -A -- 'public/background/'
           if git diff --cached --quiet; then
             echo "background1 অপরিবর্তিত — কমিট লাগবে না।"
           else
