@@ -1,88 +1,121 @@
-<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTpjMDQ4MGJjZi00ZTEzLTRlNTctODNkZS1jY2QyNDI2YzFmZDIAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaGDvU5OxKUQrwRqm4WuMUbQAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDo1ZGM2N2E5My1jYjVlLTRlYmItYmE0ZC1iYjAwZjIwZTczOWFscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoEWcKon0jhlotHuMZ0VH41wAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggw9vCWbBrmgpQO94tedjTReEO2BCUQNZQMLl/T2Tuw5ekZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaJU+1LUU0Wro1rQKuIqYGkYAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCBcYA8Zqn0gCu4pYXTkyoKokYfQJJcWVEpTPA1uCgUFVWRuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBh/Zmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmMwNDgwYmNmLTRlMTMtNGU1Ny04M2RlLWNjZDI0MjZjMWZkMi9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOjIzYmE4ZGU4LTg1ZmYtNDU1ZC05OTAyLTA4N2U3ZGJkODdiM3JjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCDD28JZsGuaClA73i152NNF4Q7YEJRA1lAwuX9PZO7Dl6JjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggbiEvWwqSEg75J0Pa5ofDoZOLShSohWDNe7jflRPvAviiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggn4IFGC7LwR472Vwi5e/1qoTH3iUhTxWpBNH6Mu2J3Ix0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQPIF3cqmvv5HBc4OHSXpoQC/hxb/d2vBvRNmS5KogShO4FhlE8MQhd3mDic1D0cgEGSoWGdfb8IPLeJKNlTgcbM=</c2pa:manifest></metadata>
+<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="svg1-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0" stop-color="#f5d77a" stop-opacity="0"/>
-      <stop offset="0.55" stop-color="#f5d77a" stop-opacity="0"/>
-      <stop offset="0.78" stop-color="#fff6c8" stop-opacity="0.45"/>
+      <stop offset="0" stop-color="#fff6c8" stop-opacity="0.85"/>
       <stop offset="1" stop-color="#f5d77a" stop-opacity="0"/>
     </radialGradient>
     <style>
-      /* Stage 1: খালি হৃদয়ের রেখা (শুরুতে ছোট থেকে বড় হয়) */
+      /* Stage 1 (0-2s): bottom star appears */
       @keyframes svg1-k1 {
         0%   { transform: scale(0.6); opacity: 0.7; }
         30%  { transform: scale(1);   opacity: 1; }
         90%  { transform: scale(1);   opacity: 1; }
         100% { transform: scale(0.6); opacity: 0.7; }
       }
-      /* Stage 2: ৩৩% এ ফোটে, ৯০% এ মিলিয়ে যায় */
+      /* Stage 2 (2-4s): first line + middle star */
       @keyframes svg1-k2 {
-        0%, 30%   { opacity: 0; transform: scale(0.8); }
-        45%, 88%  { opacity: 1; transform: scale(1); }
-        100%      { opacity: 0; transform: scale(0.8); }
+        0%, 30%  { opacity: 0; }
+        42%, 88% { opacity: 1; }
+        100%     { opacity: 0; }
       }
-      /* Stage 3: ৬৬% এ ফোটে, ৯০% এ মিলিয়ে যায় */
+      /* Stage 3 (4-6s): second line + top star + glow */
       @keyframes svg1-k3 {
-        0%, 63%   { opacity: 0; }
-        78%, 88%  { opacity: 1; }
-        100%      { opacity: 0; }
+        0%, 63%  { opacity: 0; }
+        75%, 88% { opacity: 1; }
+        100%     { opacity: 0; }
       }
-      @keyframes svg1-float {
-        from { transform: translateY(0px); }
-        to   { transform: translateY(-22px); }
+      @keyframes svg1-draw1 {
+        0%, 30%  { stroke-dashoffset: 1; }
+        42%, 100% { stroke-dashoffset: 0; }
       }
-      @keyframes svg1-twinkle {
-        0%, 100% { opacity: 1; }
-        50%      { opacity: 0.35; }
+      @keyframes svg1-draw2 {
+        0%, 63%  { stroke-dashoffset: 1; }
+        75%, 100% { stroke-dashoffset: 0; }
+      }
+      @keyframes svg1-pop2 {
+        0%, 32%  { transform: scale(0.5); }
+        46%      { transform: scale(1.12); }
+        54%, 100% { transform: scale(1); }
+      }
+      @keyframes svg1-pop3 {
+        0%, 65%  { transform: scale(0.5); }
+        79%      { transform: scale(1.12); }
+        87%, 100% { transform: scale(1); }
       }
       @keyframes svg1-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      .svg1-s1 { animation: svg1-k1 6s ease-in-out infinite; transform-origin: 500px 500px; }
-      .svg1-s2 { animation: svg1-k2 6s ease-in-out infinite; transform-origin: 500px 500px; }
-      .svg1-s3 { animation: svg1-k3 6s ease-in-out infinite; transform-origin: 500px 500px; }
-      .svg1-floatA { animation: svg1-float 3s ease-in-out infinite alternate; }
-      .svg1-floatB { animation: svg1-float 3s ease-in-out -1.5s infinite alternate; }
-      .svg1-tw1 { animation: svg1-twinkle 2s ease-in-out infinite; }
-      .svg1-tw2 { animation: svg1-twinkle 2s ease-in-out -0.7s infinite; }
-      .svg1-tw3 { animation: svg1-twinkle 2s ease-in-out -1.3s infinite; }
-      .svg1-ring { animation: svg1-spin 6s linear infinite; transform-origin: 500px 500px; }
+      @keyframes svg1-pulse {
+        0%, 100% { transform: scale(0.9); opacity: 0.55; }
+        50%      { transform: scale(1.1); opacity: 1; }
+      }
+      @keyframes svg1-twinkle {
+        0%, 100% { opacity: 0.2; transform: scale(0.7); }
+        50%      { opacity: 1;   transform: scale(1.2); }
+      }
+
+      .svg1-s1 { animation: svg1-k1 6s ease-in-out infinite; transform-origin: 500px 800px; }
+      .svg1-s2 { animation: svg1-k2 6s ease-in-out infinite; }
+      .svg1-s3 { animation: svg1-k3 6s ease-in-out infinite; }
+
+      .svg1-ring  { animation: svg1-spin 6s linear infinite; transform-origin: 500px 800px; }
+      .svg1-halo1 { animation: svg1-pulse 3s ease-in-out infinite; transform-origin: 500px 800px; }
+
+      .svg1-line1 { stroke-dasharray: 1; stroke-dashoffset: 1; animation: svg1-draw1 6s ease-in-out infinite; }
+      .svg1-line2 { stroke-dasharray: 1; stroke-dashoffset: 1; animation: svg1-draw2 6s ease-in-out infinite; }
+
+      .svg1-n2    { animation: svg1-pop2 6s ease-in-out infinite; transform-origin: 500px 500px; }
+      .svg1-n3    { animation: svg1-pop3 6s ease-in-out infinite; transform-origin: 500px 200px; }
+      .svg1-ring2 { animation: svg1-spin 6s linear infinite; transform-origin: 500px 500px; }
+
+      .svg1-halo3 { animation: svg1-pulse 3s ease-in-out infinite; transform-origin: 500px 200px; }
+      .svg1-sp1 { animation: svg1-twinkle 2s ease-in-out infinite; transform-origin: 360px 120px; }
+      .svg1-sp2 { animation: svg1-twinkle 2s ease-in-out infinite -0.7s; transform-origin: 640px 120px; }
+      .svg1-sp3 { animation: svg1-twinkle 2s ease-in-out infinite -1.3s; transform-origin: 300px 250px; }
+      .svg1-sp4 { animation: svg1-twinkle 2s ease-in-out infinite -0.4s; transform-origin: 700px 250px; }
+      .svg1-sp5 { animation: svg1-twinkle 3s ease-in-out infinite -1s; transform-origin: 420px 330px; }
+      .svg1-sp6 { animation: svg1-twinkle 3s ease-in-out infinite -2s; transform-origin: 580px 330px; }
     </style>
   </defs>
 
-  <!-- Stage 1: মাঝখানে খালি হৃদয়ের রেখা -->
+  <!-- Stage 1: first narrator, bottom star with a rotating ring -->
   <g class="svg1-s1">
-    <path d="M500 700 C 300 560, 280 380, 400 330 C 450 310, 490 335, 500 365 C 510 335, 550 310, 600 330 C 720 380, 700 560, 500 700 Z" fill="none" stroke="#f5d77a" stroke-width="14" stroke-linejoin="round"/>
-  </g>
-
-  <!-- Stage 2: চারপাশে তারা ও প্রশংসার বুদবুদ -->
-  <g class="svg1-s2">
-    <g class="svg1-floatA">
-      <circle cx="220" cy="470" r="52" fill="#ffffff" fill-opacity="0.12" stroke="#8fd3ff" stroke-width="6"/>
-      <circle cx="790" cy="560" r="62" fill="#ffffff" fill-opacity="0.12" stroke="#8fd3ff" stroke-width="6"/>
-      <circle cx="330" cy="810" r="40" fill="#ffffff" fill-opacity="0.12" stroke="#8fd3ff" stroke-width="6"/>
-      <path d="M0 20 C -30 -2, -24 -26, -8 -22 C -3 -20, 0 -14, 0 -10 C 0 -14, 3 -20, 8 -22 C 24 -26, 30 -2, 0 20 Z" fill="#f0c040" transform="translate(790 560) scale(1.1)"/>
-    </g>
-    <g class="svg1-floatB">
-      <circle cx="260" cy="250" r="46" fill="#ffffff" fill-opacity="0.12" stroke="#1abc9c" stroke-width="6"/>
-      <circle cx="740" cy="270" r="56" fill="#ffffff" fill-opacity="0.12" stroke="#1abc9c" stroke-width="6"/>
-      <circle cx="690" cy="800" r="44" fill="#ffffff" fill-opacity="0.12" stroke="#1abc9c" stroke-width="6"/>
-      <path d="M0 20 C -30 -2, -24 -26, -8 -22 C -3 -20, 0 -14, 0 -10 C 0 -14, 3 -20, 8 -22 C 24 -26, 30 -2, 0 20 Z" fill="#f0c040" transform="translate(260 250)"/>
-      <path d="M0 20 C -30 -2, -24 -26, -8 -22 C -3 -20, 0 -14, 0 -10 C 0 -14, 3 -20, 8 -22 C 24 -26, 30 -2, 0 20 Z" fill="#f0c040" transform="translate(220 470) scale(0.9)"/>
-    </g>
-    <path class="svg1-tw1" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#ffffff" transform="translate(500 180)"/>
-    <path class="svg1-tw2" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#f5d77a" transform="translate(130 640)"/>
-    <path class="svg1-tw3" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#8fd3ff" transform="translate(880 400)"/>
-    <path class="svg1-tw1" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#ffffff" transform="translate(520 880)"/>
-  </g>
-
-  <!-- Stage 3: বাইরে ঝলমল, মাঝের হৃদয় ফাঁকাই -->
-  <g class="svg1-s3">
-    <circle cx="500" cy="500" r="430" fill="url(#svg1-glow)"/>
+    <circle class="svg1-halo1" cx="500" cy="800" r="150" fill="url(#svg1-glow)"/>
     <g class="svg1-ring">
-      <circle cx="500" cy="500" r="385" fill="none" stroke="#f5d77a" stroke-width="6" stroke-dasharray="18 26" stroke-opacity="0.8"/>
+      <circle cx="500" cy="800" r="125" fill="none" stroke="#1abc9c" stroke-width="6" stroke-dasharray="14 18" opacity="0.8"/>
     </g>
-    <path d="M500 700 C 300 560, 280 380, 400 330 C 450 310, 490 335, 500 365 C 510 335, 550 310, 600 330 C 720 380, 700 560, 500 700 Z" fill="none" stroke="#ffffff" stroke-width="8" stroke-dasharray="10 16" stroke-opacity="0.5" transform="translate(500 510) scale(0.55) translate(-500 -510)"/>
-    <path class="svg1-tw1" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#fff6c8" transform="translate(190 210) scale(1.6)"/>
-    <path class="svg1-tw2" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#fff6c8" transform="translate(810 190) scale(1.6)"/>
-    <path class="svg1-tw3" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#fff6c8" transform="translate(830 800) scale(1.6)"/>
-    <path class="svg1-tw1" d="M0 -26 L7 -7 L26 0 L7 7 L0 26 L-7 7 L-26 0 L-7 -7 Z" fill="#fff6c8" transform="translate(170 790) scale(1.6)"/>
+    <rect x="430" y="730" width="140" height="140" rx="10" fill="#f5d77a" fill-opacity="0.18" stroke="#f5d77a" stroke-width="12"/>
+    <rect x="430" y="730" width="140" height="140" rx="10" fill="#1abc9c" fill-opacity="0.12" stroke="#f0c040" stroke-width="12" transform="rotate(45 500 800)"/>
+    <circle cx="500" cy="800" r="26" fill="#ffffff"/>
+  </g>
+
+  <!-- Stage 2: chain link to the second narrator -->
+  <g class="svg1-s2">
+    <path class="svg1-line1" pathLength="1" d="M500 700 L500 580" fill="none" stroke="#f5d77a" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="500" cy="640" r="9" fill="#ffffff"/>
+    <g class="svg1-n2">
+      <g class="svg1-ring2">
+        <circle cx="500" cy="500" r="100" fill="none" stroke="#8fd3ff" stroke-width="5" stroke-dasharray="10 16" opacity="0.8"/>
+      </g>
+      <rect x="445" y="445" width="110" height="110" rx="8" fill="#f5d77a" fill-opacity="0.18" stroke="#f5d77a" stroke-width="10"/>
+      <rect x="445" y="445" width="110" height="110" rx="8" fill="#1abc9c" fill-opacity="0.12" stroke="#2ecc71" stroke-width="10" transform="rotate(45 500 500)"/>
+      <circle cx="500" cy="500" r="20" fill="#ffffff"/>
+    </g>
+  </g>
+
+  <!-- Stage 3: chain link to the Prophet's words, top star, glow and sparkles -->
+  <g class="svg1-s3">
+    <circle class="svg1-halo3" cx="500" cy="200" r="190" fill="url(#svg1-glow)"/>
+    <path class="svg1-line2" pathLength="1" d="M500 420 L500 280" fill="none" stroke="#f5d77a" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="500" cy="350" r="9" fill="#ffffff"/>
+    <g class="svg1-n3">
+      <rect x="445" y="145" width="110" height="110" rx="8" fill="#f5d77a" fill-opacity="0.25" stroke="#f5d77a" stroke-width="10"/>
+      <rect x="445" y="145" width="110" height="110" rx="8" fill="#8fd3ff" fill-opacity="0.15" stroke="#ffffff" stroke-width="10" transform="rotate(45 500 200)"/>
+      <circle cx="500" cy="200" r="22" fill="#ffffff"/>
+    </g>
+    <circle class="svg1-sp1" cx="360" cy="120" r="9" fill="#ffffff"/>
+    <circle class="svg1-sp2" cx="640" cy="120" r="9" fill="#f0c040"/>
+    <circle class="svg1-sp3" cx="300" cy="250" r="8" fill="#8fd3ff"/>
+    <circle class="svg1-sp4" cx="700" cy="250" r="8" fill="#ffffff"/>
+    <circle class="svg1-sp5" cx="420" cy="330" r="7" fill="#f5d77a"/>
+    <circle class="svg1-sp6" cx="580" cy="330" r="7" fill="#2ecc71"/>
   </g>
 </svg>

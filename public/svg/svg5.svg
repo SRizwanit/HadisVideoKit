@@ -1,90 +1,115 @@
 <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="svg5-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0" stop-color="#fff6c8" stop-opacity="0.75"/>
+      <stop offset="0" stop-color="#fff6c8" stop-opacity="0.9"/>
       <stop offset="1" stop-color="#f5d77a" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="svg5-beam" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff6c8" stop-opacity="0.7"/>
-      <stop offset="1" stop-color="#f5d77a" stop-opacity="0.08"/>
-    </linearGradient>
     <style>
+      /* Stage 1 (0-2s): the journey begins (start point and road) */
       @keyframes svg5-k1 {
-        0%   { transform: scale(0.6); opacity: 0.7; }
-        30%  { transform: scale(1);   opacity: 1; }
-        90%  { transform: scale(1);   opacity: 1; }
-        100% { transform: scale(0.6); opacity: 0.7; }
+        0%   { transform: scale(0.65); opacity: 0.7; }
+        30%  { transform: scale(1);    opacity: 1; }
+        90%  { transform: scale(1);    opacity: 1; }
+        100% { transform: scale(0.65); opacity: 0.7; }
       }
+      /* Stage 2 (2-4s): the road forks to two worldly goals */
       @keyframes svg5-k2 {
-        0%, 30%   { opacity: 0; }
-        45%, 88%  { opacity: 1; }
-        100%      { opacity: 0; }
+        0%, 30%  { opacity: 0; }
+        42%, 88% { opacity: 1; }
+        100%     { opacity: 0; }
       }
+      @keyframes svg5-draw {
+        0%, 30%   { stroke-dashoffset: 1; }
+        50%, 100% { stroke-dashoffset: 0; }
+      }
+      @keyframes svg5-pop {
+        0%, 45%   { transform: scale(0); }
+        58%       { transform: scale(1.12); }
+        66%, 100% { transform: scale(1); }
+      }
+      /* Stage 3 (4-6s): light travels along the roads to what was intended */
       @keyframes svg5-k3 {
-        0%, 63%   { opacity: 0; transform: scale(0.9); }
-        78%, 88%  { opacity: 1; transform: scale(1); }
-        100%      { opacity: 0; transform: scale(0.9); }
+        0%, 63%  { opacity: 0; }
+        75%, 88% { opacity: 1; }
+        100%     { opacity: 0; }
       }
-      @keyframes svg5-beam {
-        0%, 32%  { transform: scaleY(0); }
-        50%, 88% { transform: scaleY(1); }
-        100%     { transform: scaleY(0); }
+      @keyframes svg5-flow {
+        from { stroke-dashoffset: 0; }
+        to   { stroke-dashoffset: -150; }
       }
-      @keyframes svg5-ra {
-        0%, 66%  { opacity: 0; transform: scale(0.5); }
-        69%      { opacity: 0.9; transform: scale(0.6); }
-        90%      { opacity: 0; transform: scale(2.4); }
-        100%     { opacity: 0; transform: scale(2.4); }
+      @keyframes svg5-pulse {
+        0%, 100% { transform: scale(0.9); opacity: 0.55; }
+        50%      { transform: scale(1.1); opacity: 1; }
       }
-      @keyframes svg5-rb {
-        0%, 72%  { opacity: 0; transform: scale(0.5); }
-        75%      { opacity: 0.8; transform: scale(0.6); }
-        96%      { opacity: 0; transform: scale(2.4); }
-        100%     { opacity: 0; transform: scale(2.4); }
-      }
-      @keyframes svg5-fill {
-        0%, 64%  { fill-opacity: 0; }
-        80%, 88% { fill-opacity: 0.85; }
-        100%     { fill-opacity: 0; }
+      @keyframes svg5-twinkle {
+        0%, 100% { opacity: 0.2; transform: scale(0.7); }
+        50%      { opacity: 1;   transform: scale(1.2); }
       }
       @keyframes svg5-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      @keyframes svg5-twinkle { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-      .svg5-s1 { animation: svg5-k1 6s ease-in-out infinite; transform-origin: 500px 220px; }
+
+      .svg5-s1 { animation: svg5-k1 6s ease-in-out infinite; transform-origin: 500px 850px; }
       .svg5-s2 { animation: svg5-k2 6s ease-in-out infinite; }
-      .svg5-s3 { animation: svg5-k3 6s ease-in-out infinite; transform-origin: 500px 720px; }
-      .svg5-beam { animation: svg5-beam 6s ease-in-out infinite; transform-origin: 500px 290px; }
-      .svg5-r1 { animation: svg5-ra 6s ease-out infinite; transform-origin: 500px 720px; }
-      .svg5-r2 { animation: svg5-rb 6s ease-out infinite; transform-origin: 500px 720px; }
-      .svg5-fill { animation: svg5-fill 6s ease-in-out infinite; }
-      .svg5-halo { animation: svg5-spin 6s linear infinite; transform-origin: 500px 220px; }
-      .svg5-tw { animation: svg5-twinkle 2s ease-in-out infinite; }
-      .svg5-tw2 { animation: svg5-twinkle 2s ease-in-out infinite; animation-delay: -1s; }
+      .svg5-s3 { animation: svg5-k3 6s ease-in-out infinite; }
+
+      .svg5-halo1 { animation: svg5-pulse 3s ease-in-out infinite; transform-origin: 500px 850px; }
+      .svg5-ring0 { animation: svg5-spin 6s linear infinite; transform-origin: 500px 850px; }
+
+      .svg5-forkL { stroke-dasharray: 1; stroke-dashoffset: 1; animation: svg5-draw 6s ease-in-out infinite; }
+      .svg5-forkR { stroke-dasharray: 1; stroke-dashoffset: 1; animation: svg5-draw 6s ease-in-out infinite; }
+      .svg5-coin  { animation: svg5-pop 6s ease-in-out infinite; transform-origin: 280px 420px; }
+      .svg5-rings { animation: svg5-pop 6s ease-in-out infinite; transform-origin: 720px 420px; }
+
+      .svg5-flowL { stroke-dasharray: 20 30; animation: svg5-flow 3s linear infinite; }
+      .svg5-flowR { stroke-dasharray: 20 30; animation: svg5-flow 3s linear infinite; }
+      .svg5-haloL { animation: svg5-pulse 3s ease-in-out infinite;     transform-origin: 280px 420px; }
+      .svg5-haloR { animation: svg5-pulse 3s ease-in-out infinite -1.5s; transform-origin: 720px 420px; }
+      .svg5-sp1 { animation: svg5-twinkle 2s ease-in-out infinite;       transform-origin: 190px 300px; }
+      .svg5-sp2 { animation: svg5-twinkle 2s ease-in-out infinite -0.7s; transform-origin: 810px 300px; }
+      .svg5-sp3 { animation: svg5-twinkle 3s ease-in-out infinite -1.4s; transform-origin: 280px 280px; }
+      .svg5-sp4 { animation: svg5-twinkle 3s ease-in-out infinite -0.5s; transform-origin: 720px 280px; }
+      .svg5-sp5 { animation: svg5-twinkle 2s ease-in-out infinite -1.2s; transform-origin: 500px 560px; }
+      .svg5-sp6 { animation: svg5-twinkle 2s ease-in-out infinite -0.3s; transform-origin: 500px 230px; }
     </style>
   </defs>
 
-  <!-- Stage 1: a bright star -->
+  <!-- Stage 1: the start of the journey (hijrah): start point and the first stretch of road -->
   <g class="svg5-s1">
-    <circle cx="500" cy="220" r="150" fill="url(#svg5-glow)"/>
-    <polygon points="500,140 520,192 576,195 532,231 547,285 500,254 453,285 468,231 424,195 480,192" fill="#f0c040" stroke="#fff6c8" stroke-width="8" stroke-linejoin="round"/>
-    <g class="svg5-halo">
-      <circle cx="500" cy="220" r="115" fill="none" stroke="#f5d77a" stroke-width="5" stroke-dasharray="8 22" stroke-opacity="0.8"/>
+    <circle class="svg5-halo1" cx="500" cy="850" r="170" fill="url(#svg5-glow)"/>
+    <g class="svg5-ring0">
+      <circle cx="500" cy="850" r="95" fill="none" stroke="#1abc9c" stroke-width="6" stroke-dasharray="12 18" opacity="0.8"/>
+    </g>
+    <path d="M500 850 L500 690" fill="none" stroke="#f5d77a" stroke-width="16" stroke-linecap="round"/>
+    <path d="M500 850 L500 690" fill="none" stroke="#fff6c8" stroke-width="4" stroke-linecap="round" stroke-dasharray="14 16"/>
+    <circle cx="500" cy="850" r="30" fill="#f5d77a" fill-opacity="0.3" stroke="#f5d77a" stroke-width="10"/>
+    <circle cx="500" cy="850" r="12" fill="#ffffff"/>
+  </g>
+
+  <!-- Stage 2: the road forks; a coin (worldly gain) on the left, two linked rings (marriage) on the right -->
+  <g class="svg5-s2">
+    <path class="svg5-forkL" pathLength="1" d="M500 690 C500 600 290 620 280 505" fill="none" stroke="#f5d77a" stroke-width="14" stroke-linecap="round"/>
+    <path class="svg5-forkR" pathLength="1" d="M500 690 C500 600 710 620 720 505" fill="none" stroke="#f5d77a" stroke-width="14" stroke-linecap="round"/>
+    <g class="svg5-coin">
+      <circle cx="280" cy="420" r="75" fill="#f0c040" fill-opacity="0.3" stroke="#f0c040" stroke-width="10"/>
+      <circle cx="280" cy="420" r="50" fill="none" stroke="#fff6c8" stroke-width="5" stroke-dasharray="8 10"/>
+      <path d="M280 390 L280 450 M262 408 Q280 392 298 408 M262 432 Q280 448 298 432" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+    </g>
+    <g class="svg5-rings">
+      <circle cx="692" cy="420" r="46" fill="none" stroke="#1abc9c" stroke-width="12"/>
+      <circle cx="748" cy="420" r="46" fill="none" stroke="#8fd3ff" stroke-width="12"/>
     </g>
   </g>
 
-  <!-- Stage 2: light descends to a small heart -->
-  <g class="svg5-s2">
-    <polygon class="svg5-beam" points="480,290 520,290 600,640 400,640" fill="url(#svg5-beam)"/>
-    <line x1="500" y1="300" x2="500" y2="640" stroke="#ffffff" stroke-width="4" stroke-dasharray="4 14" stroke-opacity="0.8"/>
-    <path d="M500 800 C405 735 395 655 450 648 C480 645 495 665 500 682 C505 665 520 645 550 648 C605 655 595 735 500 800 Z" fill="#8fd3ff" fill-opacity="0.15" stroke="#f5d77a" stroke-width="12" stroke-linejoin="round"/>
-  </g>
-
-  <!-- Stage 3: heart fills with light, ripples spread -->
+  <!-- Stage 3: light flows along both roads to the goal; the destination glows -->
   <g class="svg5-s3">
-    <circle cx="500" cy="720" r="260" fill="url(#svg5-glow)"/>
-    <path class="svg5-fill" d="M500 800 C405 735 395 655 450 648 C480 645 495 665 500 682 C505 665 520 645 550 648 C605 655 595 735 500 800 Z" fill="#2ecc71" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
-    <circle class="svg5-r1" cx="500" cy="720" r="130" fill="none" stroke="#2ecc71" stroke-width="6"/>
-    <circle class="svg5-r2" cx="500" cy="720" r="130" fill="none" stroke="#f5d77a" stroke-width="6"/>
-    <circle class="svg5-tw" cx="290" cy="470" r="9" fill="#ffffff"/>
-    <circle class="svg5-tw2" cx="710" cy="470" r="9" fill="#8fd3ff"/>
+    <circle class="svg5-haloL" cx="280" cy="420" r="150" fill="url(#svg5-glow)"/>
+    <circle class="svg5-haloR" cx="720" cy="420" r="150" fill="url(#svg5-glow)"/>
+    <path class="svg5-flowL" d="M500 690 C500 600 290 620 280 505" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+    <path class="svg5-flowR" d="M500 690 C500 600 710 620 720 505" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+    <circle class="svg5-sp1" cx="190" cy="300" r="9" fill="#ffffff"/>
+    <circle class="svg5-sp2" cx="810" cy="300" r="9" fill="#f0c040"/>
+    <circle class="svg5-sp3" cx="280" cy="280" r="8" fill="#8fd3ff"/>
+    <circle class="svg5-sp4" cx="720" cy="280" r="8" fill="#ffffff"/>
+    <circle class="svg5-sp5" cx="500" cy="560" r="8" fill="#f5d77a"/>
+    <circle class="svg5-sp6" cx="500" cy="230" r="8" fill="#2ecc71"/>
   </g>
 </svg>
