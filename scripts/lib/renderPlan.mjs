@@ -6,7 +6,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 // ---------- src/constants.ts থেকে কপি (টেস্টে মিলিয়ে দেখা হয়) ----------
-export const THEME_IDS = ["emerald", "navy", "greenDayNight", "monsoon", "winter", "spring"];
+export const THEME_IDS = ["emerald", "navy", "greenDayNight", "monsoon", "winter", "spring", "autumn"];
 /** সময়ের মোড (workflow-এর `time_mode`): day / night / dayToNight (ডিফল্ট, আগের আচরণ) / nightToDay — emerald/navy স্থির থিমে প্রভাব নেই */
 export const TIME_MODES = ["day", "night", "dayToNight", "nightToDay"];
 export const DEFAULT_TIME_MODE = "dayToNight";

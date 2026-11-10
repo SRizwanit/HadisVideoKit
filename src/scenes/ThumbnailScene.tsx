@@ -57,8 +57,7 @@ type Props = {
 
 /**
  * থিম অনুযায়ী থাম্বনেইলের ডিফল্ট nightFactor (০ = দিন, ০.৫ = গোধূলি, ১ = রাত)।
- * ⚠️ emerald ও navy "static" থিম — nightFactor তাদের রঙ/ব্যাকগ্রাউন্ডে কোনো প্রভাব ফেলে না (`getThemeColors` সবসময় একই প্যালেট দেয়)।
- *    তাই গুরুত্বপূর্ণ শুধু দিন-রাতের থিমগুলোর (greenDayNight, monsoon, winter, spring) মান: ০ = উজ্জ্বল দিন, ০.৫ = সোনালি গোধূলি, ০.৯ = রাত + জোনাকি।
+ * সব থিমই দিন-রাতের (emerald/navy-ও এখন): ০ = উজ্জ্বল দিন, ০.৫ = সোনালি গোধূলি, ০.৯ = রাত + জোনাকি।
  *    ভিন্ন লুক চাইলে workflow-এর `thumbnail_night` (০–১) দিয়ে বদলানো যায়; কোড বদলাতে হয় না।
  */
 export const THUMBNAIL_NIGHT_BY_THEME: Record<ThemeId, number> = {
@@ -68,6 +67,7 @@ export const THUMBNAIL_NIGHT_BY_THEME: Record<ThemeId, number> = {
   monsoon: 0.9, // বৃষ্টি + বিদ্যুতের রাত + জোনাকি
   winter: 0.9, // কুয়াশা + তারা + হিম-জোনাকি
   spring: 0.8, // বেগুনি-গোলাপি রাত, ঝরা পাপড়ি + জোনাকি
+  autumn: 0.5, // সোনালি-কমলা গোধূলি + ঝরা পাতা
 };
 /**
  * `time_mode` অনুযায়ী থাম্বনেইলের ডিফল্ট (শুধু যে মোডের জন্য আলাদা লুক দরকার): day = উজ্জ্বল দিন, nightToDay = সোনালি ভোর।

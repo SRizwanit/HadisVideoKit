@@ -168,11 +168,12 @@ const Mist: React.FC<{ width: number; height: number; effect: SeasonEffect; alph
   );
 };
 
-const Petals: React.FC<{ width: number; height: number; effect: SeasonEffect; alpha: number }> = ({
+const Petals: React.FC<{ width: number; height: number; effect: SeasonEffect; alpha: number; leaf?: boolean }> = ({
   width,
   height,
   effect,
   alpha,
+  leaf = false,
 }) => {
   const frame = useCurrentFrame();
   const unit = Math.min(width, height) / 1080;
@@ -182,9 +183,9 @@ const Petals: React.FC<{ width: number; height: number; effect: SeasonEffect; al
     <>
       {Array.from({ length: effect.count }, (_, i) => {
         const depth = random(`pt2-d-${i}`); // ০ = দূরে, ১ = কাছে
-        const size = (14 + 20 * depth) * unit;
+        const size = (leaf ? 22 + 26 * depth : 14 + 20 * depth) * unit;
         const wrapH = height + size * 4;
-        const fall = (1.1 + 1.7 * depth) * unit; // px/ফ্রেম
+        const fall = (leaf ? 0.8 + 1.3 * depth : 1.1 + 1.7 * depth) * unit; // px/ফ্রেম
         const y = ((random(`pt2-y-${i}`) * wrapH + frame * fall) % wrapH) - size * 2;
         const phase = random(`pt2-p-${i}`) * Math.PI * 2;
         const sway = Math.sin(frame * (0.018 + 0.026 * random(`pt2-w-${i}`)) + phase) * 70 * unit;
@@ -200,7 +201,7 @@ const Petals: React.FC<{ width: number; height: number; effect: SeasonEffect; al
               width: size,
               height: size * 0.72,
               background: colors[i % colors.length],
-              borderRadius: "100% 0 100% 0",
+              borderRadius: leaf ? "0 100% 0 100%" : "100% 0 100% 0",
               opacity: alpha * (0.55 + 0.45 * depth),
               transform: `rotate(${spin}deg) scaleX(${flip})`,
               boxShadow: `0 0 ${size * 0.4}px ${colors[i % colors.length]}55`,
@@ -221,6 +222,7 @@ export const SeasonEffects: React.FC<Props> = ({ width, height, nightFactor, eff
       {effect.kind === "rain" && <Rain width={width} height={height} nf={nf} effect={effect} alpha={alpha} />}
       {effect.kind === "mist" && <Mist width={width} height={height} effect={effect} alpha={alpha} />}
       {effect.kind === "petals" && <Petals width={width} height={height} effect={effect} alpha={alpha} />}
+      {effect.kind === "leaves" && <Petals width={width} height={height} effect={effect} alpha={alpha} leaf />}
     </div>
   );
 };

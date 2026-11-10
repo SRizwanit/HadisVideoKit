@@ -3,8 +3,8 @@ import type { ThemeId } from "../types";
 /**
  * থিম-ভিত্তিক ক্যাপশন স্টাইল: প্রতিটা থিমের ক্যাপশন আলাদা রকম অ্যানিমেটেড ও রঙিন।
  *
- *  - wordFx      : সক্রিয় শব্দের অ্যানিমেশন (gold / neon / pill / drip / frost / bloom)
- *  - particle    : ক্যাপশন-বাক্সের ভেতরে ভাসা কণা (sparkle / star / firefly / rain / snow / petal)
+ *  - wordFx      : সক্রিয় শব্দের অ্যানিমেশন (gold / neon / pill / drip / frost / bloom / ember)
+ *  - particle    : ক্যাপশন-বাক্সের ভেতরে ভাসা কণা (sparkle / star / firefly / rain / snow / petal / leaf)
  *  - ringSpeed   : বাক্সের ঘুরন্ত রঙিন বর্ডারের গতি (ডিগ্রি/ফ্রেম)
  *  - shimmer     : বাক্সের উপর দিয়ে আলোর ঝলক (প্রতি `shimmerPeriod` ফ্রেমে একবার)
  *  - entryScale  : বাক্স ওঠার সময় শুরুর স্কেল (১ = স্কেল নেই)
@@ -13,8 +13,8 @@ import type { ThemeId } from "../types";
  * সবকিছু ফ্রেম থেকে হিসাব — CSS animation / Math.random() নেই, তাই render-safe।
  */
 
-export type WordFx = "gold" | "neon" | "pill" | "drip" | "frost" | "bloom";
-export type ParticleKind = "sparkle" | "star" | "firefly" | "rain" | "snow" | "petal";
+export type WordFx = "gold" | "neon" | "pill" | "drip" | "frost" | "bloom" | "ember";
+export type ParticleKind = "sparkle" | "star" | "firefly" | "rain" | "snow" | "petal" | "leaf";
 
 export type CaptionStyle = {
   wordFx: WordFx;
@@ -40,6 +40,8 @@ export const CAPTION_STYLES: Record<ThemeId, CaptionStyle> = {
   winter: { wordFx: "frost", particle: "snow", particleCount: 24, ringSpeed: 0.8, shimmer: true, shimmerPeriod: 110, entryScale: 0.95, glowPulse: 10 },
   // বসন্ত: মার্কার-হাইলাইট, দুলুনি, ফুল ও ঝরা পাপড়ি
   spring: { wordFx: "bloom", particle: "petal", particleCount: 12, ringSpeed: 1.4, shimmer: true, shimmerPeriod: 100, entryScale: 0.94, glowPulse: 12 },
+  // শরৎ: কমলা-সোনালি আঁচ, শব্দ হালকা দোলে, উপরে ঝরা পাতা; চারপাশে পাতা ঝরে
+  autumn: { wordFx: "ember", particle: "leaf", particleCount: 16, ringSpeed: 1.1, shimmer: true, shimmerPeriod: 104, entryScale: 0.95, glowPulse: 10 },
 };
 
 export const getCaptionStyle = (theme: ThemeId): CaptionStyle => CAPTION_STYLES[theme] ?? CAPTION_STYLES.emerald;

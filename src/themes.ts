@@ -1,8 +1,8 @@
 import type { ThemeId } from "./types";
 
 /**
- * Part 3: ৩টা থিম (emerald, navy, greenDayNight) + ৩টা ঋতু-থিম (monsoon = বর্ষা, winter = শীত, spring = বসন্ত)।
- * ঋতু-থিম তিনটাই দিন-রাতের থিম (greenDayNight-এর মতো) — সময়ের মোড (day / night / dayToNight / nightToDay) চারটাতেই কাজ করে।
+ * Part 3: ৩টা মূল থিম (emerald, navy, greenDayNight) + ৪টা ঋতু-থিম (monsoon = বর্ষা, winter = শীত, spring = বসন্ত, autumn = শরৎ)।
+ * সাতটা থিমই দিন-রাতের থিম (greenDayNight-এর মতো) — সময়ের মোড (day / night / dayToNight / nightToDay) চারটাতেই কাজ করে।
  *
  * নকশার সিদ্ধান্ত: সব লেখা সবসময় আধা-স্বচ্ছ গাঢ় প্যানেলের (`panelBg`) উপরে বসবে।
  * ফলে দিনের উজ্জ্বল আকাশেও লেখা পড়া যায়, আর লেখার রঙ দিন-রাতে বদলাতে হয় না।
@@ -38,10 +38,10 @@ export type Decor = {
 
 /** ঋতুর বিশেষ এফেক্ট: বর্ষার বৃষ্টি, শীতের কুয়াশা, বসন্তের ঝরা পাপড়ি */
 export type SeasonEffect = {
-  kind: "rain" | "mist" | "petals";
-  /** rain/mist-এ প্রথম রঙটাই; petals-এ পাপড়িগুলো পালা করে এই রঙ নেয় */
+  kind: "rain" | "mist" | "petals" | "leaves";
+  /** rain/mist-এ প্রথম রঙটাই; petals/leaves-এ পাপড়িগুলো পালা করে এই রঙ নেয় */
   colors: string[];
-  /** rain = ফোঁটার সংখ্যা, mist = কুয়াশার স্তর (হিমকণা = ×৫), petals = পাপড়ির সংখ্যা */
+  /** rain = ফোঁটার সংখ্যা, mist = কুয়াশার স্তর (হিমকণা = ×৫), petals/leaves = পাপড়ি/পাতার সংখ্যা */
   count: number;
   /** দিনে (nightFactor ০) ও রাতে (১) এফেক্টের স্বচ্ছতা — মাঝে মসৃণ মিশ্রণ */
   dayOpacity: number;
@@ -89,6 +89,35 @@ export type Theme = {
 
 // ---------- থিমের সংজ্ঞা ----------
 
+// emerald (এমারেল্ড): আগের গাঢ় প্যালেট এখন "রাত"; সাথে নতুন "দিন" ও "গোধূলি" — সময়ের মোড এখন emerald-এও কাজ করে
+const emeraldDay: Palette = {
+  skyTop: "#8fdcb4",
+  skyMid: "#c8f2d8",
+  skyBottom: "#58b98a",
+  text: "#fff8e1",
+  textMuted: "#d9f0e0",
+  accent: "#f5c542",
+  accent2: "#ffe08a",
+  panelBg: "#032010d1",
+  panelBorder: "#f5c542cc",
+  glow: "#ffe08a",
+  captionColors: ["#ffd166", "#7ef0b0", "#8ee3ff", "#ffb3c7", "#c9b6ff", "#ffa86b"],
+};
+
+const emeraldDusk: Palette = {
+  skyTop: "#2c4a52",
+  skyMid: "#c98a58",
+  skyBottom: "#e6b566",
+  text: "#fff8e1",
+  textMuted: "#e6efd8",
+  accent: "#f5c542",
+  accent2: "#ffe08a",
+  panelBg: "#032010cc",
+  panelBorder: "#f5c542cc",
+  glow: "#f5c542",
+  captionColors: ["#ffd166", "#7ef0b0", "#8ee3ff", "#ffb3c7", "#c9b6ff", "#ffa86b"],
+};
+
 const emeraldPalette: Palette = {
   skyTop: "#021f12",
   skyMid: "#064e2f",
@@ -101,6 +130,35 @@ const emeraldPalette: Palette = {
   panelBorder: "#f5c54299",
   glow: "#f5c542",
   captionColors: ["#ffd166", "#7ef0b0", "#8ee3ff", "#ffb3c7", "#c9b6ff", "#ffa86b"],
+};
+
+// navy (রয়্যাল নেভি): আগের গাঢ় প্যালেট এখন "রাত"; সাথে নতুন "দিন" ও "গোধূলি"
+const navyDay: Palette = {
+  skyTop: "#6fb9f5",
+  skyMid: "#b9deff",
+  skyBottom: "#e6f3ff",
+  text: "#ffffff",
+  textMuted: "#cfe3ff",
+  accent: "#8fd3ff",
+  accent2: "#ffffff",
+  panelBg: "#050a2ad1",
+  panelBorder: "#8fd3ffcc",
+  glow: "#cfeaff",
+  captionColors: ["#8fd3ff", "#ffe08a", "#9bf0c6", "#ffb3c7", "#d2b8ff", "#ffb88a"],
+};
+
+const navyDusk: Palette = {
+  skyTop: "#33387f",
+  skyMid: "#c4688a",
+  skyBottom: "#f0a868",
+  text: "#ffffff",
+  textMuted: "#e3e8ff",
+  accent: "#9fdcff",
+  accent2: "#ffe3c0",
+  panelBg: "#070a2acc",
+  panelBorder: "#9fdcffcc",
+  glow: "#ffc08a",
+  captionColors: ["#9fdcff", "#ffe08a", "#9bf0c6", "#ffb3c7", "#d2b8ff", "#ffb88a"],
 };
 
 const navyPalette: Palette = {
@@ -288,22 +346,94 @@ const springNight: Palette = {
   captionColors: ["#ff9fc4", "#ffd98a", "#9bf0c6", "#9fe0ff", "#d8c2ff", "#ffb08a"],
 };
 
+// ---- শরৎ (autumn): সোনালি-কমলা আলো, ঝরা পাতা ----
+const autumnDay: Palette = {
+  skyTop: "#f5c07a",
+  skyMid: "#ffe2b4",
+  skyBottom: "#e9a05e",
+  text: "#fff4e2",
+  textMuted: "#f6e2c6",
+  accent: "#ff9a3c",
+  accent2: "#ffd08a",
+  panelBg: "#2a1208d1",
+  panelBorder: "#ff9a3ccc",
+  glow: "#ffcf8a",
+  captionColors: ["#ffb347", "#ffd98a", "#ff8a6b", "#a8f0b0", "#9fe0ff", "#ffc4d0"],
+};
+
+const autumnDusk: Palette = {
+  skyTop: "#6b3a4a",
+  skyMid: "#d9663a",
+  skyBottom: "#f0a050",
+  text: "#fff4e2",
+  textMuted: "#f2d8c0",
+  accent: "#ffb15a",
+  accent2: "#ffe0a8",
+  panelBg: "#2a0f08cc",
+  panelBorder: "#ffb15acc",
+  glow: "#ff9a50",
+  captionColors: ["#ffb347", "#ffd98a", "#ff8a6b", "#a8f0b0", "#9fe0ff", "#ffc4d0"],
+};
+
+const autumnNight: Palette = {
+  skyTop: "#150b10",
+  skyMid: "#2e1a1a",
+  skyBottom: "#4a2a1c",
+  text: "#fff4e2",
+  textMuted: "#e8cfb8",
+  accent: "#ffb15a",
+  accent2: "#ffd8a0",
+  panelBg: "#1a0b07c4",
+  panelBorder: "#ffb15acc",
+  glow: "#ff9a50",
+  captionColors: ["#ffb347", "#ffd98a", "#ff8a6b", "#a8f0b0", "#9fe0ff", "#ffc4d0"],
+};
+
 export const THEMES: Record<ThemeId, Theme> = {
   emerald: {
     id: "emerald",
     name: "এমারেল্ড নাইট",
-    isStatic: true,
-    day: emeraldPalette,
+    isStatic: false,
+    day: emeraldDay,
+    dusk: emeraldDusk,
     night: emeraldPalette,
     decor: { pattern: "geometric", particles: "gold", particleCount: 28 },
+    scenery: {
+      sun: { color: "#fff3b0", glow: "#ffd966" },
+      moon: { color: "#fff6d8", glow: "#f5c542" },
+      star: "#fff3c4",
+      cloud: "#ffffff",
+      fireflyColor: "#ffe08a",
+      fireflyGlow: "#f5c542",
+      fireflyCount: 26,
+      hills: {
+        back: ["#4fb07a", "#5f7a4a", "#06402a"],
+        front: ["#2f9a62", "#46633a", "#042f1e"],
+      },
+    },
   },
   navy: {
     id: "navy",
     name: "রয়্যাল নেভি",
-    isStatic: true,
-    day: navyPalette,
+    isStatic: false,
+    day: navyDay,
+    dusk: navyDusk,
     night: navyPalette,
     decor: { pattern: "none", particles: "stars", particleCount: 40 },
+    scenery: {
+      sun: { color: "#fffbe0", glow: "#ffe9a0" },
+      moon: { color: "#eef4ff", glow: "#8fd3ff" },
+      star: "#ffffff",
+      cloud: "#ffffff",
+      fireflyColor: "#bfe6ff",
+      fireflyGlow: "#8fd3ff",
+      fireflyCount: 24,
+      hills: {
+        back: ["#5f8fd0", "#4a5a8f", "#0b1a4a"],
+        front: ["#4a78bd", "#3a4677", "#060f33"],
+      },
+      starCount: 110,
+    },
   },
   greenDayNight: {
     id: "greenDayNight",
@@ -427,6 +557,39 @@ export const THEMES: Record<ThemeId, Theme> = {
         count: 34,
         dayOpacity: 1,
         nightOpacity: 0.65,
+      },
+    },
+  },
+  autumn: {
+    id: "autumn",
+    name: "শরৎ — ঝরা পাতা",
+    isStatic: false,
+    day: autumnDay,
+    dusk: autumnDusk,
+    night: autumnNight,
+    decor: { pattern: "none", particles: "none", particleCount: 0 },
+    scenery: {
+      sun: { color: "#fff0c0", glow: "#ffb04a" },
+      moon: { color: "#fff3e0", glow: "#ffc27a" },
+      star: "#fff4e0",
+      cloud: "#fff0dc",
+      fireflyColor: "#ffd27a",
+      fireflyGlow: "#ff9a3c",
+      fireflyCount: 26,
+      hills: {
+        back: ["#d89a4a", "#9a5a3a", "#2a1410"],
+        front: ["#c0742f", "#7a4430", "#1c0c0a"],
+      },
+      starCount: 70,
+      cloudCount: 5,
+      cloudDayOpacity: 0.6,
+      cloudNightOpacity: 0.05,
+      effect: {
+        kind: "leaves",
+        colors: ["#d9531e", "#f0a030", "#a83a1a", "#e8c040"],
+        count: 30,
+        dayOpacity: 1,
+        nightOpacity: 0.6,
       },
     },
   },

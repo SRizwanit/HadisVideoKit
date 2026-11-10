@@ -11,7 +11,7 @@ import type { TimeMode } from "../constants";
 
 /**
  * Part 6: থিমের ব্যাকগ্রাউন্ড।
- *  - emerald / navy : গ্রেডিয়েন্ট + ধীর ঘূর্ণায়মান জিওমেট্রিক প্যাটার্ন (emerald) + ভাসমান কণা (স্থির — সময়ের মোডে প্রভাব নেই)
+ *  - emerald / navy : গ্রেডিয়েন্ট + ধীর ঘূর্ণায়মান জিওমেট্রিক প্যাটার্ন (emerald) + ভাসমান কণা — এখন emerald/navy-ও দিন-রাতের আকাশ পায়, প্যাটার্ন/কণা তার উপরে বসে
  *  - greenDayNight, monsoon, winter, spring (দিন-রাতের থিম): DayNightSky + (ঋতুর এফেক্ট: বৃষ্টি / কুয়াশা / ঝরা পাপড়ি) + Fireflies
  * সব অ্যানিমেশন useCurrentFrame() ভিত্তিক।
  *
@@ -140,6 +140,21 @@ export const Background: React.FC<Props> = ({ theme, timing, nightFactor, timeMo
         <DayNightSky width={width} height={height} nightFactor={nf} themeId={def.id} mirror={mode === "nightToDay"} />
         {def.scenery.effect && (
           <SeasonEffects width={width} height={height} nightFactor={nf} effect={def.scenery.effect} />
+        )}
+        {def.decor.pattern === "geometric" && (
+          <div style={{ position: "absolute", inset: 0, opacity: 0.55 }}>
+            <GeometricPattern width={width} height={height} color={palette.accent} frame={frame} />
+          </div>
+        )}
+        {def.decor.particles !== "none" && (
+          <Particles
+            width={width}
+            height={height}
+            count={def.decor.particleCount}
+            color={def.decor.particles === "gold" ? palette.accent : palette.accent2}
+            kind={def.decor.particles}
+            frame={frame}
+          />
         )}
         <Fireflies
           width={width}

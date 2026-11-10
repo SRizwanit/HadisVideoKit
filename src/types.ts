@@ -40,7 +40,7 @@ export const hadisVideoSchema = z.object({
   theme: themeIdSchema,
   /**
    * দিন-রাতের মোড (workflow-এর `time_mode`)। না দিলে = `dayToNight` (আগের আচরণ)। শুধু দিন-রাতের থিমে
-   * (greenDayNight, monsoon, winter, spring) প্রভাব ফেলে; emerald/navy স্থির।
+   * (emerald, navy, greenDayNight, monsoon, winter, spring, autumn) প্রভাব ফেলে।
    */
   timeMode: timeModeSchema.optional(),
   orientation: orientationSchema,

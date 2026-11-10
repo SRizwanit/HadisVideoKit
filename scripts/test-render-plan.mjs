@@ -152,7 +152,7 @@ check("id: `0101`, `a_b-C9` চলে", () => buildPlan(["--id", "a_b-C9"]).ok &
 check("খারাপ theme/orientation/quality → ভুল, চলার তালিকা সহ", () => {
   const e = errsOf(base("--theme", "zz", "--orientation", "wide", "--quality", "8k"));
   return (
-    e.includes("emerald, navy, greenDayNight, monsoon, winter, spring") &&
+    e.includes("emerald, navy, greenDayNight, monsoon, winter, spring, autumn") &&
     e.includes("portrait, landscape, both") &&
     e.includes("hd, 4k, both")
   );
@@ -827,10 +827,10 @@ check("publish: কিতাব/নম্বর ফাঁকা বা খাল
 });
 
 // ---------- নতুন ঋতু-থিম (monsoon / winter / spring) + সময়ের মোড (--time-mode) ----------
-check("ঋতু-থিম monsoon / winter / spring চলে; theme তালিকায় ৬টা", () => {
+check("ঋতু-থিম monsoon / winter / spring / autumn চলে; theme তালিকায় ৭টা", () => {
   return (
-    RP.THEME_IDS.length === 6 &&
-    ["monsoon", "winter", "spring"].every((t) => {
+    RP.THEME_IDS.length === 7 &&
+    ["monsoon", "winter", "spring", "autumn"].every((t) => {
       const r = buildPlan(base("--theme", t));
       return r.ok && r.plan.jobs[0].inputProps.theme === t;
     })

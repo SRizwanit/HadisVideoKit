@@ -51,6 +51,13 @@ const Flower: React.FC<{ color: string; center: string }> = ({ color, center }) 
   </svg>
 );
 
+const Leaf: React.FC<{ color: string }> = ({ color }) => (
+  <svg viewBox="-11 -11 22 22" width="100%" height="100%" style={{ display: "block", overflow: "visible" }}>
+    <path d="M-8 8 C-9 -4 0 -10 9 -9 C10 0 4 9 -8 8Z" fill={color} />
+    <path d="M-8 8 L5 -5" stroke="rgba(0,0,0,0.35)" strokeWidth={1.3} strokeLinecap="round" fill="none" />
+  </svg>
+);
+
 const Drop: React.FC<{ color: string }> = ({ color }) => (
   <svg viewBox="-8 -11 16 21" width="100%" height="100%" style={{ display: "block", overflow: "visible" }}>
     <path d="M0 -10 C4 -3 7 1 7 4.5 A7 7 0 0 1 -7 4.5 C-7 1 -4 -3 0 -10Z" fill={color} />
@@ -235,6 +242,20 @@ const Particle: React.FC<{
     );
   }
 
+  if (kind === "leaf") {
+    const size = (12 + r3 * 12) * u;
+    const span = h + size * 2;
+    const speed = (0.9 + r4 * 1.2) * u;
+    const y = mod(frame * speed + r2 * span, span) - size;
+    const x = r1 * w + Math.sin(frame * 0.03 * (0.6 + r3) + r4 * TAU) * 34 * u;
+    const flip = 0.4 + 0.6 * Math.abs(Math.cos(frame * 0.05 + r1 * TAU));
+    return (
+      <div style={{ position: "absolute", left: x, top: y, width: size, height: size, opacity: 0.6 + 0.3 * r2, transform: `rotate(${Math.sin(frame * 0.04 + r4 * TAU) * 50 + r3 * 90}deg) scaleX(${flip})` }}>
+        <Leaf color={pick(r4 > 0.66 ? 0 : r4 > 0.33 ? 2 : 1)} />
+      </div>
+    );
+  }
+
   // petal
   const size = (9 + r3 * 9) * u;
   const span = h + size * 2;
@@ -397,6 +418,17 @@ export function wordFx(a: WordFxArgs): WordFxOut {
       out.above = (
         <span style={abs({ top: "-0.34em", left: "50%", width: "0.34em", height: "0.34em", marginLeft: "-0.17em", opacity: m * 0.95, transform: `rotate(${frame * 2.2}deg) scale(${0.6 + 0.5 * pop})` })}>
           <Snowflake color="#ffffff" />
+        </span>
+      );
+    }
+  } else if (fx === "ember") {
+    out.glow = act ? `0 0 ${fs * 0.25 * m}px ${withAlpha(activeColor, 0.85 * m)}, 0 0 ${fs * 0.6 * m}px ${withAlpha("#ff7a2a", 0.45 * m)}, ` : "";
+    out.transform = act ? `translateY(${Math.sin(frame * 0.3) * 0.025 * m}em) rotate(${Math.sin(frame * 0.2) * 1.6 * m}deg)` : "";
+    out.under = bar({ background: `linear-gradient(90deg, #ff7a2a, ${activeColor}, #ffd25a)`, boxShadow: `0 0 ${barH * 2}px ${withAlpha("#ff7a2a", 0.8)}` });
+    if (act) {
+      out.above = (
+        <span style={abs({ top: "-0.34em", right: "-0.08em", width: "0.4em", height: "0.4em", opacity: m, transform: `rotate(${Math.sin(frame * 0.12) * 35 + 20}deg) translateY(${Math.sin(frame * 0.2) * 0.05}em) scale(${0.5 + 0.6 * pop})` })}>
+          <Leaf color="#ff8a3c" />
         </span>
       );
     }
