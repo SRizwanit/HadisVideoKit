@@ -9,6 +9,7 @@ import {
   pageTextOpacity,
   paginateCaption,
   planCaption,
+  clamp01,
   popScale,
   wordColorIndex,
   wordLook,
@@ -19,8 +20,10 @@ import { useHadisTimestamp } from "../lib/loadHadis";
 import { buildFrameSegments, type FrameSegment, type Timing } from "../lib/timing";
 import { useInfographicMix } from "../lib/useInfographicMix";
 import { computeLayout, type Layout } from "../lib/useLayout";
-import { getThemeColors, mixColors, parseColor, type Palette } from "../themes";
+import { getThemeColors, mixColors, type Palette } from "../themes";
 import type { ThemeId } from "../types";
+import { getCaptionStyle, type CaptionStyle } from "../lib/captionStyles";
+import { PanelParticles, PanelRing, PanelShimmer, wordFx, withAlpha } from "./CaptionFx";
 
 /**
  * Part 10: রঙিন অ্যানিমেটেড ক্যাপশন (ভিডিওর নিচের বাক্স)।
@@ -73,24 +76,16 @@ export type CaptionProps = {
   frame?: number;
 };
 
-const withAlpha = (color: string, alpha: number): string => {
-  try {
-    const c = parseColor(color);
-    return `rgba(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)}, ${Math.max(0, Math.min(1, alpha))})`;
-  } catch {
-    return color;
-  }
-};
-
 /** এক সেগমেন্টের বাক্স: প্রতিটা শব্দ মাপে (hook) + পেজ ভাগ করে + বর্তমান পেজ আঁকে। সেগমেন্ট বদলালে `key` বদলায় → নতুন মাপ */
 const CaptionBox: React.FC<{
   seg: FrameSegment;
   plan: CaptionPlan;
   L: Layout;
   palette: Palette;
+  cstyle: CaptionStyle;
   absFrame: number;
   fps: number;
-}> = ({ seg, plan, L, palette, absFrame, fps }) => {
+}> = ({ seg, plan, L, palette, cstyle, absFrame, fps }) => {
   const u = L.unit;
   const pad = CAPTION_PAD_UNITS * u;
   const box = L.captionBox;
@@ -149,6 +144,7 @@ const CaptionBox: React.FC<{
   const fs = base * paging.scale;
   const barH = Math.max(3 * u, fs * 0.06);
 
+  const activeIdx = words.findIndex((_, i) => wordLook(words, i, absFrame, fps).state === "active");
   const pageIdx = Math.max(0, pageIndexAt(paging.pages, words, absFrame));
   const page = paging.pages[pageIdx] ?? { start: 0, end: words.length, lines: [{ start: 0, end: words.length }] };
   const pageStartFrame = words[page.start]?.startFrame ?? seg.startFrame;
@@ -159,7 +155,8 @@ const CaptionBox: React.FC<{
     const look = wordLook(words, i, absFrame, fps);
     const activeColor = palette.captionColors[wordColorIndex(seg.index, i, palette.captionColors.length)] ?? palette.accent;
     const color = mixColors(palette.text, activeColor, look.activeMix);
-    const glow = look.activeMix > 0.01 ? `0 0 ${fs * 0.32 * look.activeMix}px ${withAlpha(activeColor, 0.85 * look.activeMix)}, ` : "";
+    const fx = wordFx({ fx: cstyle.wordFx, look, color, activeColor, frame: absFrame, fs, u, barH });
+    const transforms = [look.pop > 0.001 ? `scale(${popScale(look.pop)})` : "", fx.transform].filter(Boolean).join(" ");
     return (
       <span
         data-word={i}
@@ -167,32 +164,19 @@ const CaptionBox: React.FC<{
         style={{
           display: "inline-block",
           position: "relative",
+          isolation: "isolate",
           padding: "0 0.05em",
-          color,
+          color: fx.color,
           opacity: look.opacity,
-          transform: look.pop > 0.001 ? `scale(${popScale(look.pop)})` : undefined,
+          transform: transforms || undefined,
           transformOrigin: "50% 60%",
-          textShadow: `${glow}0 ${2 * u}px ${6 * u}px rgba(0, 0, 0, 0.45)`,
+          textShadow: `${fx.glow}0 ${2 * u}px ${6 * u}px rgba(0, 0, 0, 0.45)`,
         }}
       >
+        {fx.behind}
         {w.word}
-        {look.underline > 0.01 ? (
-          <span
-            data-underline=""
-            style={{
-              position: "absolute",
-              left: "6%",
-              right: "6%",
-              bottom: "0.04em",
-              height: barH,
-              borderRadius: barH,
-              background: activeColor,
-              transformOrigin: "50% 50%",
-              transform: `scaleX(${look.underline})`,
-              opacity: look.activeMix,
-            }}
-          />
-        ) : null}
+        {fx.under}
+        {fx.above}
       </span>
     );
   };
@@ -211,6 +195,7 @@ const CaptionBox: React.FC<{
     );
   });
 
+  const glowColor = palette.captionColors[wordColorIndex(seg.index, Math.max(0, activeIdx), palette.captionColors.length)] ?? palette.accent;
   const active = words.findIndex((_, i) => wordLook(words, i, absFrame, fps).state === "active");
 
   return (
@@ -237,14 +222,16 @@ const CaptionBox: React.FC<{
         boxSizing: "border-box",
         borderRadius: PANEL_RADIUS_UNITS * u,
         background: palette.panelBg,
-        border: `${Math.max(2, 2.5 * u)}px solid ${palette.panelBorder}`,
-        boxShadow: `0 ${10 * u}px ${30 * u}px rgba(0, 0, 0, 0.35)`,
+        boxShadow: `0 ${10 * u}px ${30 * u}px rgba(0, 0, 0, 0.35), 0 0 ${(14 + cstyle.glowPulse * Math.sin(absFrame * 0.12)) * u}px ${withAlpha(glowColor, 0.4)}`,
         backdropFilter: PANEL_BLUR_UNITS > 0 ? `blur(${PANEL_BLUR_UNITS * u}px)` : undefined,
         opacity: plan.opacity,
-        transform: plan.slideUnits > 0.001 ? `translateY(${plan.slideUnits * u}px)` : undefined,
+        transform: `translateY(${Math.max(0, plan.slideUnits) * u}px) scale(${cstyle.entryScale + (1 - cstyle.entryScale) * clamp01(plan.opacity)})`,
         overflow: "hidden",
       }}
     >
+      <PanelParticles style={cstyle} colors={palette.captionColors} frame={absFrame} w={box.width} h={box.height} u={u} />
+      {cstyle.shimmer ? <PanelShimmer frame={absFrame} period={cstyle.shimmerPeriod} width={box.width} u={u} /> : null}
+      <PanelRing colors={palette.captionColors} frame={absFrame} speed={cstyle.ringSpeed} radius={PANEL_RADIUS_UNITS * u} width={Math.max(3, 4 * u)} />
       {/* মাপার জন্য লুকানো কপি (বেস সাইজ; প্রতিটা শব্দ আলাদা, এক লাইনে) */}
       <span
         aria-hidden
@@ -334,7 +321,7 @@ export const CaptionView: React.FC<CaptionViewProps> = ({ segments, theme, timin
   });
   const palette = getThemeColors(theme, nightFactor);
 
-  return <CaptionBox key={plan.index} seg={seg} plan={plan} L={L} palette={palette} absFrame={absFrame} fps={timing.fps} />;
+  return <CaptionBox key={plan.index} seg={seg} plan={plan} L={L} palette={palette} cstyle={getCaptionStyle(theme)} absFrame={absFrame} fps={timing.fps} />;
 };
 
 export const Caption: React.FC<CaptionProps> = ({ hadisId, theme, timing, frameOffset = 0, size, frame }) => {
