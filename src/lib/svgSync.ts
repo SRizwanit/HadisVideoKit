@@ -17,7 +17,28 @@ import { FPS } from "../constants";
  * একই `runSync` কলে CSS আর SMIL দুটোই বসে; `{ css, smil }`-এ এখন `smil`-ও আসল সংখ্যা।
  */
 
+/**
+ * ⏪ পিং-পং (reverse): SVG-র অ্যানিমেশন শেষ হয়ে গেলেও সেগমেন্টের সময় বাকি থাকলে আবার গোড়া থেকে চলে না —
+ * উল্টো দিকে (reverse) চলে, শুরুতে পৌঁছে আবার সামনে, এভাবে সেগমেন্ট শেষ পর্যন্ত (forward → reverse → forward …)।
+ *
+ * "একবারের দৈর্ঘ্য" (period) = এই SVG-র সব অ্যানিমেশনের মধ্যে সবচেয়ে দেরিতে শেষ হওয়া অ্যানিমেশনের শেষ-সময়
+ * (CSS: delay + duration × iterations; SMIL: begin + dur × repeatCount / repeatDur)। অসীম লুপ
+ * (`infinite` / `indefinite`) এই হিসাবে এক পাক ধরা হয়; শুধু অসীম লুপই থাকলে সেই এক পাকই period।
+ * সব অ্যানিমেশন একই period ধরে একসাথে উল্টোয়, তাই দৃশ্যটা সুসংগত থাকে।
+ * বন্ধ করতে: `SVG_PINGPONG = false`। সময় এখনো stateless (পরম) — স্ক্রাব/সমান্তরাল রেন্ডারে একই ছবি।
+ */
+export const SVG_PINGPONG = true;
+
 export type SyncCounts = { css: number; smil: number };
+
+/** t (ms) কে [0, period]-এর মধ্যে আগে-পিছে ভাঁজ করে: 0→period→0→period… ; period ≤ 0 বা অসীম হলে t-ই ফেরে */
+export function pingPongTime(t: number, period: number): number {
+  if (!Number.isFinite(t) || t <= 0) return 0;
+  if (!(period > 0) || !Number.isFinite(period)) return t;
+  const cycle = period * 2;
+  const m = t % cycle;
+  return m <= period ? m : cycle - m;
+}
 
 /**
  * প্রথম sync-এ পাওয়া অ্যানিমেশনের তালিকা (পরের ফ্রেমগুলোতে একই তালিকা ব্যবহার হয়)।
@@ -43,13 +64,85 @@ export function collectAnimations(container: Element): Animation[] {
   return container.getAnimations({ subtree: true });
 }
 
-/** তালিকার প্রতিটা অ্যানিমেশন থামিয়ে সময় বসায়; কয়টা অ্যানিমেশন পেল তা ফেরত দেয়। */
+/** এক CSS অ্যানিমেশনের শেষ-সময় (ms) — finite হলে delay + duration × iterations; অসীম হলে `null`; আন্দাজ না হলে 0 */
+function cssAnimationEndMs(a: Animation): { end: number; infinite: boolean; oneCycle: number } {
+  try {
+    const ct = a.effect?.getComputedTiming?.();
+    if (!ct) return { end: 0, infinite: false, oneCycle: 0 };
+    const delay = Number(ct.delay) || 0;
+    const dur = typeof ct.duration === "number" ? ct.duration : Number(ct.duration) || 0;
+    const end = Number(ct.endTime);
+    const infinite = !Number.isFinite(end);
+    return { end: infinite ? 0 : Math.max(0, end), infinite, oneCycle: Math.max(0, delay + dur) };
+  } catch {
+    return { end: 0, infinite: false, oneCycle: 0 };
+  }
+}
+
+/** SMIL ঘড়ি-মান ("2s", "500ms", "1.5", "0:03", "1min") → মিলিসেকেন্ড; বোঝা না গেলে null (যেমন "indefinite", "click", "a.end") */
+export function parseClockMs(raw: string | null | undefined): number | null {
+  if (raw == null) return null;
+  const v = raw.split(";")[0].trim();
+  if (!v) return null;
+  let m = v.match(/^(-?\d+(?:\.\d+)?)\s*(ms|s|min|h)?$/i);
+  if (m) {
+    const n = parseFloat(m[1]);
+    const u = (m[2] ?? "s").toLowerCase();
+    return u === "ms" ? n : u === "min" ? n * 60000 : u === "h" ? n * 3600000 : n * 1000;
+  }
+  m = v.match(/^(?:(\d+):)?(\d+):(\d+(?:\.\d+)?)$/);
+  if (m) return ((m[1] ? parseInt(m[1], 10) * 3600 : 0) + parseInt(m[2], 10) * 60 + parseFloat(m[3])) * 1000;
+  return null;
+}
+
+/** container-এর SMIL উপাদানগুলোর মধ্যে সবচেয়ে দেরির শেষ-সময় (ms) ও অসীম-লুপের এক পাক */
+function smilPeriods(container: Element): { end: number; oneCycle: number } {
+  let end = 0;
+  let oneCycle = 0;
+  container.querySelectorAll(SMIL_SELECTOR).forEach((el) => {
+    const begin = Math.max(0, parseClockMs(el.getAttribute("begin")) ?? 0);
+    const dur = parseClockMs(el.getAttribute("dur"));
+    if (dur === null || dur <= 0) {
+      end = Math.max(end, begin); // `set` বা dur-ছাড়া
+      return;
+    }
+    oneCycle = Math.max(oneCycle, begin + dur);
+    const rc = el.getAttribute("repeatCount");
+    const rd = el.getAttribute("repeatDur");
+    const count = rc && rc !== "indefinite" ? parseFloat(rc) : rc === "indefinite" ? 0 : 1;
+    const repeatDur = rd && rd !== "indefinite" ? parseClockMs(rd) : null;
+    if (rc === "indefinite" || rd === "indefinite") return; // অসীম — শুধু oneCycle ধরা হলো
+    end = Math.max(end, begin + (repeatDur ?? dur * (Number.isFinite(count) && count > 0 ? count : 1)));
+  });
+  return { end, oneCycle };
+}
+
+/**
+ * পিং-পং-এর "একবারের দৈর্ঘ্য" (ms): CSS + SMIL মিলিয়ে সবচেয়ে দেরিতে শেষ হওয়া অ্যানিমেশনের শেষ-সময়;
+ * finite কিছু না থাকলে অসীম লুপের এক পাক; কিছুই না থাকলে 0 (= পিং-পং নেই, আগের মতো)।
+ */
+export function computePeriodMs(animations: readonly Animation[], container: Element): number {
+  let finiteEnd = 0;
+  let cycle = 0;
+  for (const a of animations) {
+    const r = cssAnimationEndMs(a);
+    if (r.infinite) cycle = Math.max(cycle, r.oneCycle);
+    else finiteEnd = Math.max(finiteEnd, r.end);
+  }
+  const sm = smilPeriods(container);
+  finiteEnd = Math.max(finiteEnd, sm.end);
+  cycle = Math.max(cycle, sm.oneCycle);
+  return finiteEnd > 0 ? finiteEnd : cycle;
+}
+
+/** তালিকার প্রতিটা অ্যানিমেশন থামিয়ে সময় বসায়; কয়টা অ্যানিমেশন পেল তা ফেরত দেয়। `periodMs > 0` হলে পিং-পং (reverse)। */
 export function applyAnimationTime(
   animations: readonly Animation[],
   localFrame: number,
   fps: number = FPS,
+  periodMs = 0,
 ): number {
-  const t = frameToMs(localFrame, fps);
+  const t = pingPongTime(frameToMs(localFrame, fps), periodMs);
   for (const a of animations) {
     a.pause();
     a.currentTime = t;
@@ -84,8 +177,8 @@ export function countSmilAnimations(container: Element): number {
  * সময় প্রতিবার "পরম" — CSS-এর মতোই stateless; SMIL পেছনেও যেতে পারে, তাই এখানে cache লাগে না।
  * ফেরত: সময় বসানো SVG-র সংখ্যা (API না থাকলে বা SVG না থাকলে 0)।
  */
-export function applySmilTime(container: Element, localFrame: number, fps: number = FPS): number {
-  const seconds = frameToMs(localFrame, fps) / 1000;
+export function applySmilTime(container: Element, localFrame: number, fps: number = FPS, periodMs = 0): number {
+  const seconds = pingPongTime(frameToMs(localFrame, fps), periodMs) / 1000;
   let applied = 0;
   for (const svg of findSvgRoots(container)) {
     if (typeof svg.pauseAnimations !== "function" || typeof svg.setCurrentTime !== "function") continue;
@@ -102,9 +195,11 @@ export function applySmilTime(container: Element, localFrame: number, fps: numbe
  * পিছনে স্ক্রাব করতে হলে `runSync` + cache ব্যবহার করো (useSvgSync তা-ই করে)।
  */
 export function syncSvgToFrame(container: Element, localFrame: number, fps: number = FPS): SyncCounts {
-  const css = applyAnimationTime(collectAnimations(container), localFrame, fps);
+  const anims = collectAnimations(container);
+  const period = SVG_PINGPONG ? computePeriodMs(anims, container) : 0;
+  const css = applyAnimationTime(anims, localFrame, fps, period);
   const smil = countSmilAnimations(container);
-  if (smil > 0) applySmilTime(container, localFrame, fps);
+  if (smil > 0) applySmilTime(container, localFrame, fps, period);
   return { css, smil };
 }
 
@@ -129,10 +224,12 @@ export function runSync(
       root,
     };
   }
-  const css = applyAnimationTime(cache.current.animations, localFrame, fps);
+  // পিং-পং (reverse): অ্যানিমেশনের সময় ফুরালে উল্টো দিকে চলে (SVG_PINGPONG = false দিলে আগের মতো)
+  const period = SVG_PINGPONG ? computePeriodMs(cache.current.animations, container) : 0;
+  const css = applyAnimationTime(cache.current.animations, localFrame, fps, period);
   // SMIL (9D): উপাদান থাকলেই ঘড়ি বসে। CSS-এর মতো cache-এর ঝামেলা নেই — SMIL ঘড়ি পেছনে যেতে পারে।
   const smil = cache.current.smil;
-  if (smil > 0) applySmilTime(container, localFrame, fps);
+  if (smil > 0) applySmilTime(container, localFrame, fps, period);
   return { css, smil };
 }
 
