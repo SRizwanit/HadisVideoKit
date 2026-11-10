@@ -1,121 +1,179 @@
-<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" xmlns:c2pa="http://c2pa.org/manifest">
   <defs>
     <radialGradient id="svg1-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0" stop-color="#fff6c8" stop-opacity="0.85"/>
+      <stop offset="0" stop-color="#fff6c8" stop-opacity="0.9"/>
       <stop offset="1" stop-color="#f5d77a" stop-opacity="0"/>
     </radialGradient>
     <style>
-      /* Stage 1 (0-2s): bottom star appears */
+      /* ===== ১০ stage, ৬ সেকেন্ড লুপ: প্রতি stage = ১০% = ০.৬ সেকেন্ড ===== */
+
+      /* Stage 1 (0-10%): খোলা কিতাব, সবসময় দৃশ্যমান */
       @keyframes svg1-k1 {
         0%   { transform: scale(0.6); opacity: 0.7; }
-        30%  { transform: scale(1);   opacity: 1; }
-        90%  { transform: scale(1);   opacity: 1; }
+        8%   { transform: scale(1);   opacity: 1; }
+        96%  { transform: scale(1);   opacity: 1; }
         100% { transform: scale(0.6); opacity: 0.7; }
       }
-      /* Stage 2 (2-4s): first line + middle star */
-      @keyframes svg1-k2 {
-        0%, 30%  { opacity: 0; }
-        42%, 88% { opacity: 1; }
-        100%     { opacity: 0; }
-      }
-      /* Stage 3 (4-6s): second line + top star + glow */
-      @keyframes svg1-k3 {
-        0%, 63%  { opacity: 0; }
-        75%, 88% { opacity: 1; }
-        100%     { opacity: 0; }
-      }
-      @keyframes svg1-draw1 {
-        0%, 30%  { stroke-dashoffset: 1; }
-        42%, 100% { stroke-dashoffset: 0; }
-      }
-      @keyframes svg1-draw2 {
-        0%, 63%  { stroke-dashoffset: 1; }
-        75%, 100% { stroke-dashoffset: 0; }
-      }
-      @keyframes svg1-pop2 {
-        0%, 32%  { transform: scale(0.5); }
-        46%      { transform: scale(1.12); }
-        54%, 100% { transform: scale(1); }
-      }
-      @keyframes svg1-pop3 {
-        0%, 65%  { transform: scale(0.5); }
-        79%      { transform: scale(1.12); }
-        87%, 100% { transform: scale(1); }
-      }
-      @keyframes svg1-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      @keyframes svg1-pulse {
-        0%, 100% { transform: scale(0.9); opacity: 0.55; }
-        50%      { transform: scale(1.1); opacity: 1; }
-      }
-      @keyframes svg1-twinkle {
-        0%, 100% { opacity: 0.2; transform: scale(0.7); }
-        50%      { opacity: 1;   transform: scale(1.2); }
-      }
+      /* Stage 2..10: নিজের stage-এ ফোটে, ৯৬% থেকে ১০০% এ মিলিয়ে যায় */
+      @keyframes svg1-k2  { 0%, 10% { opacity: 0; } 14%, 96% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes svg1-k3  { 0%, 20% { opacity: 0; } 24%, 96% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes svg1-k4  { 0%, 30% { opacity: 0; } 34%, 96% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes svg1-k5  { 0%, 40% { opacity: 0; } 44%, 96% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes svg1-k6  { 0%, 50% { opacity: 0; } 54%, 96% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes svg1-k7  { 0%, 60% { opacity: 0; } 64%, 96% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes svg1-k8  { 0%, 70% { opacity: 0; } 74%, 96% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes svg1-k9  { 0%, 80% { opacity: 0; } 84%, 96% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes svg1-k10 { 0%, 90% { opacity: 0; } 94%, 96% { opacity: 1; } 100% { opacity: 0; } }
 
-      .svg1-s1 { animation: svg1-k1 6s ease-in-out infinite; transform-origin: 500px 800px; }
-      .svg1-s2 { animation: svg1-k2 6s ease-in-out infinite; }
-      .svg1-s3 { animation: svg1-k3 6s ease-in-out infinite; }
+      /* সংযোগ-রেখা আঁকা (সনদের কড়ি জোড়া লাগা) */
+      @keyframes svg1-d1 { 0%, 30% { stroke-dashoffset: 100; } 36%, 100% { stroke-dashoffset: 0; } }
+      @keyframes svg1-d2 { 0%, 40% { stroke-dashoffset: 100; } 46%, 100% { stroke-dashoffset: 0; } }
+      @keyframes svg1-d3 { 0%, 50% { stroke-dashoffset: 100; } 56%, 100% { stroke-dashoffset: 0; } }
+      @keyframes svg1-d4 { 0%, 60% { stroke-dashoffset: 100; } 66%, 100% { stroke-dashoffset: 0; } }
 
-      .svg1-ring  { animation: svg1-spin 6s linear infinite; transform-origin: 500px 800px; }
-      .svg1-halo1 { animation: svg1-pulse 3s ease-in-out infinite; transform-origin: 500px 800px; }
+      /* গিঁট (বর্ণনাকারীর কড়ি) ফুটে ওঠা */
+      @keyframes svg1-p1 { 0%, 22% { transform: scale(0); } 27% { transform: scale(1.2); } 31%, 100% { transform: scale(1); } }
+      @keyframes svg1-p2 { 0%, 32% { transform: scale(0); } 37% { transform: scale(1.2); } 41%, 100% { transform: scale(1); } }
+      @keyframes svg1-p3 { 0%, 42% { transform: scale(0); } 47% { transform: scale(1.2); } 51%, 100% { transform: scale(1); } }
+      @keyframes svg1-p4 { 0%, 52% { transform: scale(0); } 57% { transform: scale(1.2); } 61%, 100% { transform: scale(1); } }
+      @keyframes svg1-p5 { 0%, 62% { transform: scale(0); } 67% { transform: scale(1.2); } 71%, 100% { transform: scale(1); } }
 
-      .svg1-line1 { stroke-dasharray: 1; stroke-dashoffset: 1; animation: svg1-draw1 6s ease-in-out infinite; }
-      .svg1-line2 { stroke-dasharray: 1; stroke-dashoffset: 1; animation: svg1-draw2 6s ease-in-out infinite; }
+      /* ছোট বাড়তি অ্যানিমেশন (৬ সেকেন্ডে সমান ভাগ হয়) */
+      @keyframes svg1-twinkle { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+      @keyframes svg1-pulse   { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.6; } }
+      @keyframes svg1-spin    { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes svg1-flow    { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
 
-      .svg1-n2    { animation: svg1-pop2 6s ease-in-out infinite; transform-origin: 500px 500px; }
-      .svg1-n3    { animation: svg1-pop3 6s ease-in-out infinite; transform-origin: 500px 200px; }
-      .svg1-ring2 { animation: svg1-spin 6s linear infinite; transform-origin: 500px 500px; }
+      .svg1-s1  { animation: svg1-k1 6s ease-in-out infinite; transform-origin: 500px 700px; }
+      .svg1-s2  { animation: svg1-k2 6s ease-in-out infinite; }
+      .svg1-s3  { animation: svg1-k3 6s ease-in-out infinite; }
+      .svg1-s4  { animation: svg1-k4 6s ease-in-out infinite; }
+      .svg1-s5  { animation: svg1-k5 6s ease-in-out infinite; }
+      .svg1-s6  { animation: svg1-k6 6s ease-in-out infinite; }
+      .svg1-s7  { animation: svg1-k7 6s ease-in-out infinite; }
+      .svg1-s8  { animation: svg1-k8 6s ease-in-out infinite; }
+      .svg1-s9  { animation: svg1-k9 6s ease-in-out infinite; }
+      .svg1-s10 { animation: svg1-k10 6s ease-in-out infinite; }
 
-      .svg1-halo3 { animation: svg1-pulse 3s ease-in-out infinite; transform-origin: 500px 200px; }
-      .svg1-sp1 { animation: svg1-twinkle 2s ease-in-out infinite; transform-origin: 360px 120px; }
-      .svg1-sp2 { animation: svg1-twinkle 2s ease-in-out infinite -0.7s; transform-origin: 640px 120px; }
-      .svg1-sp3 { animation: svg1-twinkle 2s ease-in-out infinite -1.3s; transform-origin: 300px 250px; }
-      .svg1-sp4 { animation: svg1-twinkle 2s ease-in-out infinite -0.4s; transform-origin: 700px 250px; }
-      .svg1-sp5 { animation: svg1-twinkle 3s ease-in-out infinite -1s; transform-origin: 420px 330px; }
-      .svg1-sp6 { animation: svg1-twinkle 3s ease-in-out infinite -2s; transform-origin: 580px 330px; }
+      .svg1-link { stroke-dasharray: 100; stroke-dashoffset: 100; }
+      .svg1-l1 { animation: svg1-d1 6s ease-in-out infinite; }
+      .svg1-l2 { animation: svg1-d2 6s ease-in-out infinite; }
+      .svg1-l3 { animation: svg1-d3 6s ease-in-out infinite; }
+      .svg1-l4 { animation: svg1-d4 6s ease-in-out infinite; }
+
+      .svg1-n1 { animation: svg1-p1 6s ease-out infinite; transform-origin: 170px 600px; }
+      .svg1-n2 { animation: svg1-p2 6s ease-out infinite; transform-origin: 270px 430px; }
+      .svg1-n3 { animation: svg1-p3 6s ease-out infinite; transform-origin: 500px 300px; }
+      .svg1-n4 { animation: svg1-p4 6s ease-out infinite; transform-origin: 730px 430px; }
+      .svg1-n5 { animation: svg1-p5 6s ease-out infinite; transform-origin: 830px 600px; }
+
+      .svg1-ray   { animation: svg1-twinkle 3s ease-in-out infinite; }
+      .svg1-star  { animation: svg1-twinkle 2s ease-in-out infinite; }
+      .svg1-star2 { animation: svg1-twinkle 2s ease-in-out infinite; animation-delay: -1s; }
+      .svg1-arch  { animation: svg1-pulse 2s ease-in-out infinite; }
+      .svg1-ring  { animation: svg1-spin 6s linear infinite; transform-origin: 500px 500px; }
+      .svg1-c1 { animation: svg1-flow 1.5s ease-in-out infinite; animation-delay: 0s; }
+      .svg1-c2 { animation: svg1-flow 1.5s ease-in-out infinite; animation-delay: -0.5s; }
+      .svg1-c3 { animation: svg1-flow 1.5s ease-in-out infinite; animation-delay: -1s; }
     </style>
   </defs>
 
-  <!-- Stage 1: first narrator, bottom star with a rotating ring -->
+  <!-- Stage 1 (0.0-0.6 s): খোলা কিতাব — হাদিসের গ্রন্থ -->
   <g class="svg1-s1">
-    <circle class="svg1-halo1" cx="500" cy="800" r="150" fill="url(#svg1-glow)"/>
-    <g class="svg1-ring">
-      <circle cx="500" cy="800" r="125" fill="none" stroke="#1abc9c" stroke-width="6" stroke-dasharray="14 18" opacity="0.8"/>
-    </g>
-    <rect x="430" y="730" width="140" height="140" rx="10" fill="#f5d77a" fill-opacity="0.18" stroke="#f5d77a" stroke-width="12"/>
-    <rect x="430" y="730" width="140" height="140" rx="10" fill="#1abc9c" fill-opacity="0.12" stroke="#f0c040" stroke-width="12" transform="rotate(45 500 800)"/>
-    <circle cx="500" cy="800" r="26" fill="#ffffff"/>
+    <path d="M500 760 C440 730 360 725 300 745 L300 650 C360 630 440 635 500 665 Z" fill="#f5d77a" fill-opacity="0.25" stroke="#f5d77a" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M500 760 C560 730 640 725 700 745 L700 650 C640 630 560 635 500 665 Z" fill="#f5d77a" fill-opacity="0.25" stroke="#f5d77a" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M500 665 L500 760" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+    <path d="M335 680 C380 668 430 672 470 690" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+    <path d="M335 705 C380 693 430 697 470 715" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+    <path d="M665 680 C620 668 570 672 530 690" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+    <path d="M665 705 C620 693 570 697 530 715" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
   </g>
 
-  <!-- Stage 2: chain link to the second narrator -->
+  <!-- Stage 2 (0.6-1.2 s): কিতাব থেকে আলো ও রশ্মি -->
   <g class="svg1-s2">
-    <path class="svg1-line1" pathLength="1" d="M500 700 L500 580" fill="none" stroke="#f5d77a" stroke-width="10" stroke-linecap="round"/>
-    <circle cx="500" cy="640" r="9" fill="#ffffff"/>
-    <g class="svg1-n2">
-      <g class="svg1-ring2">
-        <circle cx="500" cy="500" r="100" fill="none" stroke="#8fd3ff" stroke-width="5" stroke-dasharray="10 16" opacity="0.8"/>
-      </g>
-      <rect x="445" y="445" width="110" height="110" rx="8" fill="#f5d77a" fill-opacity="0.18" stroke="#f5d77a" stroke-width="10"/>
-      <rect x="445" y="445" width="110" height="110" rx="8" fill="#1abc9c" fill-opacity="0.12" stroke="#2ecc71" stroke-width="10" transform="rotate(45 500 500)"/>
-      <circle cx="500" cy="500" r="20" fill="#ffffff"/>
+    <circle cx="500" cy="640" r="260" fill="url(#svg1-glow)"/>
+    <g stroke="#f0c040" stroke-width="6" stroke-linecap="round">
+      <line class="svg1-ray" x1="405" y1="595" x2="335" y2="555"/>
+      <line class="svg1-ray" x1="429" y1="566" x2="378" y2="504"/>
+      <line class="svg1-ray" x1="462" y1="547" x2="435" y2="471"/>
+      <line class="svg1-ray" x1="500" y1="540" x2="500" y2="460"/>
+      <line class="svg1-ray" x1="538" y1="547" x2="565" y2="471"/>
+      <line class="svg1-ray" x1="571" y1="566" x2="622" y2="504"/>
+      <line class="svg1-ray" x1="595" y1="595" x2="665" y2="555"/>
     </g>
   </g>
 
-  <!-- Stage 3: chain link to the Prophet's words, top star, glow and sparkles -->
+  <!-- Stage 3 (1.2-1.8 s): প্রথম গিঁট — প্রথম বর্ণনাকারী (হুমায়দী) -->
   <g class="svg1-s3">
-    <circle class="svg1-halo3" cx="500" cy="200" r="190" fill="url(#svg1-glow)"/>
-    <path class="svg1-line2" pathLength="1" d="M500 420 L500 280" fill="none" stroke="#f5d77a" stroke-width="10" stroke-linecap="round"/>
-    <circle cx="500" cy="350" r="9" fill="#ffffff"/>
-    <g class="svg1-n3">
-      <rect x="445" y="145" width="110" height="110" rx="8" fill="#f5d77a" fill-opacity="0.25" stroke="#f5d77a" stroke-width="10"/>
-      <rect x="445" y="145" width="110" height="110" rx="8" fill="#8fd3ff" fill-opacity="0.15" stroke="#ffffff" stroke-width="10" transform="rotate(45 500 200)"/>
-      <circle cx="500" cy="200" r="22" fill="#ffffff"/>
+    <g class="svg1-n1">
+      <circle cx="170" cy="600" r="34" fill="#f5d77a" fill-opacity="0.2" stroke="#f5d77a" stroke-width="10"/>
+      <circle cx="170" cy="600" r="12" fill="#ffffff"/>
     </g>
-    <circle class="svg1-sp1" cx="360" cy="120" r="9" fill="#ffffff"/>
-    <circle class="svg1-sp2" cx="640" cy="120" r="9" fill="#f0c040"/>
-    <circle class="svg1-sp3" cx="300" cy="250" r="8" fill="#8fd3ff"/>
-    <circle class="svg1-sp4" cx="700" cy="250" r="8" fill="#ffffff"/>
-    <circle class="svg1-sp5" cx="420" cy="330" r="7" fill="#f5d77a"/>
-    <circle class="svg1-sp6" cx="580" cy="330" r="7" fill="#2ecc71"/>
   </g>
-</svg>
+
+  <!-- Stage 4 (1.8-2.4 s): সংযোগ + দ্বিতীয় গিঁট -->
+  <g class="svg1-s4">
+    <path class="svg1-link svg1-l1" pathLength="100" d="M170 600 L270 430" fill="none" stroke="#1abc9c" stroke-width="10" stroke-linecap="round"/>
+    <g class="svg1-n2">
+      <circle cx="270" cy="430" r="34" fill="#f5d77a" fill-opacity="0.2" stroke="#f5d77a" stroke-width="10"/>
+      <circle cx="270" cy="430" r="12" fill="#ffffff"/>
+    </g>
+  </g>
+
+  <!-- Stage 5 (2.4-3.0 s): সংযোগ + তৃতীয় গিঁট (আলকামা, চূড়ায়) -->
+  <g class="svg1-s5">
+    <path class="svg1-link svg1-l2" pathLength="100" d="M270 430 L500 300" fill="none" stroke="#1abc9c" stroke-width="10" stroke-linecap="round"/>
+    <g class="svg1-n3">
+      <circle cx="500" cy="300" r="40" fill="#f5d77a" fill-opacity="0.2" stroke="#f5d77a" stroke-width="10"/>
+      <circle cx="500" cy="300" r="14" fill="#ffffff"/>
+    </g>
+  </g>
+
+  <!-- Stage 6 (3.0-3.6 s): সংযোগ + চতুর্থ গিঁট -->
+  <g class="svg1-s6">
+    <path class="svg1-link svg1-l3" pathLength="100" d="M500 300 L730 430" fill="none" stroke="#1abc9c" stroke-width="10" stroke-linecap="round"/>
+    <g class="svg1-n4">
+      <circle cx="730" cy="430" r="34" fill="#f5d77a" fill-opacity="0.2" stroke="#f5d77a" stroke-width="10"/>
+      <circle cx="730" cy="430" r="12" fill="#ffffff"/>
+    </g>
+  </g>
+
+  <!-- Stage 7 (3.6-4.2 s): সংযোগ + পঞ্চম গিঁট — শিকল সম্পূর্ণ -->
+  <g class="svg1-s7">
+    <path class="svg1-link svg1-l4" pathLength="100" d="M730 430 L830 600" fill="none" stroke="#1abc9c" stroke-width="10" stroke-linecap="round"/>
+    <g class="svg1-n5">
+      <circle cx="830" cy="600" r="34" fill="#f5d77a" fill-opacity="0.2" stroke="#f5d77a" stroke-width="10"/>
+      <circle cx="830" cy="600" r="12" fill="#ffffff"/>
+    </g>
+  </g>
+
+  <!-- Stage 8 (4.2-4.8 s): পুরো সনদ জুড়ে আলো -->
+  <g class="svg1-s8">
+    <path class="svg1-arch" d="M170 600 L270 430 L500 300 L730 430 L830 600" fill="none" stroke="#fff6c8" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="170" cy="600" r="62" fill="url(#svg1-glow)"/>
+    <circle cx="270" cy="430" r="62" fill="url(#svg1-glow)"/>
+    <circle cx="500" cy="300" r="70" fill="url(#svg1-glow)"/>
+    <circle cx="730" cy="430" r="62" fill="url(#svg1-glow)"/>
+    <circle cx="830" cy="600" r="62" fill="url(#svg1-glow)"/>
+  </g>
+
+  <!-- Stage 9 (4.8-5.4 s): অর্ধচন্দ্র ও ঝিকিমিকি তারা -->
+  <g class="svg1-s9">
+    <path d="M530 125 A50 50 0 1 0 530 215 A46 46 0 0 1 530 125 Z" fill="#f5d77a"/>
+    <path class="svg1-star" d="M150 308 L156 324 L172 330 L156 336 L150 352 L144 336 L128 330 L144 324 Z" fill="#8fd3ff"/>
+    <path class="svg1-star2" d="M850 308 L856 324 L872 330 L856 336 L850 352 L844 336 L828 330 L844 324 Z" fill="#8fd3ff"/>
+    <path class="svg1-star2" d="M330 168 L336 184 L352 190 L336 196 L330 212 L324 196 L308 190 L324 184 Z" fill="#ffffff"/>
+    <path class="svg1-star" d="M670 168 L676 184 L692 190 L676 196 L670 212 L664 196 L648 190 L664 184 Z" fill="#ffffff"/>
+    <path class="svg1-star" d="M720 108 L725 121 L738 126 L725 131 L720 144 L715 131 L702 126 L715 121 Z" fill="#8fd3ff"/>
+  </g>
+
+  <!-- Stage 10 (5.4-6.0 s): আলোর বলয় ও ডান দিকে এগিয়ে চলা তীর — সনদ পরের বর্ণনাকারীর দিকে এগোয় -->
+  <g class="svg1-s10">
+    <circle class="svg1-ring" cx="500" cy="500" r="400" fill="none" stroke="#f0c040" stroke-width="6" stroke-dasharray="20 18" opacity="0.7"/>
+    <g fill="none" stroke="#2ecc71" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+      <path class="svg1-c1" d="M400 820 L440 850 L400 880"/>
+      <path class="svg1-c2" d="M480 820 L520 850 L480 880"/>
+      <path class="svg1-c3" d="M560 820 L600 850 L560 880"/>
+    </g>
+  </g>
+<metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTpmYjBjOGI5MC02MTk2LTQwN2YtOTNkZC1hMDc2ODJmMGExNWEAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaCcv4qa0hCcng8NGOd16noQAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDo5ZmRmOTAzMS0zMTE4LTQ2MTgtYWI4ZS1hZjk0M2ZlN2VjNTVscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoKtYB1vN4izp5FCFGPesH6wAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggMWAygCo+7WlSduXX8ZiY5uWpmnVQ46qYqt/IZiRcfT2kZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaNuMZa3YMQHNrthPWM1bOOoAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRMAAAAAAAAAAAAAAAAZGhhc2hYIFIeNW5EPBIhNcI2wPTkdva5bUYHEXd6OlcH0zzxyA/NZG5hbWVuanVtYmYgbWFuaWZlc3RqZXhjbHVzaW9uc4GiZXN0YXJ0GS7wZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmZiMGM4YjkwLTYxOTYtNDA3Zi05M2RkLWEwNzY4MmYwYTE1YS9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOjJjYTc1ZDZlLTBkYjctNDhjNC05ZDVhLTIxYmI3NTQ5OWRjM3JjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCAxYDKAKj7taVJ25dfxmJjm5amadVDjqpiq38hmJFx9PaJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggjug+NoN+QlZOUCF+8dTh0K+65iDfb/hsZwTuO3ScqbWiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFgg9Iu1/uXh/o+lkpmw2QMsAB/aklWZXDd4O0F5nOABo6N0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQGXfj5akGcqSn2Vme5oI1QNOGmg2rLTSh/g3M0anF0s6yHuzzM267t30nI26oo/SDg+jOTDc4VljfohUSNruKUA=</c2pa:manifest></metadata></svg>
